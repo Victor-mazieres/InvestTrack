@@ -1,7 +1,6 @@
 import PeaGraph from "./Modules/PeaGraph";
 import PeaTopActions from "./Modules/PeaTopActions";
 import PeaPortfolio from "./Modules/PeaPortfolio";
-import PeaNews from "./Modules/PeaNews";
 
 export default function PeaPage() {
   return (
@@ -16,9 +15,6 @@ export default function PeaPage() {
 
       {/* Répartition du Portefeuille */}
       <PeaPortfolio />
-
-      {/* Dernières actualités */}
-      <PeaNews />
     </div>
   );
 }
