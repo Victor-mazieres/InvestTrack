@@ -11,7 +11,7 @@ import {
   PlusCircle,
   List
 } from "lucide-react";
-import PeaActionChart from "./Modules/PeaActionChart";
+import PeaActionChart from "./PeaActionChart";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parse } from "date-fns";

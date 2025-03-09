@@ -13,13 +13,20 @@ import NavigationButton from "./components/Navbar/NavigationButton";
 import Dashboard from "./components/Pages/Dashboard/Dashboard";
 import PeaPage from "./components/Pages/PeaPage/PeaPage";
 import ImmobilierPage from "./components/Pages/ImmobilierPage/ImmobilierPage";
-import MoreActions from "./components/Pages/PeaPage/MoreActions";
-import DetailPage from "./components/Pages/PeaPage/DetailPage";
-import DividendeDetailPage from "./components/Pages/PeaPage/Modules/DividendeDetailPage";
-import HistoriqueOrderPage from "./components/Pages/PeaPage/HistoriqueOrderPage";
+import MoreActions from "./components/Pages/PeaPage/Modules/Actions/MoreActions";
+import DetailPage from "./components/Pages/PeaPage/Modules/Actions/DetailPage";
+import DividendeDetailPage from "./components/Pages/PeaPage/Modules/Actions/DividendeDetailPage";
+import HistoriqueOrderPage from "./components/Pages/PeaPage/Modules/Actions/HistoriqueOrderPage";
 import CalculatorCredit from "./components/Pages/CalculatorCredit/CalculatorCredit";
 import LoginPage from "./components/Pages/ConnexionPage/LoginPage/LoginPage";
 import RegisterPage from "./components/Pages/ConnexionPage/RegisterPage/RegisterPage";
+import PeaPie from "./components/Pages/PeaPage/Modules/Portfolio/PeaPie";
+import PeaBars from "./components/Pages/PeaPage/Modules/Portfolio/PeaBars";
+import PeaBarsSecteurs from "./components/Pages/PeaPage/Modules/Portfolio/PeaBarsSecteurs";
+import PeaBarsValeurs from "./components/Pages/PeaPage/Modules/Portfolio/PeaBarsValeurs";
+import ProfilePage from "./components/Pages/Profile/ProfilePage";
+import PeaPieSecteurs from "./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs";
+import PeaPieValeurs from "./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs";
 
 function AppContent() {
   const location = useLocation();
@@ -65,10 +72,58 @@ function AppContent() {
               }
             />
             <Route
-              path="/calcul"
+              path="/Calcul"
               element={
                 <ModalWrapper onClose={() => navigate(-1)}>
                   <CalculatorCredit />
+                </ModalWrapper>
+              }
+            />
+            <Route
+              path="/RepartitionCamembert"
+              element={
+                <ModalWrapper onClose={() => navigate(-1)}>
+                  <PeaPie />
+                </ModalWrapper>
+              }
+            />
+            <Route
+              path="/RepartitionBarreSecteurs"
+              element={
+                <ModalWrapper onClose={() => navigate(-1)}>
+                  <PeaBarsSecteurs />
+                </ModalWrapper>
+              }
+            />
+            <Route
+              path="/RepartitionBarreValeurs"
+              element={
+                <ModalWrapper onClose={() => navigate(-1)}>
+                  <PeaBarsValeurs />
+                </ModalWrapper>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ModalWrapper onClose={() => navigate(-1)}>
+                  <ProfilePage />
+                </ModalWrapper>
+              }
+            />
+            <Route
+              path="/RepartitionCamembertSecteurs"
+              element={
+                <ModalWrapper onClose={() => navigate(-1)}>
+                  <PeaPieSecteurs />
+                </ModalWrapper>
+              }
+            />
+            <Route
+              path="/RepartitionCamembertValeurs"
+              element={
+                <ModalWrapper onClose={() => navigate(-1)}>
+                  <PeaPieValeurs />
                 </ModalWrapper>
               }
             />
@@ -110,7 +165,7 @@ function MainContent({ location }) {
   });
 
   return (
-    <div {...handlers} className="mt-16 pb-20 overflow-hidden">
+    <div {...handlers} className="mt-16 overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}
@@ -129,6 +184,13 @@ function MainContent({ location }) {
             <Route path="/connexion" element={<LoginPage />} />
             <Route path="/inscription" element={<RegisterPage />} />
             <Route path="*" element={<Dashboard />} />
+            <Route path="/RepartitionBarreSecteurs" element={<PeaBarsSecteurs />} />
+            <Route path="/RepartitionBarreValeurs" element={<PeaBarsValeurs />} />
+            <Route path="/RepartitionCamembert" element={<PeaPie />} />
+            <Route path="/profile" element={<ProfilePage/>} />
+            <Route path="/RepartitionCamembertSecteurs" element={<PeaPieSecteurs/>} />
+            <Route path="/RepartitionCamembertValeurs" element={<PeaPieValeurs/>} />
+
           </Routes>
         </motion.div>
       </AnimatePresence>

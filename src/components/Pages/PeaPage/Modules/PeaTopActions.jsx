@@ -88,7 +88,7 @@ export default function PeaTopActions() {
 
       {/* Bouton Voir Plus */}
       <div className="relative mt-4 flex justify-center">
-        <button onClick={() => navigate("/MoreActions")} className="text-primary font-semibold hover:text-secondary transition text-base">
+        <button onClick={() => navigate("/MoreActions")} className="text-greenLight font-semibold hover:text-secondary transition text-base">
           Voir plus →
         </button>
       </div>
