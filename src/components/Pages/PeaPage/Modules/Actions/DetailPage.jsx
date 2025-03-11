@@ -226,18 +226,17 @@ export default function DetailPage() {
     <div className="relative p-6 min-h-screen bg-light">
       {/* Petit overlay dégradé en haut */}
       <div className="pointer-events-none absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black/20 to-transparent z-10" />
-      {/* Petite barre "poignée" centrée en haut */}
-      <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 w-12 h-2 bg-gray-400 rounded-full z-20" />
 
       {/* Barre de navigation */}
-      <div className="flex items-center justify-between mb-6">
+      <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-greenLight text-2xl font-semibold hover:text-secondary transition"
+          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
         >
-          <ArrowLeft className="w-6 h-6 mr-2" /> Retour
+          <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-      </div>
+        <h1 className="ml-4 text-2xl font-bold text-secondary">Retour</h1>
+      </header>
 
       {/* Titre, Secteur & Graphique */}
       <div className="mb-4">

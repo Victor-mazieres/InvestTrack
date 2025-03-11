@@ -155,14 +155,15 @@ export default function HistoriqueOrderPage() {
   return (
     <div className="p-4 min-h-screen bg-gray-50">
       {/* Barre de navigation */}
-      <div className="flex items-center mb-6">
+      <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-greenLight text-2xl font-semibold hover:text-secondary transition"
+          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
         >
-          <ArrowLeft className="w-6 h-6 mr-2" /> Retour
+          <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-      </div>
+        <h1 className="ml-4 text-2xl font-bold text-secondary">Retour</h1>
+      </header>
 
       <h1 className="text-3xl font-bold text-secondary mb-4">
         Historique d'achats –{" "}

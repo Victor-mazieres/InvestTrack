@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense, memo } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,143 +8,132 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSwipeable } from "react-swipeable";
+
+// Composants standards
 import Navbar from "./components/Navbar/Navbar";
 import NavigationButton from "./components/Navbar/NavigationButton";
 import Dashboard from "./components/Pages/Dashboard/Dashboard";
 import PeaPage from "./components/Pages/PeaPage/PeaPage";
 import ImmobilierPage from "./components/Pages/ImmobilierPage/ImmobilierPage";
 import MoreActions from "./components/Pages/PeaPage/Modules/Actions/MoreActions";
-import DetailPage from "./components/Pages/PeaPage/Modules/Actions/DetailPage";
-import DividendeDetailPage from "./components/Pages/PeaPage/Modules/Actions/DividendeDetailPage";
-import HistoriqueOrderPage from "./components/Pages/PeaPage/Modules/Actions/HistoriqueOrderPage";
-import CalculatorCredit from "./components/Pages/CalculatorCredit/CalculatorCredit";
-import LoginPage from "./components/Pages/ConnexionPage/LoginPage/LoginPage";
-import RegisterPage from "./components/Pages/ConnexionPage/RegisterPage/RegisterPage";
-import PeaPie from "./components/Pages/PeaPage/Modules/Portfolio/PeaPie";
-import PeaBars from "./components/Pages/PeaPage/Modules/Portfolio/PeaBars";
-import PeaBarsSecteurs from "./components/Pages/PeaPage/Modules/Portfolio/PeaBarsSecteurs";
-import PeaBarsValeurs from "./components/Pages/PeaPage/Modules/Portfolio/PeaBarsValeurs";
 import ProfilePage from "./components/Pages/Profile/ProfilePage";
-import PeaPieSecteurs from "./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs";
-import PeaPieValeurs from "./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs";
+import Profile from "./components/Pages/Profile/Modules/Profile";
+
+// Lazy Loading pour les modales (optimisation)
+const DetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DetailPage"));
+const DividendeDetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DividendeDetailPage"));
+const HistoriqueOrderPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/HistoriqueOrderPage"));
+const CalculatorCredit = lazy(() => import("./components/Pages/CalculatorCredit/CalculatorCredit"));
+const PeaPie = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPie"));
+const PeaBarsSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsSecteurs"));
+const PeaBarsValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsValeurs"));
+const PeaPieSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs"));
+const PeaPieValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs"));
 
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
-  // Vérifie si l'URL est "/connexion" ou "/inscription"
-  const hideNav =
-    location.pathname === "/connexion" || location.pathname === "/inscription";
-  
-  // Pour la gestion des modales, on récupère le background s'il existe
-  const background = location.state?.detailBackground || location.state?.background;
+
+  // Si location.state.background existe, cela signifie qu'une modal est ouverte
+  // et que l'on souhaite conserver l'affichage du contenu principal (par exemple la page Pea).
+  const background = location.state?.background;
+  const hideNav = location.pathname === "/connexion" || location.pathname === "/inscription";
 
   return (
     <>
-      {/* Contenu principal */}
+      {/* Toujours afficher le contenu principal en utilisant la location de background si présente */}
       <MainContent location={background || location} />
-      
-      {/* Routes modales affichées uniquement si un background est défini */}
+
+      {/* Affichage des modales uniquement si un background est défini */}
       {background && (
         <AnimatePresence>
-          <Routes location={location}>
-            <Route
-              path="/DetailPage/:id"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <DetailPage />
-                </ModalWrapper>
-              }
-            />
-            <Route
-              path="/HistoriqueOrderPage/:id"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <HistoriqueOrderPage />
-                </ModalWrapper>
-              }
-            />
-            <Route
-              path="/DividendeDetailPage/:id"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <DividendeDetailPage />
-                </ModalWrapper>
-              }
-            />
-            <Route
-              path="/Calcul"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <CalculatorCredit />
-                </ModalWrapper>
-              }
-            />
-            <Route
-              path="/RepartitionCamembert"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <PeaPie />
-                </ModalWrapper>
-              }
-            />
-            <Route
+          <Suspense fallback={<div>Chargement...</div>}>
+            <Routes location={location}>
+              <Route
+                path="/DetailPage/:id"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <DetailPage />
+                  </ModalWrapper>
+                }
+              />
+              <Route
+                path="/HistoriqueOrderPage/:id"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <HistoriqueOrderPage />
+                  </ModalWrapper>
+                }
+              />
+              <Route
+                path="/DividendeDetailPage/:id"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <DividendeDetailPage />
+                  </ModalWrapper>
+                }
+              />
+              <Route
+                path="/Calcul"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <CalculatorCredit />
+                  </ModalWrapper>
+                }
+              />
+              <Route
               path="/RepartitionBarreSecteurs"
               element={
                 <ModalWrapper onClose={() => navigate(-1)}>
                   <PeaBarsSecteurs />
                 </ModalWrapper>
               }
-            />
-            <Route
-              path="/RepartitionBarreValeurs"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <PeaBarsValeurs />
-                </ModalWrapper>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <ProfilePage />
-                </ModalWrapper>
-              }
-            />
-            <Route
+              />
+              <Route
+                path="/RepartitionBarreValeurs"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <PeaBarsValeurs />
+                  </ModalWrapper>
+                }
+              />
+              <Route
               path="/RepartitionCamembertSecteurs"
               element={
                 <ModalWrapper onClose={() => navigate(-1)}>
                   <PeaPieSecteurs />
                 </ModalWrapper>
               }
-            />
-            <Route
-              path="/RepartitionCamembertValeurs"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <PeaPieValeurs />
-                </ModalWrapper>
-              }
-            />
-          </Routes>
+              />
+              <Route
+                path="/RepartitionCamembertValeurs"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <PeaPieValeurs />
+                  </ModalWrapper>
+                }
+              />
+            </Routes>
+          </Suspense>
         </AnimatePresence>
       )}
 
-      {/* Affiche Navbar et NavigationButton seulement si on n'est pas sur /connexion ou /inscription */}
+      {/* Navbar toujours affichée sauf sur les pages /connexion et /inscription */}
       {!hideNav && (
         <>
           <NavigationButton />
-          <Navbar />
+          <MemoizedNavbar />
         </>
       )}
     </>
   );
 }
 
+// Composant MainContent avec gestion du swipe et animation
+// La clé de l'animation est basée sur location.pathname fournie via background ou location
 function MainContent({ location }) {
   const navigate = useNavigate();
-  // Définition des pages pour le swipe
+
   const pages = ["/pea", "/immobilier", "/MoreActions"];
   const currentIndex = pages.indexOf(location.pathname);
 
@@ -164,33 +153,28 @@ function MainContent({ location }) {
     trackMouse: true,
   });
 
+  // Dans ce cas, on laisse les animations normales (les transitions se déclenchent
+  // seulement si l'utilisateur navigue sur une nouvelle page et non lors de la fermeture d'une modal)
+  const animationProps = {
+    initial: { x: "100%", opacity: 0 },
+    animate: { x: 0, opacity: 1 },
+    exit: { x: "-100%", opacity: 0 },
+    transition: { duration: 0.3, ease: "easeOut" },
+  };
+
   return (
-    <div {...handlers} className="mt-16 overflow-hidden">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={location.pathname}
-          initial={{ x: "100%", opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: "-100%", opacity: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
+    <div {...handlers} className="h-full flex flex-col overflow-hidden pt-16">
+      <AnimatePresence exitBeforeEnter>
+        {/* L'absence de changement de key permet de conserver le composant et ses données */}
+        <motion.div {...animationProps}>
           <Routes location={location}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/pea" element={<PeaPage />} />
             <Route path="/immobilier" element={<ImmobilierPage />} />
             <Route path="/MoreActions" element={<MoreActions />} />
-            <Route path="/calcul" element={<CalculatorCredit />} />
-            <Route path="/HistoriqueOrderPage/:id" element={<HistoriqueOrderPage />} />
-            <Route path="/connexion" element={<LoginPage />} />
-            <Route path="/inscription" element={<RegisterPage />} />
-            <Route path="*" element={<Dashboard />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/info-profile" element={<Profile />} />
             <Route path="/RepartitionBarreSecteurs" element={<PeaBarsSecteurs />} />
-            <Route path="/RepartitionBarreValeurs" element={<PeaBarsValeurs />} />
-            <Route path="/RepartitionCamembert" element={<PeaPie />} />
-            <Route path="/profile" element={<ProfilePage/>} />
-            <Route path="/RepartitionCamembertSecteurs" element={<PeaPieSecteurs/>} />
-            <Route path="/RepartitionCamembertValeurs" element={<PeaPieValeurs/>} />
-
           </Routes>
         </motion.div>
       </AnimatePresence>
@@ -198,9 +182,8 @@ function MainContent({ location }) {
   );
 }
 
+// Composant ModalWrapper optimisé
 function ModalWrapper({ children, onClose }) {
-  const navigate = useNavigate();
-
   return (
     <motion.div
       className="fixed inset-0 z-50 bg-black bg-opacity-40"
@@ -233,6 +216,9 @@ function ModalWrapper({ children, onClose }) {
     </motion.div>
   );
 }
+
+// Utilisation de React.memo pour optimiser la Navbar
+const MemoizedNavbar = memo(Navbar);
 
 export default function App() {
   return (

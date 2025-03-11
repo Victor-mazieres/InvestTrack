@@ -103,13 +103,16 @@ export default function PeaPieSecteurs() {
   return (
     <div className="min-h-screen bg-light w-full p-6">
       {/* Header avec bouton Retour et titre */}
-      <div className="w-full mb-6">
+      <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-greenLight text-2xl font-semibold hover:text-secondary transition mb-4"
+          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
         >
-          <ArrowLeft className="w-6 h-6 mr-2" /> Retour
+          <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
+        <h1 className="ml-4 text-2xl font-bold text-secondary">Retour</h1>
+      </header>
+      <div className="w-full mb-6">
         <h1 className="text-3xl font-bold text-primary mt-2">
           Répartition par <span className="text-greenLight">Secteur</span>
         </h1>

@@ -1,4 +1,5 @@
 import React from "react";
+import {useNavigate} from "react-router-dom";
 import {
   User,
   Bell,
@@ -11,7 +12,7 @@ import {
 
 export default function ProfilePage() {
   // Fonctions d'action (à adapter selon votre logique)
-  const handleProfile = () => console.log("Accéder au Profil");
+  const handleProfile = () => navigate ("/info-profile");
   const handleNotifications = () => console.log("Accéder aux Notifications");
   const handlePrivacy = () =>
     console.log("Accéder à la Politique de confidentialité");
@@ -19,6 +20,8 @@ export default function ProfilePage() {
     console.log("Accéder aux Conditions générales");
   const handleHelp = () => console.log("Accéder à l'Aide");
   const handleLogout = () => console.log("Déconnexion...");
+
+  const navigate = useNavigate();
 
   return (
     <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}
@@ -106,10 +109,10 @@ export default function ProfilePage() {
       </div>
 
       {/* Bouton de déconnexion (footer) collé en bas grâce à mt-auto */}
-      <div className="mt-auto flex-none px-4 py-3">
+      <div className="mt-auto flex-none px-4 py-3 mb-24">
         <button
           onClick={handleLogout}
-          className="bg-red-500 text-white w-full p-3 rounded-xl font-bold hover:bg-red-600 transition"
+          className="bg-checkred text-white w-full p-3 rounded-xl font-bold hover:bg-red-600 transition"
         >
           <div className="flex items-center justify-center space-x-2">
             <LogOut className="w-5 h-5" />

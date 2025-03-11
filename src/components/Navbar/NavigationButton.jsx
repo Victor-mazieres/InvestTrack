@@ -5,16 +5,25 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 export default function FloatingMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const toggleMenu = () => setIsOpen(!isOpen);
+  const toggleMenu = () => {
+    // Si le menu est ouvert et que l'on clique pour le fermer,
+    // réinitialiser l'état hover afin que le bouton revienne à 50%
+    if (isOpen) {
+      setIsHovered(false);
+    }
+    setIsOpen(!isOpen);
+  };
 
   // Fermer le menu en cliquant à l'extérieur
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isOpen && !event.target.closest(".floating-menu-container")) {
         setIsOpen(false);
+        setIsHovered(false);
       }
     };
 
@@ -35,7 +44,6 @@ export default function FloatingMenu() {
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 floating-menu-container">
-      {/* Effet de flou dégradé plus subtil */}
       {isOpen && (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -48,7 +56,6 @@ export default function FloatingMenu() {
         </motion.div>
       )}
 
-      {/* Bulles animées */}
       <div className="relative flex items-center justify-center z-50">
         {isOpen &&
           bubbles.map((bubble, index) => (
@@ -56,12 +63,12 @@ export default function FloatingMenu() {
               key={index}
               onClick={() => {
                 if (bubble.path === "/calcul") {
-                  // Navigation en modal en passant la location actuelle comme background
                   navigate(bubble.path, { state: { background: location } });
                 } else {
                   navigate(bubble.path);
                 }
                 setIsOpen(false);
+                setIsHovered(false);
               }}
               initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
               animate={{
@@ -80,7 +87,11 @@ export default function FloatingMenu() {
         {/* Bouton central */}
         <button
           onClick={toggleMenu}
-          className="w-16 h-16 bg-primary text-white shadow-xl rounded-full flex items-center justify-center relative z-50"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={`w-16 h-16 bg-primary text-white shadow-xl rounded-full flex items-center justify-center relative z-50 transition-opacity duration-300 ${
+            isOpen ? "opacity-100" : isHovered ? "opacity-100" : "opacity-50"
+          }`}
         >
           <motion.div animate={{ rotate: isOpen ? 45 : 0 }}>
             <Plus size={38} />
