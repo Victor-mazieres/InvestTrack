@@ -5,6 +5,7 @@ import {
   Route,
   useLocation,
   useNavigate,
+  Navigate,
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSwipeable } from "react-swipeable";
@@ -18,6 +19,8 @@ import ImmobilierPage from "./components/Pages/ImmobilierPage/ImmobilierPage";
 import MoreActions from "./components/Pages/PeaPage/Modules/Actions/MoreActions";
 import ProfilePage from "./components/Pages/Profile/ProfilePage";
 import Profile from "./components/Pages/Profile/Modules/Profile";
+import LoginPinPage from "./components/Pages/ConnexionPage/LoginPage/LoginPage";
+import RegisterPage from "./components/Pages/ConnexionPage/RegisterPage/RegisterPage";
 
 // Lazy Loading pour les modales (optimisation)
 const DetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DetailPage"));
@@ -35,7 +38,7 @@ function AppContent() {
   const navigate = useNavigate();
 
   // Si location.state.background existe, cela signifie qu'une modal est ouverte
-  // et que l'on souhaite conserver l'affichage du contenu principal (par exemple la page Pea).
+  // et que l'on souhaite conserver l'affichage du contenu principal (ex. la page Pea).
   const background = location.state?.background;
   const hideNav = location.pathname === "/connexion" || location.pathname === "/inscription";
 
@@ -82,12 +85,12 @@ function AppContent() {
                 }
               />
               <Route
-              path="/RepartitionBarreSecteurs"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <PeaBarsSecteurs />
-                </ModalWrapper>
-              }
+                path="/RepartitionBarreSecteurs"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <PeaBarsSecteurs />
+                  </ModalWrapper>
+                }
               />
               <Route
                 path="/RepartitionBarreValeurs"
@@ -98,12 +101,12 @@ function AppContent() {
                 }
               />
               <Route
-              path="/RepartitionCamembertSecteurs"
-              element={
-                <ModalWrapper onClose={() => navigate(-1)}>
-                  <PeaPieSecteurs />
-                </ModalWrapper>
-              }
+                path="/RepartitionCamembertSecteurs"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <PeaPieSecteurs />
+                  </ModalWrapper>
+                }
               />
               <Route
                 path="/RepartitionCamembertValeurs"
@@ -153,8 +156,6 @@ function MainContent({ location }) {
     trackMouse: true,
   });
 
-  // Dans ce cas, on laisse les animations normales (les transitions se déclenchent
-  // seulement si l'utilisateur navigue sur une nouvelle page et non lors de la fermeture d'une modal)
   const animationProps = {
     initial: { x: "100%", opacity: 0 },
     animate: { x: 0, opacity: 1 },
@@ -165,16 +166,19 @@ function MainContent({ location }) {
   return (
     <div {...handlers} className="h-full flex flex-col overflow-hidden pt-16">
       <AnimatePresence exitBeforeEnter>
-        {/* L'absence de changement de key permet de conserver le composant et ses données */}
         <motion.div {...animationProps}>
           <Routes location={location}>
-            <Route path="/" element={<Dashboard />} />
+            {/* Redirection par défaut vers la page de connexion */}
+            <Route path="/" element={<Navigate to="/connexion" replace />} />
             <Route path="/pea" element={<PeaPage />} />
             <Route path="/immobilier" element={<ImmobilierPage />} />
             <Route path="/MoreActions" element={<MoreActions />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/info-profile" element={<Profile />} />
             <Route path="/RepartitionBarreSecteurs" element={<PeaBarsSecteurs />} />
+            <Route path="/connexion" element={<LoginPinPage />} />
+            <Route path="/inscription" element={<RegisterPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </motion.div>
       </AnimatePresence>

@@ -4,16 +4,16 @@ import { ArrowLeft, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function RegisterPage() {
-  // Étape 1: saisie du nom d'utilisateur
-  // Étape 2: création du PIN
-  // Étape 3: confirmation du PIN
+  // Étape 1 : saisie du nom d'utilisateur
+  // Étape 2 : création du PIN
+  // Étape 3 : confirmation du PIN
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState("");
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,18 +24,29 @@ export default function RegisterPage() {
     };
   }, []);
 
-  // Passage de l'étape 1 à 2 quand le nom d'utilisateur est saisi et "Suivant" est cliqué
+  // Passage de l'étape 1 à 2 après validation du nom d'utilisateur
   const handleNextFromUsername = () => {
-    if (username.trim() !== "") {
-      setStep(2);
-      setPin("");
-      setError("");
-    } else {
+    const trimmedUsername = username.trim();
+    // Vérification que le username n'est pas vide, est alphanumérique et ne dépasse pas 20 caractères
+    const usernameRegex = /^[A-Za-z0-9]+$/;
+    if (!trimmedUsername) {
       setError("Veuillez entrer un nom d'utilisateur.");
+      return;
     }
+    if (!usernameRegex.test(trimmedUsername)) {
+      setError("Le nom d'utilisateur doit être alphanumérique (sans espaces ni caractères spéciaux).");
+      return;
+    }
+    if (trimmedUsername.length > 20) {
+      setError("Le nom d'utilisateur ne doit pas dépasser 20 caractères.");
+      return;
+    }
+    setError("");
+    setStep(2);
+    setPin("");
   };
 
-  // Dès que 6 chiffres sont saisis en étape 2, passe automatiquement à l'étape 3 (confirmation)
+  // Dès que 6 chiffres sont saisis en étape 2, on passe automatiquement à l'étape 3 (confirmation)
   useEffect(() => {
     if (step === 2 && pin.length === 6) {
       setStep(3);
@@ -43,7 +54,7 @@ export default function RegisterPage() {
     }
   }, [pin, step]);
 
-  // Dès que 6 chiffres sont saisis en confirmation (étape 3), vérifie si les PIN correspondent
+  // Dès que 6 chiffres sont saisis en étape 3, on vérifie que les PIN correspondent et on lance l'inscription
   useEffect(() => {
     if (step === 3 && confirmPin.length === 6) {
       if (pin === confirmPin) {
@@ -77,35 +88,47 @@ export default function RegisterPage() {
     }
   };
 
-  const handleRegister = () => {
-    console.log("Inscription réussie :", { username, pin });
-    // Ici, vous ajouterez la logique d'inscription réelle (hachage, appel API, etc.)
-    // Puis redirigez l'utilisateur vers la page de connexion
-    navigate("/connexion");
+  // Filtrage automatique : ne conserve que les caractères alphanumériques dans le nom d'utilisateur
+  const handleUsernameChange = (e) => {
+    const { value } = e.target;
+    const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, "");
+    setUsername(sanitizedValue);
+    setError("");
   };
 
-  // Animation variants pour les transitions entre étapes
+  // Envoi de la requête POST à l'API backend pour l'inscription
+  const handleRegister = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), pin }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        // L'inscription a réussi (la contrainte d'unicité côté serveur empêche les doublons)
+        navigate("/connexion");
+      } else {
+        setError(data.message || "Erreur lors de l'inscription");
+      }
+    } catch (error) {
+      setError("Erreur réseau lors de l'inscription");
+    }
+  };
+
+  // Variants pour l'animation des transitions entre étapes
   const stepVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -20 },
   };
 
-  // Pour l'affichage des cercles, le nombre dépend de l'étape 2 ou 3
+  // Pour l'affichage des cercles de saisie du PIN
   const displayLength = step === 2 ? pin.length : step === 3 ? confirmPin.length : 0;
-  // Clavier numérique fixe (chiffres 1 à 9)
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   return (
-    <div className="fixed inset-0
-    bg-gradient-to-b
-    from-[#2c3e50]
-    to-[#bdc3c7]
-    p-6
-    flex
-    items-center
-    justify-center
-    overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-b from-[#2c3e50] to-[#bdc3c7] p-6 flex items-center justify-center overflow-hidden">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative flex flex-col items-center">
         <AnimatePresence exitBeforeEnter>
           {step === 1 && (
@@ -119,26 +142,23 @@ export default function RegisterPage() {
               className="w-full text-center"
             >
               <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                Inscription sur Invest
-                <span className="text-greenLight">Track</span> !
+                Inscription sur Invest<span className="text-greenLight">Track</span> !
               </h1>
               <p className="text-gray-500 mb-6">
                 Entrez votre nom d'utilisateur pour créer votre compte.
               </p>
               <div className="mb-6">
-                <label className="block text-gray-700 text-sm font-medium mb-1">
+                <label className="block text-gray-700 text-sm font-medium mb-1 text-center">
                   Nom d'utilisateur
                 </label>
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value);
-                    setError("");
-                  }}
+                  onChange={handleUsernameChange}
                   placeholder="Votre nom d'utilisateur"
                   className="w-full p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  maxLength={20}
                 />
               </div>
               <button
@@ -147,9 +167,7 @@ export default function RegisterPage() {
               >
                 Suivant
               </button>
-              {error && (
-                <p className="text-red-500 mt-4 text-center">{error}</p>
-              )}
+              {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
               <p className="mt-4 text-secondary text-center">
                 Vous avez déjà un compte ?{" "}
                 <Link to="/connexion" className="text-greenLight hover:underline">
@@ -211,9 +229,7 @@ export default function RegisterPage() {
                   <ArrowLeft size={24} />
                 </button>
               </div>
-              {error && (
-                <p className="text-red-500 mb-4 text-center">{error}</p>
-              )}
+              {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
             </motion.div>
           )}
 
@@ -269,9 +285,7 @@ export default function RegisterPage() {
                   <ArrowLeft size={24} />
                 </button>
               </div>
-              {error && (
-                <p className="text-red-500 mb-4 text-center">{error}</p>
-              )}
+              {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
             </motion.div>
           )}
         </AnimatePresence>
@@ -280,7 +294,7 @@ export default function RegisterPage() {
         <AnimatePresence>
           {isVerifying && (
             <motion.div
-              className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-90"
+              className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-90 rounded-3xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

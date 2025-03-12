@@ -1,75 +1,153 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Check, Fingerprint } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Check, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function LoginPinPage() {
+  const [username, setUsername] = useState("");
+  const [remember, setRemember] = useState(false);
   const [pin, setPin] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [error, setError] = useState("");
 
+  const navigate = useNavigate();
+
+  // À l'initialisation, vérifie si un username a été sauvegardé
   useEffect(() => {
-    // Désactive le scroll sur le body
+    const savedUsername = localStorage.getItem("savedUsername");
+    if (savedUsername) {
+      setUsername(savedUsername);
+      setRemember(true);
+    }
+  }, []);
+
+  // Désactivation du scroll sur le body pendant cette page
+  useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "auto";
     };
   }, []);
 
-  // Dès que 6 chiffres sont saisis, on lance l'animation de vérification
+  // Safety net : si isVerifying reste vrai trop longtemps, on le réinitialise
   useEffect(() => {
-    if (pin.length === 6) {
-      setIsVerifying(true);
+    if (isVerifying) {
       const timer = setTimeout(() => {
-        handleConfirm();
         setIsVerifying(false);
-      }, 2000);
+        setPin("");
+      }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [pin]);
+  }, [isVerifying]);
+
+  // Déclenche la validation dès que 6 chiffres sont entrés
+  useEffect(() => {
+    if (pin.length === 6 && !isVerifying) {
+      handleConfirm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin, isVerifying]);
 
   const handleDigitClick = (digit) => {
+    if (error) setError("");
     if (pin.length < 6 && !isVerifying) {
-      setPin(pin + digit);
+      setPin((prev) => prev + digit);
     }
   };
 
   const handleBackspace = () => {
     if (!isVerifying) {
-      setPin(pin.slice(0, -1));
+      setPin((prev) => prev.slice(0, -1));
     }
   };
 
-  const handleConfirm = () => {
-    console.log("PIN saisi :", pin);
-    // Logique de validation / redirection
-    setPin("");
+  // Filtre pour ne conserver que les caractères alphanumériques
+  const handleUsernameChange = (e) => {
+    const { value } = e.target;
+    const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, "");
+    setUsername(sanitizedValue);
+    setError("");
+  };
+
+  const handleConfirm = async () => {
+    if (pin.length !== 6) return;
+
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
+      setError("Veuillez entrer votre nom d'utilisateur.");
+      setPin("");
+      return;
+    }
+
+    // Sauvegarder ou supprimer le username selon le choix de l'utilisateur
+    if (remember) {
+      localStorage.setItem("savedUsername", trimmedUsername);
+    } else {
+      localStorage.removeItem("savedUsername");
+    }
+
+    setIsVerifying(true);
+    try {
+      const response = await fetch("http://localhost:5000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: trimmedUsername, pin }),
+      });
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        // Si la réponse n'est pas du JSON, data reste vide
+      }
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        navigate("/dashboard");
+      } else {
+        setError(data.message || "Identifiants invalides");
+      }
+    } catch (err) {
+      setError("Erreur réseau lors de la connexion");
+    } finally {
+      setIsVerifying(false);
+      setPin("");
+    }
   };
 
   return (
-    <div
-      className="
-        fixed inset-0
-        bg-gradient-to-b
-        from-[#2c3e50]
-        to-[#bdc3c7]
-        p-6
-        flex
-        items-center
-        justify-center
-        overflow-hidden
-      "
-    >
+    <div className="fixed inset-0 bg-gradient-to-b from-[#2c3e50] to-[#bdc3c7] p-6 flex items-center justify-center overflow-hidden">
       <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full relative flex flex-col items-center">
         <motion.h1
-          className="text-3xl font-extrabold mb-2 text-center text-gray-900"
+          className="text-3xl font-extrabold mb-2 text-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          Bienvenue sur Invest
-          <span className="text-greenLight">Track</span> !
+          {remember && username ? (
+            <>
+              Bienvenue <span className="text-greenLight">{username}</span> !
+            </>
+          ) : (
+            <>
+              Bienvenue sur Invest<span className="text-greenLight">Track</span> !
+            </>
+          )}
         </motion.h1>
-
+        {/* Affichage conditionnel du champ pour le nom d'utilisateur */}
+        {!(remember && username) && (
+          <div className="w-full mb-4">
+            <label className="block text-gray-700 text-sm font-medium mb-1 text-center">
+              Nom d'utilisateur
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={handleUsernameChange}
+              placeholder="Votre nom d'utilisateur"
+              className="w-full p-2 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-purple-500"
+              maxLength={20}
+            />
+          </div>
+        )}
         <motion.p
           className="text-center text-gray-600 mb-8"
           initial={{ opacity: 0 }}
@@ -78,8 +156,7 @@ export default function LoginPinPage() {
         >
           Veuillez entrer votre code PIN pour continuer
         </motion.p>
-
-        {/* Cercles du PIN */}
+        {/* Affichage des cercles du PIN */}
         <div className="flex items-center justify-center mb-8">
           {[0, 1, 2, 3, 4, 5].map((index) => (
             <div
@@ -90,8 +167,7 @@ export default function LoginPinPage() {
             />
           ))}
         </div>
-
-        {/* Pavé numérique */}
+        {/* Clavier numérique */}
         <div className="grid grid-cols-3 gap-8 text-2xl font-semibold mb-8">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
             <motion.button
@@ -104,18 +180,6 @@ export default function LoginPinPage() {
               {num}
             </motion.button>
           ))}
-
-          {/* Bouton de biométrie */}
-          <motion.button
-            onClick={() => console.log("Authentification biométrique déclenchée !")}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center"
-          >
-            <Fingerprint size={24} />
-          </motion.button>
-
-          {/* Bouton pour le 0 */}
           <motion.button
             onClick={() => handleDigitClick("0")}
             whileHover={{ scale: 1.1 }}
@@ -124,8 +188,6 @@ export default function LoginPinPage() {
           >
             0
           </motion.button>
-
-          {/* Bouton de suppression */}
           <motion.button
             onClick={handleBackspace}
             whileHover={{ scale: 1.1 }}
@@ -135,7 +197,6 @@ export default function LoginPinPage() {
             <ArrowLeft size={24} />
           </motion.button>
         </div>
-
         {/* Animation de vérification */}
         <AnimatePresence>
           {isVerifying && (
@@ -150,18 +211,29 @@ export default function LoginPinPage() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1.3 }}
                 exit={{ scale: 0 }}
-                transition={{
-                  duration: 0.5,
-                  repeat: Infinity,
-                  repeatType: "mirror",
-                }}
+                transition={{ duration: 0.5 }}
               >
                 <Check size={48} className="text-white" />
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-
+        {error && (
+          <p className="text-red-500 mt-4 text-center">{error}</p>
+        )}
+        {/* Checkbox "Se souvenir de moi" placé juste au-dessus du lien */}
+        <div className="flex items-center justify-center mt-4">
+          <input
+            type="checkbox"
+            id="remember"
+            checked={remember}
+            onChange={() => setRemember(!remember)}
+            className="h-5 w-5 rounded border-gray-300 accent-greenLight mr-2"
+          />
+          <label htmlFor="remember" className="text-sm text-gray-700">
+            Se souvenir de moi
+          </label>
+        </div>
         <p className="mt-4 text-center text-gray-600">
           Pas encore de compte ?{" "}
           <Link to="/inscription" className="text-greenLight hover:underline">

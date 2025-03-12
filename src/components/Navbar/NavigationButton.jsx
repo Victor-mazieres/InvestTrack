@@ -35,7 +35,7 @@ export default function FloatingMenu() {
 
   // Positions des bulles pour un bon équilibre
   const bubbles = [
-    { icon: <Home size={24} />, path: "/", x: -100, y: -40 },
+    { icon: <Home size={24} />, path: "/dashboard", x: -100, y: -40 },
     { icon: <LineChart size={24} />, path: "/pea", x: -75, y: -115 },
     { icon: <Building2 size={24} />, path: "/immobilier", x: 0, y: -150 },
     { icon: <Calculator size={24} />, path: "/calcul", x: 75, y: -115 },

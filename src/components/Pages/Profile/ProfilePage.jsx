@@ -1,5 +1,5 @@
 import React from "react";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   Bell,
@@ -11,33 +11,31 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  // Fonctions d'action (à adapter selon votre logique)
-  const handleProfile = () => navigate ("/info-profile");
-  const handleNotifications = () => console.log("Accéder aux Notifications");
-  const handlePrivacy = () =>
-    console.log("Accéder à la Politique de confidentialité");
-  const handleTerms = () =>
-    console.log("Accéder aux Conditions générales");
-  const handleHelp = () => console.log("Accéder à l'Aide");
-  const handleLogout = () => console.log("Déconnexion...");
-
   const navigate = useNavigate();
 
+  // Fonctions d'action
+  const handleProfile = () => navigate("/info-profile");
+  const handleNotifications = () => console.log("Accéder aux Notifications");
+  const handlePrivacy = () => console.log("Accéder à la Politique de confidentialité");
+  const handleTerms = () => console.log("Accéder aux Conditions générales");
+  const handleHelp = () => console.log("Accéder à l'Aide");
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/connexion");
+  };
+
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}
-    >
+    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}>
       {/* Haut de page (header) */}
       <div className="flex-none px-4 py-3">
         <h1 className="text-xl font-bold text-gray-900">Mon compte</h1>
       </div>
       
-      {/* Contenu principal qui prend tout l'espace restant */}
+      {/* Contenu principal */}
       <div className="flex-1 px-4 min-h-0">
         {/* Section Général */}
         <section className="mb-4">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-            Général
-          </h2>
+          <h2 className="text-xs font-semibold text-gray-500 uppercase mb-2">Général</h2>
           <div className="space-y-2">
             <button
               onClick={handleProfile}
@@ -55,9 +53,7 @@ export default function ProfilePage() {
             >
               <div className="flex items-center space-x-3">
                 <Bell className="text-gray-600" />
-                <span className="text-gray-900 font-medium">
-                  Notifications
-                </span>
+                <span className="text-gray-900 font-medium">Notifications</span>
               </div>
               <ChevronRight className="text-gray-400" />
             </button>
@@ -76,9 +72,7 @@ export default function ProfilePage() {
 
         {/* Section Sécurité */}
         <section>
-          <h2 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-            Sécurité
-          </h2>
+          <h2 className="text-xs font-semibold text-gray-500 uppercase mb-2">Sécurité</h2>
           <div className="space-y-2">
             <button
               onClick={handlePrivacy}
@@ -86,9 +80,7 @@ export default function ProfilePage() {
             >
               <div className="flex items-center space-x-3">
                 <ShieldAlert className="text-gray-600" />
-                <span className="text-gray-900 font-medium">
-                  Politique de confidentialité
-                </span>
+                <span className="text-gray-900 font-medium">Politique de confidentialité</span>
               </div>
               <ChevronRight className="text-gray-400" />
             </button>
@@ -98,9 +90,7 @@ export default function ProfilePage() {
             >
               <div className="flex items-center space-x-3">
                 <FileText className="text-gray-600" />
-                <span className="text-gray-900 font-medium">
-                  Conditions générales
-                </span>
+                <span className="text-gray-900 font-medium">Conditions générales</span>
               </div>
               <ChevronRight className="text-gray-400" />
             </button>
@@ -108,7 +98,7 @@ export default function ProfilePage() {
         </section>
       </div>
 
-      {/* Bouton de déconnexion (footer) collé en bas grâce à mt-auto */}
+      {/* Bouton de déconnexion dans ProfilePage */}
       <div className="mt-auto flex-none px-4 py-3 mb-24">
         <button
           onClick={handleLogout}
