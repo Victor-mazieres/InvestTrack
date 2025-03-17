@@ -73,7 +73,7 @@ export default function Navbar() {
               padding: 0,
             }}
           >
-            Immobilier
+            IMMOBILIER
           </button>
           {location.pathname === "/immobilier" && (
             <motion.div

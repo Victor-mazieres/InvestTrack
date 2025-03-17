@@ -1,0 +1,102 @@
+
+.fixed-calendar {
+    min-height: 300px; /* ou une hauteur fixe en fonction de vos besoins */
+    height: 300px;     /* Force une hauteur constante */
+  }
+
+.themed-calendar {
+    /* Conteneur général du calendrier */
+    background-color: #ffffff;  /* Fond clair */
+    border-radius: 1rem;       /* Coins arrondis */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Ombre légère */
+    color: #0a2436;            /* Couleur de texte par défaut */
+    min-width: 300px;          /* Largeur minimale */
+    min-height: 320px;         /* Hauteur minimale pour éviter les changements de taille */
+  }
+  
+  /* En-tête (mois/année) */
+  .themed-calendar .react-datepicker__header {
+    background-color: #0a2436;
+    border-bottom: none;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+  }
+  
+  .themed-calendar .react-datepicker__current-month {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: capitalize; /* pour "February" au lieu de "FEBRUARY" */
+  }
+  
+  /* Jours de la semaine (Mon, Tue, etc.) */
+  .themed-calendar .react-datepicker__day-names {
+    margin-top: 0.5rem;
+  }
+  .themed-calendar .react-datepicker__day-name {
+    color: #0a2436;
+    font-size: 0.9rem;
+    width: 2rem;
+    line-height: 2rem;
+    margin: 0.2rem;
+    font-weight: 500;
+  }
+  
+  /* Les jours */
+  .themed-calendar .react-datepicker__day {
+    color: #0a2436;
+    font-size: 0.95rem;
+    width: 2rem;
+    line-height: 2rem;
+    margin: 0.2rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  /* Jour survolé */
+  .themed-calendar .react-datepicker__day:hover {
+    background-color: #22b99a1a; /* Légère surcouche verte (10%) */
+  }
+  
+  /* Jour actuel (aujourd'hui) */
+  .themed-calendar .react-datepicker__day--today {
+    border: 1px solid #22b99a;
+    font-weight: 600;
+  }
+  
+  /* Jour sélectionné */
+  .themed-calendar .react-datepicker__day--selected,
+  .themed-calendar .react-datepicker__day--selected:hover,
+  .themed-calendar .react-datepicker__day--keyboard-selected {
+    background-color: #22b99a;
+    color: #ffffff;
+    font-weight: 600;
+  }
+  
+  /* Jours hors du mois courant */
+  .themed-calendar .react-datepicker__day--outside-month {
+    color: #cccccc;
+  }
+  
+  /* Dropdowns de mois/année */
+  .themed-calendar .react-datepicker__month-dropdown,
+  .themed-calendar .react-datepicker__year-dropdown {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+  }
+  
+  .themed-calendar .react-datepicker__month-option,
+  .themed-calendar .react-datepicker__year-option {
+    color: #0a2436;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+  }
+  
+  .themed-calendar .react-datepicker__month-option:hover,
+  .themed-calendar .react-datepicker__year-option:hover {
+    background-color: #22b99a1a;
+  }
+  

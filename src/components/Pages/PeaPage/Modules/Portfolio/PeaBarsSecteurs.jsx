@@ -55,7 +55,7 @@ export default function PeaBarsSecteurs() {
       </div>
 
       {/* Bloc affichant la liste complète des secteurs */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800"><p className="text-sm text-gray-500">
             {fullDataSectors.length} valeurs sur {fullDataSectors.length} affichées

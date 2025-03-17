@@ -70,12 +70,6 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col items-center p-4 bg-light min-h-screen pt-16">
       <header className="w-full flex justify-between items-center mb-4 px-4">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
-        >
-          <ArrowLeft className="w-6 h-6 text-greenLight" />
-        </button>
         <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
         <div className="w-6"></div>
       </header>

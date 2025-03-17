@@ -254,7 +254,7 @@ export default function DetailPage() {
       </div>
 
       {/* Bloc Informations financières & Dividendes */}
-      <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-6">
+      <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-200 mb-6">
         <h2 className="text-2xl font-bold text-primary mb-4">Informations & Dividendes</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col items-center">
@@ -276,7 +276,7 @@ export default function DetailPage() {
         </div>
       </div>
 
-  <div className="mt-6 bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-6 relative">
+  <div className="mt-6 bg-white p-6 rounded-3xl shadow-lg border border-gray-200 mb-6 relative">
   {!isEditingDividend ? (
     <>
       {/* Bouton Modifier positionné en dehors du contenu, en haut à droite */}
@@ -313,33 +313,33 @@ export default function DetailPage() {
     </>
   ) : (
     // Vue édition
-    <div className="mb-4 p-4 border rounded-md bg-gray-50">
+    <div className="mb-4 p-4 border rounded-3xl bg-gray-50">
       <div className="flex flex-col items-center mb-4">
         <p className="font-semibold text-primary mb-1">Dividende par action</p>
         <input
           type="number"
           value={editDiv.dividendPrice}
           onChange={(e) => setEditDiv({ ...editDiv, dividendPrice: e.target.value })}
-          className="text-xl font-bold border rounded p-2 w-32 text-center"
+          className="text-xl font-bold border rounded-3xl p-2 w-32 text-center"
         />
         <p className="text-sm text-gray-500 mt-2">Date de versement</p>
         <input
           type="date"
           value={editDiv.dividendDate}
           onChange={(e) => setEditDiv({ ...editDiv, dividendDate: e.target.value })}
-          className="border rounded p-2 text-center"
+          className="border rounded-3xl p-2 text-center"
         />
       </div>
       <div className="flex space-x-2">
         <button
           onClick={saveDividendEdits}
-          className="bg-primary text-white p-2 rounded-lg hover:bg-secondary transition w-full"
+          className="bg-greenLight text-white p-2 rounded-3xl hover:bg-greenLight transition w-full"
         >
           Enregistrer
         </button>
         <button
           onClick={() => setIsEditingDividend(false)}
-          className="bg-gray-200 text-gray-800 p-2 rounded-lg transition w-full"
+          className="bg-gray-200 text-gray-800 p-2 rounded-3xl transition w-full"
         >
           Annuler
         </button>
@@ -350,14 +350,14 @@ export default function DetailPage() {
 
 
       {/* Bloc Historique */}
-      <div className="mt-6 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+      <div className="mt-6 bg-white p-6 rounded-3xl shadow-lg border border-gray-200">
         <h2 className="text-2xl font-bold text-primary mb-4 flex items-center">
           <List className="w-5 h-5 mr-2 text-primary" /> Historique
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Colonne Achats */}
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 ">
               <h3 className="text-xl font-semibold text-secondary">Achats</h3>
               <button
                 onClick={() => setIsPurchaseModalOpen(true)}
@@ -367,17 +367,17 @@ export default function DetailPage() {
               </button>
             </div>
             {/* Conteneur scrollable pour les achats */}
-            <div className="max-h-[150px] overflow-y-auto">
+            <div className="max-h-[150px] overflow-y-auto ">
               <ul className="space-y-3">
                 {action.history?.map((entry, index) => (
                   <li
                     key={index}
-                    className="flex justify-between items-center border-b pb-2 last:border-none"
+                    className="flex justify-between items-center border-b pb-2 last:border-none "
                   >
                     <span className="text-xs text-secondary">
                       {entry.date ? formatIsoDate(entry.date) : "—"}
                     </span>
-                    <span className="text-gray-900 text-sm">{entry.quantity} actions</span>
+                    <span className="text-gray-900 text-sm ">{entry.quantity} actions</span>
                     <span className="text-primary text-sm">{entry.price}€</span>
                     <span className="text-gray-600 text-xs">{entry.fees}€ frais</span>
                     <button
@@ -460,7 +460,7 @@ export default function DetailPage() {
             </div>
             <div className="mt-4">
               <p className="text-sm text-gray-500">Total des dividendes reçus</p>
-              <p className="text-2xl font-bold">{totalDividends}€</p>
+              <p className="text-2xl font-bold text-greenLight">{totalDividends}€</p>
             </div>
           </div>
         </div>
@@ -469,19 +469,19 @@ export default function DetailPage() {
       {/* Modale pour ajouter un achat */}
       {isPurchaseModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-4/5 max-w-md">
+          <div className="bg-white p-6 rounded-3xl shadow-lg w-4/5 max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-primary">Ajouter un achat</h2>
               <button onClick={() => setIsPurchaseModalOpen(false)} className="text-gray-500 hover:text-gray-800">
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 ">
               <DatePicker
                 selected={newPurchase.date}
                 onChange={(date) => setNewPurchase({ ...newPurchase, date })}
                 dateFormat="dd/MM/yyyy"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded-3xl"
                 placeholderText="Sélectionnez une date"
               />
               <input
@@ -490,7 +490,7 @@ export default function DetailPage() {
                 placeholder="Quantité"
                 value={newPurchase.quantity}
                 onChange={handlePurchaseInputChange}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded-3xl"
               />
               <input
                 type="number"
@@ -498,7 +498,7 @@ export default function DetailPage() {
                 placeholder="Prix d'achat (€)"
                 value={newPurchase.price}
                 onChange={handlePurchaseInputChange}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded-3xl"
               />
               <input
                 type="number"
@@ -506,11 +506,11 @@ export default function DetailPage() {
                 placeholder="Frais (€)"
                 value={newPurchase.fees}
                 onChange={handlePurchaseInputChange}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded-3xl"
               />
               <button
                 onClick={addPurchase}
-                className="w-full bg-primary text-white p-2 rounded-lg hover:bg-secondary transition"
+                className="w-full bg-greenLight text-white p-2 rounded-3xl hover:bg-greenLight transition"
               >
                 Ajouter
               </button>
@@ -522,7 +522,7 @@ export default function DetailPage() {
       {/* Modale pour ajouter un dividende */}
       {isAddDividendModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-4/5 max-w-md">
+          <div className="bg-white p-6 rounded-3xl shadow-lg w-4/5 max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-primary">Ajouter un dividende</h2>
               <button onClick={() => setIsAddDividendModalOpen(false)} className="text-gray-500 hover:text-gray-800">
@@ -534,7 +534,7 @@ export default function DetailPage() {
                 selected={newDividend.date}
                 onChange={(date) => setNewDividend({ ...newDividend, date })}
                 dateFormat="dd/MM/yyyy"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded-3xl"
                 placeholderText="Sélectionnez une date"
               />
               <input
@@ -543,11 +543,11 @@ export default function DetailPage() {
                 placeholder="Montant (€)"
                 value={newDividend.amount}
                 onChange={(e) => setNewDividend({ ...newDividend, amount: e.target.value })}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded-3xl"
               />
               <button
                 onClick={addDividend}
-                className="w-full bg-primary text-white p-2 rounded-lg hover:bg-secondary transition"
+                className="w-full bg-greenLight text-white p-2 rounded-3xl hover:bg-greenLight transition"
               >
                 Ajouter
               </button>

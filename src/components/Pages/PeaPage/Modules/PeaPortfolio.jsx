@@ -16,7 +16,7 @@ export default function PeaPortfolio() {
   return (
     <div className="space-y-6 p-4">
       {/* En-tête */}
-      <div className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-lg">
+      <div className="flex items-center justify-between p-3 bg-white rounded-3xl shadow-lg">
         <h2 className="text-lg font-bold text-primary flex items-center">
           <TrendingUp className="w-5 h-5 mr-2 text-primary" /> Répartitions des actions
         </h2>
@@ -24,7 +24,7 @@ export default function PeaPortfolio() {
           onClick={toggleChartMode}
           className="text-gray-600 hover:text-primary transition"
         >
-          <PieChartIcon className="w-5 h-5" />
+          <PieChartIcon className="w-5 h-5 mr-2" />
         </button>
       </div>
 

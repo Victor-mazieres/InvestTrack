@@ -40,22 +40,22 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
       {/* Bloc Répartition par secteur */}
       <div
         onClick={handleSectorClick}
-        className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm cursor-pointer"
+        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm cursor-pointer"
       >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-800">Répartition par secteur</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-medium text-gray-800 w-full text-left">Répartition par secteur</h3>
           <p
             onClick={(e) => {
               e.stopPropagation();
               handleSectorClick();
             }}
-            className="text-sm text-gray-500"
+            className="text-sm text-gray-500 w-full text-right"
           >
-            {dataSectors.length} valeurs sur 5 affichées
+            {dataSectors.length} / 5 affichées
           </p>
         </div>
         {dataSectors.map((item, idx) => (
-          <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-3">
+          <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center space-x-2">
                 <item.Icon className="w-5 h-5 text-gray-600" />
@@ -81,10 +81,10 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
       {/* Bloc Répartition par valeur */}
       <div
         onClick={handleValueClick}
-        className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm cursor-pointer"
+        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm cursor-pointer"
       >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-800">Répartition par valeur</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-medium  text-gray-800">Répartition par valeur</h3>
           <p
             onClick={(e) => {
               e.stopPropagation();
@@ -92,11 +92,11 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
             }}
             className="text-sm text-gray-500"
           >
-            {dataValues.length} valeurs sur 5 affichées
+            {dataValues.length} / 5 affichées
           </p>
         </div>
         {dataValues.map((item, idx) => (
-          <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-3">
+          <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm text-gray-700">{item.label}</span>
               <span className="text-sm font-semibold text-gray-700">

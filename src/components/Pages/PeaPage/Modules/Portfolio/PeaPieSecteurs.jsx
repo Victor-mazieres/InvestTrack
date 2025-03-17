@@ -119,7 +119,7 @@ export default function PeaPieSecteurs() {
       </div>
 
       {/* Bloc "Répartition par secteur" */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm mb-8">
+      <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-8">
         {/* Titre + nombre de valeurs affichées */}
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800">Répartition par secteur</h3>

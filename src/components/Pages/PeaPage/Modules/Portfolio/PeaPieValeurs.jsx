@@ -110,7 +110,7 @@ export default function PeaPieValeurs() {
       </div>
 
       {/* Donut pour Répartition par valeur */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm mb-12">
+      <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-12">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800">Répartition par valeur</h3>
           <p

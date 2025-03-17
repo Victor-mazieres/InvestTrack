@@ -32,6 +32,9 @@ const PeaBarsSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Po
 const PeaBarsValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsValeurs"));
 const PeaPieSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs"));
 const PeaPieValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs"));
+const SavedCalculations = lazy(() => import("./components/Pages/CalculatorCredit/SavedCalculations"));
+const CalculationDetails = lazy(() => import ("./components/Pages/CalculatorCredit/CalculationDetails"));
+const MortgageTabs  = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
 
 function AppContent() {
   const location = useLocation();
@@ -80,7 +83,7 @@ function AppContent() {
                 path="/Calcul"
                 element={
                   <ModalWrapper onClose={() => navigate(-1)}>
-                    <CalculatorCredit />
+                    <MortgageTabs  />
                   </ModalWrapper>
                 }
               />
@@ -113,6 +116,14 @@ function AppContent() {
                 element={
                   <ModalWrapper onClose={() => navigate(-1)}>
                     <PeaPieValeurs />
+                  </ModalWrapper>
+                }
+              />
+              <Route
+                path="/detailscalcul/:id"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <CalculationDetails />
                   </ModalWrapper>
                 }
               />
@@ -179,6 +190,9 @@ function MainContent({ location }) {
             <Route path="/connexion" element={<LoginPinPage />} />
             <Route path="/inscription" element={<RegisterPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/calculimmobilier" element={<SavedCalculations />} />
+            <Route path="/calculimmobilier/:timestamp" element={<SavedCalculations />} />
+            <Route path="/detailscalcul/:id" element={<CalculationDetails />} />
           </Routes>
         </motion.div>
       </AnimatePresence>
@@ -199,9 +213,9 @@ function ModalWrapper({ children, onClose }) {
     >
       <motion.div
         className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg"
-        style={{ height: "98vh" }}
+        style={{ height: "99vh" }}
         initial={{ y: "100%" }}
-        animate={{ y: "2%" }}
+        animate={{ y: "1%" }}
         exit={{ y: "100%" }}
         transition={{ duration: 0.3, ease: "easeOut" }}
         drag="y"

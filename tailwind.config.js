@@ -9,9 +9,12 @@ export default {
         light: "#ebf1f3",     // Blanc légèrement teinté
         grayBlue: "#bdced3",  // Gris bleuté doux
         grayLight: "#d2dde1", // Gris bleuté clair
-        greenLight: "#037082", // Gris bleuté clair
+        greenLight: "#22b99a", // Gris bleuté clair
         checkgreen: "#26b1ab",
         checkred: "#b12626",
+      },
+      fontFamily: {
+        sans: ['Sora', 'sans-serif'], // Définit Sora comme police par défaut pour la classe font-sans
       },
     },
   },

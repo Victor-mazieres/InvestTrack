@@ -1,13 +1,14 @@
+// MortgageSimulator.js
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
-// Hook personnalisé pour persister un état dans le localStorage
+// Hook personnalisé pour persister un état dans le localStorage (pour la saisie temporaire)
 function usePersistedState(key, defaultValue) {
   const [state, setState] = useState(() => {
     const storedValue = localStorage.getItem(key);
     if (storedValue !== null) {
-      // Pour les nombres, on utilise parseFloat, sinon on renvoie la valeur en chaîne
       return typeof defaultValue === 'number' ? parseFloat(storedValue) : storedValue;
     }
     return defaultValue;
@@ -35,67 +36,43 @@ function parseNumberFromString(value) {
 }
 
 const MortgageSimulator = () => {
-  // États avec persistance dans le localStorage
-  const [propertyPrice, setPropertyPrice] = usePersistedState('propertyPrice', 38500); // Prix du bien
-  const [personalContribution, setPersonalContribution] = usePersistedState('personalContribution', 3000); // Apport personnel
-  const [loanFees, setLoanFees] = usePersistedState('loanFees', 500); // Frais de dossier
-  const [propertyTax, setPropertyTax] = usePersistedState('propertyTax', 1000); // Taxe foncière annuelle
-  const [syndicFees, setSyndicFees] = usePersistedState('syndicFees', 100); // Frais de syndic mensuels
-  const [ownerInsuranceAmount, setOwnerInsuranceAmount] = usePersistedState('ownerInsuranceAmount', 200); // Assurance propriétaire (annuelle)
-  const [loanDuration, setLoanDuration] = usePersistedState('loanDuration', 20); // Durée du prêt en années
-  const [interestRate, setInterestRate] = usePersistedState('interestRate', "4"); // Taux d'intérêt annuel (en %)
-  const [insuranceRate, setInsuranceRate] = usePersistedState('insuranceRate', "0.3"); // Taux d'assurance emprunteur (en % annuel)
-  const [monthlyRent, setMonthlyRent] = usePersistedState('monthlyRent', 1000); // Loyer mensuel
-  const [monthlyCharges, setMonthlyCharges] = usePersistedState('monthlyCharges', 100); // Charges mensuelles
+  // États avec persistance pour la saisie
+  const [propertyPrice, setPropertyPrice] = usePersistedState('propertyPrice', 38500);
+  const [personalContribution, setPersonalContribution] = usePersistedState('personalContribution', 3000);
+  const [loanFees, setLoanFees] = usePersistedState('loanFees', 300);
+  const [propertyTax, setPropertyTax] = usePersistedState('propertyTax', 1000);
+  const [syndicFees, setSyndicFees] = usePersistedState('syndicFees', 60);
+  const [ownerInsuranceAmount, setOwnerInsuranceAmount] = usePersistedState('ownerInsuranceAmount', 144);
+  const [loanDuration, setLoanDuration] = usePersistedState('loanDuration', 20);
+  const [interestRate, setInterestRate] = usePersistedState('interestRate', "4");
+  const [insuranceRate, setInsuranceRate] = usePersistedState('insuranceRate', "0.3");
+  const [monthlyRent, setMonthlyRent] = usePersistedState('monthlyRent', 1000);
+  const [monthlyCharges, setMonthlyCharges] = usePersistedState('monthlyCharges', 100);
 
-  // Taux de notaire (8% par défaut pour l'ancien)
   const notaryRate = 8;
-
   const navigate = useNavigate();
 
   // --- Calculs ---
   const numPropertyPrice = parseFloat(propertyPrice) || 0;
   let capital = numPropertyPrice;
-
-  // Conversion des taux
   const numInterestRate = parseFloat(interestRate.replace(',', '.')) || 0;
   const numInsuranceRate = parseFloat(insuranceRate.replace(',', '.')) || 0;
-
-  // Calcul du taux mensuel et du nombre de mensualités
   const monthlyInterestRate = numInterestRate / 100 / 12;
   const numberOfMonths = loanDuration * 12;
-
-  // Calcul de la mensualité hors assurance
   let monthlyLoanPayment = 0;
   if (capital > 0 && monthlyInterestRate > 0 && numberOfMonths > 0) {
     monthlyLoanPayment =
       capital * (monthlyInterestRate / (1 - Math.pow(1 + monthlyInterestRate, -numberOfMonths)));
   }
-
-  // Calcul de l'assurance emprunteur mensuelle (taux en % annuel)
   const monthlyInsurance = (capital * (numInsuranceRate / 100)) / 12;
-
-  // Calcul de la taxe foncière mensuelle
   const monthlyPropertyTax = propertyTax / 12;
-
-  // Calcul de l'assurance propriétaire non occupant mensuelle
   const monthlyOwnerInsurance = ownerInsuranceAmount / 12;
-
-  // Mensualité totale (prêt + assurance + taxe foncière + syndic + assurance propriétaire)
   const totalMonthlyCost =
     monthlyLoanPayment + monthlyInsurance + monthlyPropertyTax + syndicFees + monthlyOwnerInsurance;
-
-  // Coût total du prêt
   const totalPaidLoan = monthlyLoanPayment * numberOfMonths;
   const totalInterest = Math.max(0, totalPaidLoan - capital);
-
-  // Coût total de l'assurance emprunteur
   const totalInsuranceCost = monthlyInsurance * numberOfMonths;
-
-  // Frais de notaire (pour information)
   const notaryFees = (numPropertyPrice * notaryRate) / 100;
-
-  // Calculs pour la rentabilité
   const totalPurchaseCost = numPropertyPrice + notaryFees;
   const annualRent = monthlyRent * 12;
   const annualCharges = monthlyCharges * 12;
@@ -107,16 +84,71 @@ const MortgageSimulator = () => {
       : 0;
   const monthlyCashFlow = monthlyRent - (totalMonthlyCost + monthlyCharges);
 
-  // Gestion des changements pour les champs entiers
   const handleIntChange = (setter) => (e) => {
-    const inputVal = e.target.value;
-    const numericValue = parseNumberFromString(inputVal);
+    const numericValue = parseNumberFromString(e.target.value);
     setter(numericValue);
   };
-
-  // Gestion des changements pour les champs décimaux (taux)
   const handleDecimalChange = (setter) => (e) => {
     setter(e.target.value);
+  };
+
+  // États pour la modal
+  const [showModal, setShowModal] = useState(false);
+  const [saveName, setSaveName] = useState("");
+
+  // Sauvegarde de la simulation via l'API avec le nom récupéré depuis la modal
+  const handleConfirmSave = async () => {
+    if (!saveName.trim()) {
+      alert("Veuillez entrer un nom pour la sauvegarde.");
+      return;
+    }
+    const simulationData = {
+      name: saveName,
+      propertyPrice,
+      personalContribution,
+      loanFees,
+      propertyTax,
+      syndicFees,
+      ownerInsuranceAmount,
+      loanDuration,
+      interestRate,
+      insuranceRate,
+      monthlyRent,
+      monthlyCharges,
+      results: {
+        totalMonthlyCost,
+        totalInterest,
+        totalInsuranceCost,
+        grossYield,
+        netYield,
+        monthlyCashFlow,
+        notaryFees,
+      },
+    };
+
+    try {
+      const token = localStorage.getItem('token'); // Le token doit être sauvegardé lors de la connexion
+      const response = await fetch('http://localhost:5000/api/simulations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(simulationData)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert("Simulation sauvegardée !");
+      } else {
+        alert("Erreur : " + data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de la sauvegarde de la simulation.");
+    } finally {
+      setShowModal(false);
+      setSaveName("");
+    }
   };
 
   return (
@@ -134,9 +166,7 @@ const MortgageSimulator = () => {
 
       {/* Carte Paramètres du prêt */}
       <section className="bg-white rounded-xl shadow p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
-          Paramètres du prêt
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Paramètres du prêt</h2>
         <div className="space-y-4">
           {/* Prix du bien */}
           <div>
@@ -163,9 +193,7 @@ const MortgageSimulator = () => {
               />
               <span className="ml-2 text-gray-600">€</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              (Non utilisé dans le calcul du montant emprunté)
-            </p>
+            <p className="text-xs text-gray-400 mt-1">(Non utilisé dans le calcul du montant emprunté)</p>
           </div>
           {/* Frais de dossier */}
           <div>
@@ -193,9 +221,7 @@ const MortgageSimulator = () => {
               />
               <span className="ml-2 text-gray-600">€</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              (sera divisé par 12 pour la mensualité)
-            </p>
+            <p className="text-xs text-gray-400 mt-1">(sera divisé par 12 pour la mensualité)</p>
           </div>
           {/* Syndic */}
           <div>
@@ -212,9 +238,7 @@ const MortgageSimulator = () => {
           </div>
           {/* Assurance propriétaire non occupant */}
           <div>
-            <label className="block text-sm text-gray-600 mb-1">
-              Assurance propriétaire non occupant (montant annuel)
-            </label>
+            <label className="block text-sm text-gray-600 mb-1">Assurance propriétaire non occupant (montant annuel)</label>
             <div className="flex items-center">
               <input
                 type="text"
@@ -236,7 +260,7 @@ const MortgageSimulator = () => {
               step="5"
               value={loanDuration}
               onChange={(e) => setLoanDuration(Number(e.target.value))}
-              className="w-full accent-primary"
+              className="w-full accent-greenLight"
             />
             <p className="text-xs text-gray-600 mt-1">{loanDuration} ans</p>
           </div>
@@ -256,9 +280,7 @@ const MortgageSimulator = () => {
           </div>
           {/* Assurance emprunteur */}
           <div>
-            <label className="block text-sm text-gray-600 mb-1">
-              Assurance emprunteur (taux annuel)
-            </label>
+            <label className="block text-sm text-gray-600 mb-1">Assurance emprunteur (taux annuel)</label>
             <div className="flex items-center">
               <input
                 type="text"
@@ -268,20 +290,15 @@ const MortgageSimulator = () => {
               />
               <span className="ml-2 text-gray-600">%</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              (Ex : 0.3% / an du capital emprunté)
-            </p>
+            <p className="text-xs text-gray-400 mt-1">(Ex : 0.3% / an du capital emprunté)</p>
           </div>
         </div>
       </section>
 
-      {/* Carte Paramètres de location */}
+      {/* Paramètres de location */}
       <section className="bg-white rounded-xl shadow p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
-          Paramètres de location
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Paramètres de location</h2>
         <div className="space-y-4">
-          {/* Loyer mensuel */}
           <div>
             <label className="block text-sm text-gray-600 mb-1">Loyer mensuel</label>
             <div className="flex items-center">
@@ -294,7 +311,6 @@ const MortgageSimulator = () => {
               <span className="ml-2 text-gray-600">€</span>
             </div>
           </div>
-          {/* Charges mensuelles */}
           <div>
             <label className="block text-sm text-gray-600 mb-1">Charges mensuelles</label>
             <div className="flex items-center">
@@ -310,13 +326,10 @@ const MortgageSimulator = () => {
         </div>
       </section>
 
-      {/* Carte Résultats */}
+      {/* Résultats */}
       <section className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
-          Résultats
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Résultats</h2>
         <div className="space-y-4">
-          {/* Mensualités */}
           <div>
             <h3 className="text-lg font-semibold text-gray-700">Mensualités</h3>
             <p className="text-2xl font-bold text-greenLight">
@@ -356,12 +369,11 @@ const MortgageSimulator = () => {
               </li>
               <li>
                 <strong>Frais de notaire :</strong>{' '}
-                {Math.round(notaryFees).toLocaleString('fr-FR')} €{' '}
+                {Math.round(notaryFees).toLocaleString('fr-FR')} €
                 <span className="text-xs text-gray-400">(8 % du prix du bien)</span>
               </li>
             </ul>
           </div>
-          {/* Rentabilité & Cash-flow */}
           <div>
             <h3 className="text-lg font-semibold text-gray-700">Calcul de rentabilité</h3>
             <div className="mt-1 text-sm text-gray-700">
@@ -398,6 +410,51 @@ const MortgageSimulator = () => {
           </div>
         </div>
       </section>
+
+      {/* Bouton de sauvegarde */}
+      <div className="mt-8 flex justify-end">
+        <button
+          onClick={() => setShowModal(true)}
+          className="px-6 py-3 bg-greenLight text-white font-semibold rounded-3xl shadow transition"
+        >
+          Sauvegarder
+        </button>
+      </div>
+
+      {/* Modal qui s'ouvre depuis le bas avec animation */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-end justify-center z-50">
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black opacity-50"
+            onClick={() => setShowModal(false)}
+          ></div>
+          {/* Contenu de la modal avec animation "slideUp" */}
+          <div className="bg-white w-full h-1/3 rounded-t-lg p-4 z-50 animate-slideUp">
+            <h3 className="text-lg font-semibold mb-2 mt-6 text-center">Nom de la sauvegarde</h3>
+            <input
+              type="text"
+              className="w-full p-2 border border-gray-300 rounded"
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+            />
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-3xl"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                className="px-4 py-2 bg-greenLight text-white rounded-3xl"
+              >
+                Sauvegarder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

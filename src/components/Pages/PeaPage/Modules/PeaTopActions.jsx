@@ -1,6 +1,18 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
-import { ChevronUp, ChevronDown, TrendingUp, Settings, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  ChevronUp,
+  ChevronDown,
+  TrendingUp,
+  Settings,
+  X,
+  ChevronRight,
+  Trash,
+  Minus,
+  Filter,
+  LineChart,
+  PlusCircle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const allActions = [
@@ -14,9 +26,63 @@ const allActions = [
   { id: 8, name: "JP Morgan", quantity: 6, price: 1300, currentPrice: 1280, change: -1.5, sector: "Finance" },
 ];
 
+// Composant CustomSelect pour un dropdown stylisé avec icônes
+const CustomSelect = ({ name, value, onChange, options, placeholder = "Sélectionnez" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleOpen = () => setIsOpen(!isOpen);
+
+  const handleOptionClick = (selectedValue) => {
+    onChange({ target: { name, value: selectedValue } });
+    setIsOpen(false);
+  };
+
+  const selectedLabel = options.find((option) => option.value === value)?.label;
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <button
+        type="button"
+        onClick={toggleOpen}
+        className="w-full p-3 border rounded-3xl bg-gray-50 flex justify-between items-center focus:outline-none"
+      >
+        <span>{selectedLabel || placeholder}</span>
+        <svg className="w-4 h-4 ml-2 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="absolute mt-1 w-full bg-white border rounded-3xl shadow-lg z-50">
+          {options.map((option) => (
+            <div
+              key={option.value}
+              onClick={() => handleOptionClick(option.value)}
+              className="p-3 hover:bg-gray-100 cursor-pointer rounded-3xl flex items-center space-x-2"
+            >
+              {option.icon && <span className="flex-shrink-0">{option.icon}</span>}
+              <span>{option.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function PeaTopActions() {
   const navigate = useNavigate();
-  const location = useLocation(); // Important pour récupérer la localisation actuelle
+  const location = useLocation();
   const [displayMode, setDisplayMode] = useState("percent");
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,7 +90,7 @@ export default function PeaTopActions() {
   const [selectedSector, setSelectedSector] = useState("");
   const [performanceFilter, setPerformanceFilter] = useState("");
 
-  // Actions filtrées selon les critères
+  // Filtrer les actions selon les critères
   const filteredActions = allActions
     .filter((action) => action.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .filter((action) => (minQuantity ? action.quantity >= parseInt(minQuantity) : true))
@@ -40,49 +106,55 @@ export default function PeaTopActions() {
   return (
     <div className="w-full p-4 relative">
       {/* Titre avec icône et engrenage */}
-      <div className="flex items-center justify-between p-2 bg-white rounded-2xl shadow-lg">
+      <div className="flex items-center justify-between p-3 bg-white rounded-3xl shadow-lg">
         <h2 className="text-lg font-bold text-primary flex items-center">
-          <TrendingUp className="w-5 h-5 mr-2 text-primary" /> Top 5 Actions
+          <TrendingUp className="w-5 h-5 mr-2 ml-2 text-primary" /> Top 5 Actions
         </h2>
         <button onClick={() => setShowFilters(true)} className="text-gray-600 hover:text-primary transition">
-          <Settings className="w-5 h-5" />
+          <Settings className="w-5 h-5 mr-2" />
         </button>
       </div>
 
       {/* Liste des actions */}
       <ul className="space-y-4 mt-3 relative">
         {filteredActions.map((action) => (
-          <li
+          <motion.li
             key={action.id}
-            className="flex items-center justify-between p-3 rounded-lg shadow-sm transition-all duration-300 cursor-pointer hover:bg-gray-100"
-            // Transmission de la localisation actuelle pour que la modal connaisse le background
-            onClick={() => navigate(`/DetailPage/${action.id}`, { state: { background: location } })}
+            className="flex items-center justify-between p-3 rounded-3xl shadow-sm transition-all duration-300 cursor-pointer hover:bg-gray-100"
+            whileHover={{ scale: 1.02 }}
+            onClick={() =>
+              navigate(`/DetailPage/${action.id}`, { state: { background: location } })
+            }
           >
-            {/* Nom de l'action */}
             <div>
-              <p className="text-primary font-semibold">{action.name}</p>
-              <p className="text-greenLight text-sm font-bold">{action.quantity} actions</p>
+              <p className="text-primary font-medium ">{action.name}</p>
+              <p className="text-greenLight text-sm font-bold ">{action.quantity} actions</p>
             </div>
-
-            {/* Prix + Variation */}
-            <div className="text-right">
-              <p className="text-lg font-bold">{action.currentPrice}€</p>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDisplayMode(displayMode === "percent" ? "euro" : "percent");
-                }}
-                className={`flex items-center text-sm font-medium transition-transform duration-200 ${
-                  action.change > 0 ? "text-checkgreen" : "text-checkred"
-                }`}
-              >
-                {action.change > 0 ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
-                {displayMode === "percent"
-                  ? `${action.change.toFixed(1)}%`
-                  : `${((action.currentPrice - action.price) * action.quantity).toFixed(2)}€`}
-              </button>
+            <div className="flex items-center space-x-2">
+              <div className="flex flex-col items-end">
+                <p className="text-lg font-medium">{action.currentPrice}€</p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDisplayMode(displayMode === "percent" ? "euro" : "percent");
+                  }}
+                  className={`flex items-center justify-center text-sm font-medium transition-transform duration-200 ${
+                    action.change > 0 ? "text-checkgreen" : "text-checkred"
+                  }`}
+                >
+                  {action.change > 0 ? (
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                  )}
+                  {displayMode === "percent"
+                    ? `${action.change.toFixed(1)}%`
+                    : `${((action.currentPrice - action.price) * action.quantity).toFixed(2)}€`}
+                </button>
+              </div>
+              <ChevronRight className="text-gray-400" />
             </div>
-          </li>
+          </motion.li>
         ))}
       </ul>
 
@@ -108,7 +180,7 @@ export default function PeaTopActions() {
               animate={{ y: 0 }}
               exit={{ y: 50 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-lg shadow-lg p-6 w-4/5 max-w-md relative"
+              className="bg-white rounded-3xl shadow-lg p-6 w-4/5 max-w-md relative"
             >
               {/* Bouton de fermeture */}
               <button onClick={() => setShowFilters(false)} className="absolute top-3 right-3 text-gray-600 hover:text-primary">
@@ -123,7 +195,7 @@ export default function PeaTopActions() {
                 placeholder="Rechercher une action..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-2 border rounded mb-3"
+                className="w-full p-2 border rounded-3xl mb-3"
               />
 
               {/* Filtre par quantité */}
@@ -132,36 +204,42 @@ export default function PeaTopActions() {
                 placeholder="Min quantité"
                 value={minQuantity}
                 onChange={(e) => setMinQuantity(e.target.value)}
-                className="w-full p-2 border rounded mb-3"
+                className="w-full p-2 border rounded-3xl mb-3"
               />
 
-              {/* Filtre par secteur */}
-              <select
-                value={selectedSector}
-                onChange={(e) => setSelectedSector(e.target.value)}
-                className="w-full p-2 border rounded mb-3"
-              >
-                <option value="">Tous les secteurs</option>
-                <option value="Tech">Tech</option>
-                <option value="E-commerce">E-commerce</option>
-                <option value="Finance">Finance</option>
-              </select>
+              {/* Filtre par secteur avec CustomSelect */}
+              <div className="mb-3">
+                <CustomSelect
+                  name="selectedSector"
+                  value={selectedSector}
+                  onChange={(e) => setSelectedSector(e.target.value)}
+                  options={[
+                    { value: "", label: "Tous les secteurs" },
+                    { value: "Tech", label: "Tech" },
+                    { value: "E-commerce", label: "E-commerce" },
+                    { value: "Finance", label: "Finance" },
+                  ]}
+                  placeholder="Secteur"
+                />
+              </div>
 
-              {/* Filtre par performance */}
-              <select
+              {/* Filtre par performance avec CustomSelect et icônes */}
+              <CustomSelect
+                name="performanceFilter"
                 value={performanceFilter}
                 onChange={(e) => setPerformanceFilter(e.target.value)}
-                className="w-full p-2 border rounded mb-4"
-              >
-                <option value="">Toutes les variations</option>
-                <option value="Hausses">Hausses</option>
-                <option value="Baisses">Baisses</option>
-                <option value="Stable">Stable</option>
-              </select>
+                options={[
+                  { value: "", label: "Toutes les variations", icon: <Filter className="w-4 h-4 text-gray-600" /> },
+                  { value: "Hausses", label: "Hausses", icon: <ChevronUp className="w-4 h-4 text-checkgreen" /> },
+                  { value: "Baisses", label: "Baisses", icon: <ChevronDown className="w-4 h-4 text-checkred" /> },
+                  { value: "Stable", label: "Stable", icon: <Minus className="w-4 h-4 text-gray-600" /> },
+                ]}
+                placeholder="Performance"
+              />
 
               <button
                 onClick={() => setShowFilters(false)}
-                className="w-full bg-primary text-white p-2 rounded-lg hover:bg-secondary transition"
+                className="w-full bg-greenLight text-white p-2 rounded-3xl hover:bg-greenLight transition mt-4"
               >
                 Appliquer
               </button>
