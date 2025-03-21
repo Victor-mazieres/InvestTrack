@@ -1,19 +1,12 @@
+// src/components/Pages/PeaPage/Modules/Portfolio/PeaPie.jsx
+import React, { useContext, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import {
   ChevronUp,
   ChevronDown,
-  TrendingUp,
-  Settings,
   X,
-  ChevronRight,
-  Trash,
-  Minus,
-  Filter,
-  LineChart,
-  PlusCircle,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   PieChart,
   Pie,
@@ -21,26 +14,10 @@ import {
   ResponsiveContainer,
   Sector,
 } from "recharts";
-
-const dataSectors = [
-  { label: "Services aux collectivités", percentage: 52.75 },
-  { label: "Énergie", percentage: 23.88 },
-  { label: "Sociétés financières", percentage: 20.84 },
-  { label: "Biens de consommation durables", percentage: 2.53 },
-];
-
-const dataValues = [
-  { label: "ENGIE", percentage: 52.75, amount: 1000 },
-  { label: "TOTALENERGIES SE", percentage: 23.88, amount: 500 },
-  { label: "CREDIT AGRICOLE S.A.", percentage: 13.24, amount: 300 },
-  { label: "BNP PARIBAS ACTIONS A", percentage: 7.6, amount: 150 },
-];
-
-const COLORS_SECTORS = ["#1abc9c", "#f39c12", "#e74c3c", "#3498db"];
-const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e"];
+import { ActionsContext } from "../Actions/ActionsContext"; // Assurez-vous que le chemin est correct
 
 /**
- * Dessine le secteur actif avec un contour et un drop-shadow pour accentuer le focus.
+ * Fonction de rendu pour le secteur actif dans le PieChart.
  */
 function renderActiveShape(props) {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
@@ -72,6 +49,9 @@ function renderActiveShape(props) {
   );
 }
 
+/**
+ * Composant de légende personnalisée affichée sous le PieChart.
+ */
 function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
   return (
     <ul className="mt-4 w-full" onClick={(e) => e.stopPropagation()}>
@@ -107,6 +87,45 @@ export default function PeaPie({ onValueClick }) {
   const [selectedSectorIndex, setSelectedSectorIndex] = useState(null);
   const [selectedValueIndex, setSelectedValueIndex] = useState(null);
 
+  // Récupération des actions depuis le contexte
+  const { actions } = useContext(ActionsContext);
+  const actionsData = Array.isArray(actions) ? actions : [];
+
+  // Calcul de la valeur totale du portefeuille
+  const totalValue = actionsData.reduce((sum, action) => {
+    const price = action.currentPrice || action.price || 0;
+    return sum + action.quantity * price;
+  }, 0);
+
+  // Calcul de la répartition par secteur
+  const sectorsMap = actionsData.reduce((acc, action) => {
+    const sector = action.sector || "Non défini";
+    const price = action.currentPrice || action.price || 0;
+    const value = action.quantity * price;
+    acc[sector] = (acc[sector] || 0) + value;
+    return acc;
+  }, {});
+  const dataSectors = Object.entries(sectorsMap).map(([label, value]) => ({
+    label,
+    percentage: totalValue ? (value / totalValue) * 100 : 0,
+  }));
+
+  // Calcul de la répartition par valeur pour chaque action
+  const dataValues = actionsData.map((action) => {
+    const price = action.currentPrice || action.price || 0;
+    const value = action.quantity * price;
+    return {
+      label: action.name,
+      percentage: totalValue ? (value / totalValue) * 100 : 0,
+      amount: value,
+    };
+  });
+
+  // Couleurs utilisées pour les graphiques
+  const COLORS_SECTORS = ["#1abc9c", "#f39c12", "#e74c3c", "#3498db", "#2ecc71", "#9b59b6"];
+  const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e", "#3498db"];
+
+  // Fonctions de navigation par défaut
   const defaultSectorClick = () => {
     navigate("/RepartitionCamembertSecteurs", { state: { background: location.pathname } });
   };
@@ -128,49 +147,46 @@ export default function PeaPie({ onValueClick }) {
           <h3 className="font-semibold text-gray-800">Répartition par secteur</h3>
           <p
             onClick={(e) => e.stopPropagation()}
-            className="text-sm text-gray-500 text-right w-full"
+            className="text-sm text-gray-500"
           >
-            {dataSectors.length} / 5 affichées
+            {dataSectors.length} secteurs
           </p>
         </div>
-        {/* Donut (camembert) qui empêche la propagation du clic */}
         <div className="w-full h-[300px] mb-4" onClick={(e) => e.stopPropagation()}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-            <Pie
-              data={dataSectors}
-              dataKey="percentage"
-              nameKey="label"
-              cx="50%"
-              cy="50%"
-              outerRadius="80%"
-              innerRadius="40%"
-              activeIndex={selectedSectorIndex}
-              activeShape={renderActiveShape}
-              onClick={(_, index) =>
-                setSelectedSectorIndex(selectedSectorIndex === index ? null : index)
-              }
-              isAnimationActive={true}
-              animationDuration={1000}
-              animationEasing="ease-in-out"
-            >
-              {dataSectors.map((entry, index) => (
-                <Cell
-                  key={`cell-sector-${index}`}
-                  fill={
-                    selectedSectorIndex === null || selectedSectorIndex === index
-                      ? COLORS_SECTORS[index % COLORS_SECTORS.length]
-                      : "#e0e0e0"
-                  }
-                  cursor="pointer"
-                />
-              ))}
-            </Pie>
-
+              <Pie
+                data={dataSectors}
+                dataKey="percentage"
+                nameKey="label"
+                cx="50%"
+                cy="50%"
+                outerRadius="80%"
+                innerRadius="40%"
+                activeIndex={selectedSectorIndex}
+                activeShape={renderActiveShape}
+                onClick={(_, index) =>
+                  setSelectedSectorIndex(selectedSectorIndex === index ? null : index)
+                }
+                isAnimationActive={true}
+                animationDuration={1000}
+                animationEasing="ease-in-out"
+              >
+                {dataSectors.map((entry, index) => (
+                  <Cell
+                    key={`cell-sector-${index}`}
+                    fill={
+                      selectedSectorIndex === null || selectedSectorIndex === index
+                        ? COLORS_SECTORS[index % COLORS_SECTORS.length]
+                        : "#e0e0e0"
+                    }
+                    cursor="pointer"
+                  />
+                ))}
+              </Pie>
             </PieChart>
           </ResponsiveContainer>
         </div>
-        {/* Légende qui empêche également la propagation */}
         <CustomLegendList
           data={dataSectors}
           colors={COLORS_SECTORS}
@@ -188,43 +204,43 @@ export default function PeaPie({ onValueClick }) {
           <h3 className="font-semibold text-gray-800">Répartition par valeur</h3>
           <p
             onClick={(e) => e.stopPropagation()}
-            className="text-sm text-gray-500 text-right w-full"
+            className="text-sm text-gray-500"
           >
-            {dataValues.length} / 5 affichées
+            {dataValues.length} valeurs
           </p>
         </div>
         <div className="w-full h-[300px] mb-4" onClick={(e) => e.stopPropagation()}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-            <Pie
-              data={dataValues}
-              dataKey="percentage"
-              nameKey="label"
-              cx="50%"
-              cy="50%"
-              outerRadius="80%"
-              innerRadius="40%"
-              activeIndex={selectedValueIndex}
-              activeShape={renderActiveShape}
-              onClick={(_, index) =>
-                setSelectedValueIndex(selectedValueIndex === index ? null : index)
-              }
-              isAnimationActive={true}
-              animationDuration={1000}
-              animationEasing="ease-in-out"
-            >
-              {dataValues.map((entry, index) => (
-                <Cell
-                  key={`cell-value-${index}`}
-                  fill={
-                    selectedValueIndex === null || selectedValueIndex === index
-                      ? COLORS_VALUES[index % COLORS_VALUES.length]
-                      : "#e0e0e0"
-                  }
-                  cursor="pointer"
-                />
-              ))}
-            </Pie>
+              <Pie
+                data={dataValues}
+                dataKey="percentage"
+                nameKey="label"
+                cx="50%"
+                cy="50%"
+                outerRadius="80%"
+                innerRadius="40%"
+                activeIndex={selectedValueIndex}
+                activeShape={renderActiveShape}
+                onClick={(_, index) =>
+                  setSelectedValueIndex(selectedValueIndex === index ? null : index)
+                }
+                isAnimationActive={true}
+                animationDuration={1000}
+                animationEasing="ease-in-out"
+              >
+                {dataValues.map((entry, index) => (
+                  <Cell
+                    key={`cell-value-${index}`}
+                    fill={
+                      selectedValueIndex === null || selectedValueIndex === index
+                        ? COLORS_VALUES[index % COLORS_VALUES.length]
+                        : "#e0e0e0"
+                    }
+                    cursor="pointer"
+                  />
+                ))}
+              </Pie>
             </PieChart>
           </ResponsiveContainer>
         </div>

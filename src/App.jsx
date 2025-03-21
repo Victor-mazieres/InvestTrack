@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { lazy, Suspense, memo } from "react";
 import {
   BrowserRouter as Router,
@@ -33,8 +34,11 @@ const PeaBarsValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Por
 const PeaPieSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs"));
 const PeaPieValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs"));
 const SavedCalculations = lazy(() => import("./components/Pages/CalculatorCredit/SavedCalculations"));
-const CalculationDetails = lazy(() => import ("./components/Pages/CalculatorCredit/CalculationDetails"));
+const CalculationDetails = lazy(() => import("./components/Pages/CalculatorCredit/CalculationDetails"));
 const MortgageTabs  = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
+
+// Import du contexte pour les actions
+import { ActionsProvider } from "./components/Pages/PeaPage/Modules/Actions/ActionsContext";
 
 function AppContent() {
   const location = useLocation();
@@ -63,6 +67,7 @@ function AppContent() {
                   </ModalWrapper>
                 }
               />
+              {/* Autres routes de modale... */}
               <Route
                 path="/HistoriqueOrderPage/:id"
                 element={
@@ -83,7 +88,7 @@ function AppContent() {
                 path="/Calcul"
                 element={
                   <ModalWrapper onClose={() => navigate(-1)}>
-                    <MortgageTabs  />
+                    <MortgageTabs />
                   </ModalWrapper>
                 }
               />
@@ -143,14 +148,12 @@ function AppContent() {
   );
 }
 
+
 // Composant MainContent avec gestion du swipe et animation
-// La clé de l'animation est basée sur location.pathname fournie via background ou location
 function MainContent({ location }) {
   const navigate = useNavigate();
-
   const pages = ["/pea", "/immobilier", "/MoreActions"];
   const currentIndex = pages.indexOf(location.pathname);
-
   const handlers = useSwipeable({
     onSwipedLeft: () => {
       if (currentIndex !== -1 && currentIndex < pages.length - 1) {
@@ -166,7 +169,6 @@ function MainContent({ location }) {
     preventDefaultTouchmoveEvent: true,
     trackMouse: true,
   });
-
   const animationProps = {
     initial: { x: "100%", opacity: 0 },
     animate: { x: 0, opacity: 1 },
@@ -193,12 +195,15 @@ function MainContent({ location }) {
             <Route path="/calculimmobilier" element={<SavedCalculations />} />
             <Route path="/calculimmobilier/:timestamp" element={<SavedCalculations />} />
             <Route path="/detailscalcul/:id" element={<CalculationDetails />} />
+            {/* Nouvelle route pour DetailPage */}
+            <Route path="/DetailPage/:id" element={<DetailPage />} />
           </Routes>
         </motion.div>
       </AnimatePresence>
     </div>
   );
 }
+
 
 // Composant ModalWrapper optimisé
 function ModalWrapper({ children, onClose }) {
@@ -235,13 +240,15 @@ function ModalWrapper({ children, onClose }) {
   );
 }
 
-// Utilisation de React.memo pour optimiser la Navbar
+// Optimisation de la Navbar
 const MemoizedNavbar = memo(Navbar);
 
 export default function App() {
   return (
     <Router>
-      <AppContent />
+      <ActionsProvider>
+        <AppContent />
+      </ActionsProvider>
     </Router>
   );
 }

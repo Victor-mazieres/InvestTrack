@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useContext } from "react";
 import {
   ChevronUp,
   ChevronDown,
@@ -7,82 +7,24 @@ import {
   Settings,
   X,
   ChevronRight,
-  Trash,
   Minus,
   Filter,
   LineChart,
   PlusCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const allActions = [
-  { id: 1, name: "Tesla", quantity: 15, price: 850, currentPrice: 890, change: 4.7, sector: "Tech" },
-  { id: 2, name: "Apple", quantity: 10, price: 1200, currentPrice: 1180, change: -1.7, sector: "Tech" },
-  { id: 3, name: "Amazon", quantity: 8, price: 950, currentPrice: 970, change: 2.1, sector: "E-commerce" },
-  { id: 4, name: "Microsoft", quantity: 12, price: 1100, currentPrice: 1125, change: 2.3, sector: "Tech" },
-  { id: 5, name: "Google", quantity: 5, price: 1050, currentPrice: 1020, change: -2.9, sector: "Tech" },
-  { id: 6, name: "Meta", quantity: 7, price: 880, currentPrice: 920, change: 4.5, sector: "Tech" },
-  { id: 7, name: "Nvidia", quantity: 4, price: 2100, currentPrice: 2150, change: 2.4, sector: "Tech" },
-  { id: 8, name: "JP Morgan", quantity: 6, price: 1300, currentPrice: 1280, change: -1.5, sector: "Finance" },
-];
-
-// Composant CustomSelect pour un dropdown stylisé avec icônes
-const CustomSelect = ({ name, value, onChange, options, placeholder = "Sélectionnez" }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const toggleOpen = () => setIsOpen(!isOpen);
-
-  const handleOptionClick = (selectedValue) => {
-    onChange({ target: { name, value: selectedValue } });
-    setIsOpen(false);
-  };
-
-  const selectedLabel = options.find((option) => option.value === value)?.label;
-
-  return (
-    <div ref={containerRef} className="relative w-full">
-      <button
-        type="button"
-        onClick={toggleOpen}
-        className="w-full p-3 border rounded-3xl bg-gray-50 flex justify-between items-center focus:outline-none"
-      >
-        <span>{selectedLabel || placeholder}</span>
-        <svg className="w-4 h-4 ml-2 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-      {isOpen && (
-        <div className="absolute mt-1 w-full bg-white border rounded-3xl shadow-lg z-50">
-          {options.map((option) => (
-            <div
-              key={option.value}
-              onClick={() => handleOptionClick(option.value)}
-              className="p-3 hover:bg-gray-100 cursor-pointer rounded-3xl flex items-center space-x-2"
-            >
-              {option.icon && <span className="flex-shrink-0">{option.icon}</span>}
-              <span>{option.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import CustomSelect from "./Actions/CustomSelect";
+import { ActionsContext } from "./Actions/ActionsContext";
 
 export default function PeaTopActions() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Récupère les actions depuis le contexte
+  const { actions } = useContext(ActionsContext);
+  // Assure-toi que "actions" est bien un tableau
+  const actionsData = Array.isArray(actions) ? actions : [];
+
   const [displayMode, setDisplayMode] = useState("percent");
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,14 +33,23 @@ export default function PeaTopActions() {
   const [performanceFilter, setPerformanceFilter] = useState("");
 
   // Filtrer les actions selon les critères
-  const filteredActions = allActions
-    .filter((action) => action.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter((action) => (minQuantity ? action.quantity >= parseInt(minQuantity) : true))
-    .filter((action) => (selectedSector ? action.sector === selectedSector : true))
+  const filteredActions = actionsData
+    .filter((action) => action.name !== undefined)
+    .filter((action) =>
+      action.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter((action) =>
+      minQuantity ? action.quantity >= parseInt(minQuantity, 10) : true
+    )
+    .filter((action) =>
+      selectedSector ? action.sector === selectedSector : true
+    )
     .filter((action) => {
-      if (performanceFilter === "Hausses") return action.change > 0;
-      if (performanceFilter === "Baisses") return action.change < 0;
-      if (performanceFilter === "Stable") return action.change === 0;
+      // Utilisation d'une valeur par défaut pour change
+      const change = action.change ?? 0;
+      if (performanceFilter === "Hausses") return change > 0;
+      if (performanceFilter === "Baisses") return change < 0;
+      if (performanceFilter === "Stable") return change === 0;
       return true;
     })
     .slice(0, 5);
@@ -117,45 +68,53 @@ export default function PeaTopActions() {
 
       {/* Liste des actions */}
       <ul className="space-y-4 mt-3 relative">
-        {filteredActions.map((action) => (
-          <motion.li
-            key={action.id}
-            className="flex items-center justify-between p-3 rounded-3xl shadow-sm transition-all duration-300 cursor-pointer hover:bg-gray-100"
-            whileHover={{ scale: 1.02 }}
-            onClick={() =>
-              navigate(`/DetailPage/${action.id}`, { state: { background: location } })
-            }
-          >
-            <div>
-              <p className="text-primary font-medium ">{action.name}</p>
-              <p className="text-greenLight text-sm font-bold ">{action.quantity} actions</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="flex flex-col items-end">
-                <p className="text-lg font-medium">{action.currentPrice}€</p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDisplayMode(displayMode === "percent" ? "euro" : "percent");
-                  }}
-                  className={`flex items-center justify-center text-sm font-medium transition-transform duration-200 ${
-                    action.change > 0 ? "text-checkgreen" : "text-checkred"
-                  }`}
-                >
-                  {action.change > 0 ? (
-                    <ChevronUp className="w-4 h-4 mr-1" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 mr-1" />
-                  )}
-                  {displayMode === "percent"
-                    ? `${action.change.toFixed(1)}%`
-                    : `${((action.currentPrice - action.price) * action.quantity).toFixed(2)}€`}
-                </button>
+        {filteredActions.map((action) => {
+          // Utilisation de valeurs par défaut pour les propriétés
+          const change = action.change ?? 0;
+          const currentPrice = action.currentPrice ?? 0;
+          const price = action.price ?? 0;
+          const quantity = action.quantity ?? 0;
+
+          return (
+            <motion.li
+              key={action.id}
+              className="flex items-center justify-between p-3 rounded-3xl shadow-sm transition-all duration-300 cursor-pointer hover:bg-gray-100"
+              whileHover={{ scale: 1.02 }}
+              onClick={() =>
+                navigate(`/DetailPage/${action.id}`, { state: { background: location } })
+              }
+            >
+              <div>
+                <p className="text-primary font-medium">{action.name}</p>
+                <p className="text-greenLight text-sm font-bold">{quantity} actions</p>
               </div>
-              <ChevronRight className="text-gray-400" />
-            </div>
-          </motion.li>
-        ))}
+              <div className="flex items-center space-x-2">
+                <div className="flex flex-col items-end">
+                  <p className="text-lg font-medium">{currentPrice}€</p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDisplayMode(displayMode === "percent" ? "euro" : "percent");
+                    }}
+                    className={`flex items-center justify-center text-sm font-medium transition-transform duration-200 ${
+                      change > 0 ? "text-checkgreen" : "text-checkred"
+                    }`}
+                  >
+                    {change > 0 ? (
+                      <ChevronUp className="w-4 h-4 mr-1" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 mr-1" />
+                    )}
+                    {displayMode === "percent"
+                      ? `${change.toFixed(1)}%`
+                      : `${((currentPrice - price) * quantity).toFixed(2)}€`}
+                  </button>
+                </div>
+                <ChevronRight className="text-gray-400" />
+              </div>
+            </motion.li>
+          );
+        })}
       </ul>
 
       {/* Bouton Voir Plus */}
@@ -207,7 +166,7 @@ export default function PeaTopActions() {
                 className="w-full p-2 border rounded-3xl mb-3"
               />
 
-              {/* Filtre par secteur avec CustomSelect */}
+              {/* Filtre par secteur */}
               <div className="mb-3">
                 <CustomSelect
                   name="selectedSector"
@@ -223,7 +182,7 @@ export default function PeaTopActions() {
                 />
               </div>
 
-              {/* Filtre par performance avec CustomSelect et icônes */}
+              {/* Filtre par performance */}
               <CustomSelect
                 name="performanceFilter"
                 value={performanceFilter}

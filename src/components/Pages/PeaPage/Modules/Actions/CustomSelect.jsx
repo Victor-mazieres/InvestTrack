@@ -43,9 +43,9 @@ const CustomSelect = ({ name, value, onChange, options, placeholder = "Catégori
         </svg>
       </button>
 
-      {/* Liste des options */}
+      {/* Liste des options avec scroll */}
       {isOpen && (
-        <div className="absolute mt-1 w-full bg-white border rounded-3xl shadow-lg z-10">
+        <div className="absolute mt-1 w-full bg-white border rounded-3xl shadow-lg z-10 overflow-y-auto" style={{ maxHeight: "200px" }}>
           {options.map((option) => (
             <div
               key={option.value}

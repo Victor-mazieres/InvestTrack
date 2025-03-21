@@ -1,30 +1,55 @@
-import React, { useState } from "react";
+// src/components/Pages/PeaPage/Modules/Portfolio/PeaBars.jsx
+import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Building2, Zap, Banknote, Car } from "lucide-react";
-
-const dataSectors = [
-  { label: "Services aux collectivités", percentage: 52.75, Icon: Building2 },
-  { label: "Énergie", percentage: 23.88, Icon: Zap },
-  { label: "Sociétés financières", percentage: 20.84, Icon: Banknote },
-  { label: "Biens de consommation durables", percentage: 2.53, Icon: Car },
-];
-
-const dataValues = [
-  { label: "ENGIE", percentage: 52.75, amount: 513.9 },
-  { label: "TOTALENERGIES SE", percentage: 23.88, amount: 232.68 },
-  { label: "CREDIT AGRICOLE S.A.", percentage: 13.24, amount: 129.04 },
-  { label: "BNP PARIBAS ACTIONS A", percentage: 7.6, amount: 74.02 },
-];
-
-const COLORS_SECTORS = ["#1abc9c", "#f39c12", "#e74c3c", "#3498db"];
-const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e"];
+import { ChevronUp, ChevronDown } from "lucide-react"; // Pour une éventuelle icône (optionnel)
+import { ActionsContext } from "../Actions/ActionsContext"; // Adaptez le chemin selon votre structure
 
 export default function PeaBars({ onSectorClick, onValueClick }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Par défaut, si aucun onClick n'est passé, on navigue vers "/RepartitionBarre" avec le background
+  // Récupération des actions depuis le contexte
+  const { actions } = useContext(ActionsContext);
+  // On s'assure que "actions" est un tableau
+  const actionsData = Array.isArray(actions) ? actions : [];
+
+  // Calculer la valeur totale du portefeuille (on privilégie currentPrice s'il existe, sinon price)
+  const totalValue = actionsData.reduce((sum, action) => {
+    const price = action.currentPrice || action.price || 0;
+    return sum + action.quantity * price;
+  }, 0);
+
+  // Calculer la répartition par secteur
+  const sectorsMap = actionsData.reduce((acc, action) => {
+    const sector = action.sector || "Non défini";
+    const price = action.currentPrice || action.price || 0;
+    const value = action.quantity * price;
+    acc[sector] = (acc[sector] || 0) + value;
+    return acc;
+  }, {});
+
+  const sectorsData = Object.entries(sectorsMap).map(([label, value]) => ({
+    label,
+    percentage: totalValue ? (value / totalValue) * 100 : 0,
+  }));
+
+  // Calculer la répartition par valeur (chaque action devient une entrée)
+  const valuesData = actionsData.map(action => {
+    const price = action.currentPrice || action.price || 0;
+    const value = action.quantity * price;
+    return {
+      label: action.name,
+      percentage: totalValue ? (value / totalValue) * 100 : 0,
+      amount: value,
+    };
+  });
+
+  // Couleurs statiques pour l'affichage
+  const COLORS_SECTORS = ["#1abc9c", "#f39c12", "#e74c3c", "#3498db", "#2ecc71", "#9b59b6"];
+  const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e", "#3498db"];
+
+  // Gestion des clics par défaut (navigation vers des pages détaillées)
   const defaultSectorClick = () => {
     navigate("/RepartitionBarreSecteurs", { state: { background: location } });
   };
@@ -43,22 +68,22 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
         className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm cursor-pointer"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-medium text-gray-800 w-full text-left">Répartition par secteur</h3>
+          <h3 className="font-medium text-gray-800">Répartition par secteur</h3>
           <p
             onClick={(e) => {
               e.stopPropagation();
               handleSectorClick();
             }}
-            className="text-sm text-gray-500 w-full text-right"
+            className="text-sm text-gray-500"
           >
-            {dataSectors.length} / 5 affichées
+            {sectorsData.length} secteurs
           </p>
         </div>
-        {dataSectors.map((item, idx) => (
+        {sectorsData.map((item, idx) => (
           <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center space-x-2">
-                <item.Icon className="w-5 h-5 text-gray-600" />
+                {/* Vous pouvez ajouter une icône ici si besoin */}
                 <span className="text-sm text-gray-700">{item.label}</span>
               </div>
               <span className="text-sm font-semibold text-gray-700">
@@ -84,7 +109,7 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
         className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm cursor-pointer"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-medium  text-gray-800">Répartition par valeur</h3>
+          <h3 className="font-medium text-gray-800">Répartition par valeur</h3>
           <p
             onClick={(e) => {
               e.stopPropagation();
@@ -92,10 +117,10 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
             }}
             className="text-sm text-gray-500"
           >
-            {dataValues.length} / 5 affichées
+            {valuesData.length} valeurs
           </p>
         </div>
-        {dataValues.map((item, idx) => (
+        {valuesData.map((item, idx) => (
           <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm text-gray-700">{item.label}</span>

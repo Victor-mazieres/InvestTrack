@@ -1,169 +1,131 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  TrendingUp,
-  Trash,
-  ChevronRight,
-  LineChart,
-  PlusCircle,
-} from "lucide-react";
 import { motion } from "framer-motion";
-import DatePicker from "react-datepicker";
+import { TrendingUp, Trash, ChevronRight, LineChart, PlusCircle } from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
-
-// Composant CustomSelect pour un dropdown stylisé uniformément
-const CustomSelect = ({ name, value, onChange, options, placeholder = "Catégorie" }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const toggleOpen = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const handleOptionClick = (selectedValue) => {
-    onChange({ target: { name, value: selectedValue } });
-    setIsOpen(false);
-  };
-
-  const selectedLabel = options.find((option) => option.value === value)?.label;
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={toggleOpen}
-        className="w-full p-3 border rounded-3xl bg-gray-50 flex justify-between items-center focus:outline-none"
-      >
-        <span>{selectedLabel || placeholder}</span>
-        <svg
-          className="w-4 h-4 ml-2 text-gray-600"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-      {isOpen && (
-        <div className="absolute mt-1 w-full bg-white border rounded-3xl shadow-lg z-50">
-          {options.map((option) => (
-            <div
-              key={option.value}
-              onClick={() => handleOptionClick(option.value)}
-              className="p-3 hover:bg-gray-100 cursor-pointer rounded-3xl"
-            >
-              {option.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Composant CustomDatePicker utilisant react-datepicker
-const CustomDatePicker = ({ selected, onChange, placeholderText }) => {
-  return (
-    <DatePicker
-      selected={selected}
-      onChange={onChange}
-      placeholderText={placeholderText}
-      className="w-full p-3 border rounded-3xl bg-gray-50"
-      calendarClassName="fixed-calendar rounded-3xl shadow-lg border border-gray-200"
-      wrapperClassName="w-full"
-      popperPlacement="bottom"
-      showYearDropdown
-      yearDropdownItemNumber={5}
-      scrollableYearDropdown
-      showMonthDropdown
-    />
-  );
-};
-
-
+import CustomSelect from "./CustomSelect";
+import CustomDatePicker from "./CustomDatePicker";
+import { ActionsContext } from "../Actions/ActionsContext";
+import { sectors } from "../Actions/constants/sectors"; // Ajuste le chemin si nécessaire
 
 export default function MoreActions() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { actions, addAction, deleteAction, fetchActions } = useContext(ActionsContext);
+  const actionsData = Array.isArray(actions) ? actions : [];
+
   const [activeTab, setActiveTab] = useState("details");
-  const [actions, setActions] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
 
-  // Charger les actions depuis localStorage
-  useEffect(() => {
-    const storedActions = JSON.parse(localStorage.getItem("actions")) || [];
-    setActions(storedActions);
-  }, []);
-
-  // État du formulaire d'ajout
   const [newAction, setNewAction] = useState({
     name: "",
     quantity: "",
-    price: "",
+    purchasePrice: "",
     fees: "",
-    dividend: "",
-    dividendDate: null, // Utilise null pour aucune date sélectionnée
-    sector: "Non défini",
+    dividendPrice: "",
+    dividendDate: null,
+    sector: "",
+    history: [],
+    priceHistory: [],
+    dividendsHistory: [],
   });
 
   const handleInputChange = (e) => {
-    setNewAction({ ...newAction, [e.target.name]: e.target.value });
+    if (e && e.target && e.target.name) {
+      setNewAction({ ...newAction, [e.target.name]: e.target.value });
+    }
   };
 
-  const addAction = () => {
-    if (!newAction.name || !newAction.quantity || !newAction.price) return;
-    const newActionsList = [...actions, { ...newAction, id: Date.now() }];
-    setActions(newActionsList);
-    localStorage.setItem("actions", JSON.stringify(newActionsList));
-    setNewAction({
-      name: "",
-      quantity: "",
-      price: "",
-      fees: "",
-      dividend: "",
-      dividendDate: null,
-      sector: "Non défini",
-    });
+  const handleDateChange = (date) => {
+    setNewAction({ ...newAction, dividendDate: date });
   };
 
-  const deleteAction = (id) => {
-    const updatedActions = actions.filter((action) => action.id !== id);
-    setActions(updatedActions);
-    localStorage.setItem("actions", JSON.stringify(updatedActions));
+  const handleSectorChange = (selectedValue) => {
+    setNewAction({ ...newAction, sector: selectedValue });
   };
 
-  const totalValorisation = actions.reduce(
-    (sum, action) => sum + action.quantity * action.price,
+  const handleAddAction = async () => {
+    if (!newAction.name || !newAction.quantity || !newAction.purchasePrice) return;
+
+    try {
+      // Créer une entrée initiale dans l'historique
+      const initialHistoryEntry = {
+        date: new Date().toISOString().slice(0, 10),
+        quantity: parseInt(newAction.quantity, 10),
+        price: parseFloat(newAction.purchasePrice),
+        fees: parseFloat(newAction.fees) || 0,
+      };
+
+      const actionToCreate = {
+        name: newAction.name,
+        sector: newAction.sector,
+        quantity: parseInt(newAction.quantity, 10),
+        purchasePrice: parseFloat(newAction.purchasePrice),
+        fees: parseFloat(newAction.fees) || 0,
+        dividendPrice: newAction.dividendPrice ? parseFloat(newAction.dividendPrice) : null,
+        dividendDate: newAction.dividendDate,
+        history: [initialHistoryEntry],
+        priceHistory: newAction.priceHistory || [],
+        dividendsHistory: newAction.dividendsHistory || [],
+      };
+
+      const createdAction = await addAction(actionToCreate);
+      await fetchActions();
+
+      navigate(`/DetailPage/${createdAction.id}`, {
+        state: { background: location, createdAction },
+      });
+
+      setNewAction({
+        name: "",
+        quantity: "",
+        purchasePrice: "",
+        fees: "",
+        dividendPrice: "",
+        dividendDate: null,
+        sector: "",
+        history: [],
+        priceHistory: [],
+        dividendsHistory: [],
+      });
+
+      setShowPopup(true);
+      setTimeout(() => {
+        setShowPopup(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Erreur lors de la création de l'action :", error);
+    }
+  };
+
+  const totalValorisation = actionsData.reduce(
+    (sum, action) => sum + action.quantity * action.purchasePrice,
     0
   );
-  const totalBénéfice = actions.reduce(
-    (sum, action) => sum + action.quantity * (action.price - action.fees),
+  const totalBénéfice = actionsData.reduce(
+    (sum, action) => sum + action.quantity * (action.purchasePrice - action.fees),
     0
   );
   const bénéficeColor = totalBénéfice >= 0 ? "text-checkgreen" : "text-checkred";
 
-  const sectorOptions = [
-    { value: "Non défini", label: "Catégorie" },
-    { value: "Technologie", label: "Technologie" },
-    { value: "Finance", label: "Finance" },
-    { value: "E-commerce", label: "E-commerce" },
-    { value: "Santé", label: "Santé" },
-    { value: "Autre", label: "Autre" },
-  ];
+  // Transformation de la liste des secteurs en options pour le dropdown
+  const sectorOptions = sectors.map((sector) => ({
+    value: sector === "Tous les secteurs" ? "" : sector,
+    label: sector,
+  }));
 
   return (
     <div className="w-full p-4 min-h-screen bg-gray-100">
-      {/* Valorisation & Bénéfice */}
+      {showPopup && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-greenLight text-white p-4 rounded shadow-lg z-50"
+        >
+          Action ajoutée !
+        </motion.div>
+      )}
       <div className="text-center mb-6">
         <h1 className="text-xl font-bold text-primary flex items-center justify-center">
           <span className="text-xl font-bold text-primary">€ Valorisation totale</span>
@@ -175,8 +137,6 @@ export default function MoreActions() {
             : `${totalBénéfice.toFixed(2)}€`} (bénéfice)
         </p>
       </div>
-
-      {/* Onglets */}
       <div className="flex justify-around bg-white rounded-3xl shadow-md p-2 mb-4 border border-gray-200">
         <button
           onClick={() => setActiveTab("details")}
@@ -195,28 +155,20 @@ export default function MoreActions() {
           Ajouter
         </button>
       </div>
-
-      {/* Liste des actions */}
       {activeTab === "details" && (
         <div>
           <h2 className="text-lg font-bold text-primary mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" /> Toutes les actions
           </h2>
           <ul className="space-y-4">
-            {actions.map((action) => (
+            {actionsData.map((action) => (
               <motion.li
                 key={action.id}
-                className="flex items-center justify-between p-4 rounded-lg shadow-sm bg-white cursor-pointer hover:shadow-md transition"
+                className="flex items-center justify-between p-4 rounded-3xl shadow-sm bg-white cursor-pointer hover:shadow-md transition"
                 whileHover={{ scale: 1.02 }}
                 onClick={() =>
                   navigate(`/DetailPage/${action.id}`, {
-                    state: {
-                      background: {
-                        pathname: location.pathname,
-                        search: location.search,
-                        hash: location.hash,
-                      },
-                    },
+                    state: { background: location, createdAction: action },
                   })
                 }
               >
@@ -224,11 +176,11 @@ export default function MoreActions() {
                   <LineChart className="w-6 h-6 text-primary" />
                   <div>
                     <p className="text-primary font-semibold text-lg">{action.name}</p>
-                    <p className="text-gray-600 font-medium text-sm">{action.quantity} actions</p>
+                    <p className="text-greenLight font-medium text-sm">{action.quantity} actions</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold">{action.price}€</p>
+                  <p className="text-lg font-bold">{action.purchasePrice}€</p>
                 </div>
                 <div className="flex space-x-2">
                   <button
@@ -247,8 +199,6 @@ export default function MoreActions() {
           </ul>
         </div>
       )}
-
-      {/* Formulaire d'ajout */}
       {activeTab === "add" && (
         <div className="p-6 bg-white rounded-3xl shadow-md border border-gray-200">
           <h2 className="text-lg font-bold text-primary mb-4">Ajouter une action</h2>
@@ -271,44 +221,38 @@ export default function MoreActions() {
             />
             <input
               type="number"
-              name="price"
+              name="purchasePrice"
               placeholder="Prix d'achat (€)"
-              value={newAction.price}
+              value={newAction.purchasePrice}
               onChange={handleInputChange}
               className="w-full p-3 border rounded-3xl bg-gray-50"
             />
-
-            {/* CustomSelect pour la catégorie */}
             <CustomSelect
-              name="sector"
-              value={newAction.sector}
-              onChange={handleInputChange}
-              options={sectorOptions}
-              placeholder="Catégorie"
-            />
+  name="sector"
+  value={newAction.sector}
+  onChange={(selectedValue) => handleSectorChange(selectedValue)}
+  options={sectorOptions}
+  placeholder="Catégorie"
+/>
 
             <input
               type="number"
-              name="dividend"
+              name="dividendPrice"
               placeholder="Dividende (€)"
-              value={newAction.dividend}
+              value={newAction.dividendPrice}
               onChange={handleInputChange}
               className="w-full p-3 border rounded-3xl bg-gray-50"
             />
-
-            {/* Utilisation du CustomDatePicker pour la date du dividende */}
             <div className="w-full">
               <CustomDatePicker
                 selected={newAction.dividendDate}
-                onChange={(date) =>
-                  setNewAction({ ...newAction, dividendDate: date })
-                }
+                onChange={handleDateChange}
                 placeholderText="Sélectionnez la date du dividende"
+                className="w-full p-3 border rounded-3xl bg-gray-50"
               />
             </div>
-
             <motion.button
-              onClick={addAction}
+              onClick={handleAddAction}
               whileTap={{ scale: 0.95 }}
               className="w-full bg-greenLight text-white p-3 rounded-3xl hover:bg-greenLight transition flex items-center justify-center"
             >
