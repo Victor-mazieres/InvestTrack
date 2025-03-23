@@ -1,4 +1,3 @@
-// MortgageSimulator.js
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -174,7 +173,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={formatNumberWithSpaces(propertyPrice)}
                 onChange={handleIntChange(setPropertyPrice)}
               />
@@ -187,7 +186,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={formatNumberWithSpaces(personalContribution)}
                 onChange={handleIntChange(setPersonalContribution)}
               />
@@ -201,7 +200,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={formatNumberWithSpaces(loanFees)}
                 onChange={handleIntChange(setLoanFees)}
               />
@@ -215,7 +214,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={formatNumberWithSpaces(propertyTax)}
                 onChange={handleIntChange(setPropertyTax)}
               />
@@ -229,7 +228,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={formatNumberWithSpaces(syndicFees)}
                 onChange={handleIntChange(setSyndicFees)}
               />
@@ -242,7 +241,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={formatNumberWithSpaces(ownerInsuranceAmount)}
                 onChange={handleIntChange(setOwnerInsuranceAmount)}
               />
@@ -270,7 +269,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={interestRate}
                 onChange={handleDecimalChange(setInterestRate)}
               />
@@ -284,7 +283,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={insuranceRate}
                 onChange={handleDecimalChange(setInsuranceRate)}
               />
@@ -304,7 +303,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={formatNumberWithSpaces(monthlyRent)}
                 onChange={handleIntChange(setMonthlyRent)}
               />
@@ -316,7 +315,7 @@ const MortgageSimulator = () => {
             <div className="flex items-center">
               <input
                 type="text"
-                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex-1 p-2 border border-gray-300 rounded-3xl pl-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={formatNumberWithSpaces(monthlyCharges)}
                 onChange={handleIntChange(setMonthlyCharges)}
               />
@@ -434,7 +433,7 @@ const MortgageSimulator = () => {
             <h3 className="text-lg font-semibold mb-2 mt-6 text-center">Nom de la sauvegarde</h3>
             <input
               type="text"
-              className="w-full p-2 border border-gray-300 rounded"
+              className="w-full p-2 border border-gray-300 rounded-3xl pl-3"
               value={saveName}
               onChange={(e) => setSaveName(e.target.value)}
             />

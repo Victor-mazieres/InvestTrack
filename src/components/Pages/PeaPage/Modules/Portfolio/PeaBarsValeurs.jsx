@@ -1,16 +1,17 @@
 // PeaBarsValeursDetails.jsx
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { ActionsContext } from "../Actions/ActionsContext"; // Ajustez le chemin si nécessaire
 
-const fullDataValues = [
+// Jeu de données statique (fallback)
+const fullDataValuesStatic = [
   { label: "ENGIE", percentage: 52.75, amount: 513.9 },
   { label: "TOTALENERGIES SE", percentage: 23.88, amount: 232.68 },
   { label: "CREDIT AGRICOLE S.A.", percentage: 13.24, amount: 129.04 },
   { label: "BNP PARIBAS ACTIONS A", percentage: 7.6, amount: 74.02 },
-  { label: "AUTRE SOCIÉTÉ", percentage: 3.53, amount: 50.00 },
-  // Ajoutez d'autres valeurs si nécessaire
+  { label: "AUTRE SOCIÉTÉ", percentage: 3.53, amount: 50.0 },
 ];
 
 const COLORS_VALUES = [
@@ -21,6 +22,10 @@ const COLORS_VALUES = [
   "#3498db",
 ];
 
+/**
+ * Composant Bar
+ * Affiche une barre représentant visuellement le pourcentage d'une valeur.
+ */
 function Bar({ percentage, color }) {
   return (
     <div className="relative w-full h-2 bg-gray-200 rounded-full">
@@ -32,8 +37,40 @@ function Bar({ percentage, color }) {
   );
 }
 
+/**
+ * PeaBarsValeursDetails
+ * Affiche la répartition par valeur.
+ * Si des données dynamiques (actions) sont disponibles dans le contexte, on calcule pour chaque action sa valeur,
+ * sinon on utilise le jeu de données statique.
+ */
 export default function PeaBarsValeursDetails() {
   const navigate = useNavigate();
+  const { actions } = useContext(ActionsContext);
+  const actionsData = Array.isArray(actions) ? actions : [];
+
+  // Calcul dynamique des valeurs si des actions sont présentes
+  const dynamicDataValues = useMemo(() => {
+    if (actionsData.length === 0) return [];
+    // Calcul de la valeur totale du portefeuille
+    const totalValue = actionsData.reduce((sum, action) => {
+      const price = action.currentPrice || action.price || 1; // Valeur par défaut = 1 si non défini
+      return sum + action.quantity * price;
+    }, 0);
+    // Création du tableau des valeurs pour chaque action
+    return actionsData.map((action) => {
+      const price = action.currentPrice || action.price || 1;
+      const value = action.quantity * price;
+      return {
+        label: action.name,
+        percentage: totalValue ? (value / totalValue) * 100 : 0,
+        amount: value,
+      };
+    });
+  }, [actionsData]);
+
+  // Utiliser les données dynamiques si disponibles, sinon le fallback statique
+  const displayData =
+    dynamicDataValues.length > 0 ? dynamicDataValues : fullDataValuesStatic;
 
   return (
     <div className="min-h-screen bg-light w-full p-6">
@@ -53,16 +90,24 @@ export default function PeaBarsValeursDetails() {
         </h1>
       </div>
 
-      {/* Bloc Répartition par valeur (liste complète) */}
+      {/* Bloc Répartition par valeur */}
       <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-800"><p className="text-sm text-gray-500">
-            {fullDataValues.length} valeurs sur {fullDataValues.length} affichées
-          </p></h3>
+          <h3 className="font-semibold text-gray-800">
+            Répartition par valeur
+          </h3>
+          <p className="text-sm text-gray-500">
+            {displayData.length} valeur{displayData.length > 1 ? "s" : ""} affichée
+            {displayData.length > 1 ? "s" : ""}
+          </p>
         </div>
         <div className="space-y-4">
-          {fullDataValues.map((item, idx) => (
-            <motion.div key={idx} whileHover={{ scale: 1.03 }} className="cursor-pointer">
+          {displayData.map((item, idx) => (
+            <motion.div
+              key={idx}
+              whileHover={{ scale: 1.03 }}
+              className="cursor-pointer"
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm text-gray-700">{item.label}</span>
                 <span className="text-sm font-semibold text-gray-700">

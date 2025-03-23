@@ -2,7 +2,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronUp, ChevronDown } from "lucide-react"; // Pour une éventuelle icône (optionnel)
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { ActionsContext } from "../Actions/ActionsContext"; // Adaptez le chemin selon votre structure
 
 export default function PeaBars({ onSectorClick, onValueClick }) {
@@ -11,19 +11,19 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
 
   // Récupération des actions depuis le contexte
   const { actions } = useContext(ActionsContext);
-  // On s'assure que "actions" est un tableau
   const actionsData = Array.isArray(actions) ? actions : [];
 
-  // Calculer la valeur totale du portefeuille (on privilégie currentPrice s'il existe, sinon price)
+  // Calculer la valeur totale du portefeuille.
+  // Pour éviter un total de 0 si aucune action n'a de prix renseigné, on utilise 1 comme valeur par défaut.
   const totalValue = actionsData.reduce((sum, action) => {
-    const price = action.currentPrice || action.price || 0;
+    const price = action.currentPrice || action.price || 1;
     return sum + action.quantity * price;
   }, 0);
 
   // Calculer la répartition par secteur
   const sectorsMap = actionsData.reduce((acc, action) => {
     const sector = action.sector || "Non défini";
-    const price = action.currentPrice || action.price || 0;
+    const price = action.currentPrice || action.price || 1;
     const value = action.quantity * price;
     acc[sector] = (acc[sector] || 0) + value;
     return acc;
@@ -31,16 +31,16 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
 
   const sectorsData = Object.entries(sectorsMap).map(([label, value]) => ({
     label,
-    percentage: totalValue ? (value / totalValue) * 100 : 0,
+    percentage: (value / totalValue) * 100,
   }));
 
   // Calculer la répartition par valeur (chaque action devient une entrée)
   const valuesData = actionsData.map(action => {
-    const price = action.currentPrice || action.price || 0;
+    const price = action.currentPrice || action.price || 1;
     const value = action.quantity * price;
     return {
       label: action.name,
-      percentage: totalValue ? (value / totalValue) * 100 : 0,
+      percentage: (value / totalValue) * 100,
       amount: value,
     };
   });
@@ -49,7 +49,7 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
   const COLORS_SECTORS = ["#1abc9c", "#f39c12", "#e74c3c", "#3498db", "#2ecc71", "#9b59b6"];
   const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e", "#3498db"];
 
-  // Gestion des clics par défaut (navigation vers des pages détaillées)
+  // Gestion des clics par défaut
   const defaultSectorClick = () => {
     navigate("/RepartitionBarreSecteurs", { state: { background: location } });
   };
@@ -83,7 +83,6 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
           <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center space-x-2">
-                {/* Vous pouvez ajouter une icône ici si besoin */}
                 <span className="text-sm text-gray-700">{item.label}</span>
               </div>
               <span className="text-sm font-semibold text-gray-700">

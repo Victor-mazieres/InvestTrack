@@ -1,0 +1,107 @@
+/* MyCalendarDark.css */
+
+/* Importante : retire la bordure par défaut et définit un fond sombre global */
+.react-calendar {
+    background-color: #1f2b36;
+    border-radius: 1.2rem;
+    border: none;
+    padding: 1rem;
+    color: #fff;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Navigation du mois (flèches, titre du mois/année) */
+  .react-calendar__navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    margin-bottom: 0.5rem;
+    padding: 0;
+  }
+  
+  /* Boutons de navigation (flèches) */
+  .react-calendar__navigation button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
+  }
+  
+  /* Au survol des flèches */
+  .react-calendar__navigation button:hover {
+    background-color: #2a3946;
+  }
+  
+  /* Titre (mois/année) */
+  .react-calendar__navigation span {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  /* Jours de la semaine (Mon, Tue, etc.) */
+  .react-calendar__month-view__weekdays {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #a9b3bd;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Les tuiles des jours (cases du calendrier) */
+  .react-calendar__tile {
+    background: none;
+    border: none;
+    color: #fff;
+    border-radius: 0.5rem;
+    padding: 0.4rem 0;
+    transition: background-color 0.2s ease;
+  }
+  
+  /* Au survol des cases */
+  .react-calendar__tile:enabled:hover {
+    background-color: #2a3946;
+  }
+  
+  /* Jour actuel (today) */
+  .react-calendar__tile--now {
+    background-color: #293a49;
+    position: relative;
+  }
+  
+  /* Au survol du jour actuel */
+  .react-calendar__tile--now:enabled:hover {
+    background-color: #314456;
+  }
+  
+  /* Jour sélectionné (quand vous cliquez) */
+  .react-calendar__tile--active {
+    background-color: #506d82 !important;
+  }
+  
+  /* Jours du mois précédent/suivant (hors du mois affiché) */
+  .react-calendar__month-view__days__day--neighboringMonth {
+    color: #6c7986;
+  }
+  
+  /* Style des "jours de la grille" en mode vue mois */
+  .react-calendar__month-view__days {
+    gap: 0.25rem;
+  }
+  
+  /* Pour ajouter un petit effet d'espacement dans la grille */
+  .react-calendar__tile--range {
+    background-color: #506d82;
+  }
+  
+  /* Optionnel : ajuster la hauteur de chaque tuile pour un design plus régulier */
+  .react-calendar__tile {
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  

@@ -17,12 +17,10 @@ export function ActionsProvider({ children }) {
   const navigate = useNavigate();
   const API_URL = "http://localhost:5000";
 
-  // Mémorisation de fetchActions pour éviter sa recréation
   const fetchActions = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.error("Token manquant. Redirection vers la page de connexion.");
         navigate("/login");
         return;
       }
@@ -37,7 +35,6 @@ export function ActionsProvider({ children }) {
     }
   }, [navigate]);
 
-  // Utiliser un ref pour éviter que fetchActions soit appelé plusieurs fois (notamment en mode Strict)
   const hasFetchedRef = useRef(false);
   useEffect(() => {
     if (!hasFetchedRef.current) {
@@ -50,7 +47,6 @@ export function ActionsProvider({ children }) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.error("Token manquant lors de l'ajout d'une action");
         navigate("/login");
         return;
       }
@@ -68,16 +64,13 @@ export function ActionsProvider({ children }) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.error("Token manquant lors de la mise à jour d'une action");
         navigate("/login");
         return;
       }
       const res = await axios.put(`${API_URL}/api/actions/${id}`, updatedData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setActions((prev) =>
-        prev.map((a) => (a.id === id ? res.data : a))
-      );
+      setActions((prev) => prev.map((a) => (a.id === id ? res.data : a)));
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'action :", error);
     }
@@ -87,7 +80,6 @@ export function ActionsProvider({ children }) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.error("Token manquant lors de la suppression d'une action");
         navigate("/login");
         return;
       }

@@ -1,57 +1,9 @@
-// src/components/Pages/PeaPage/Modules/Portfolio/PeaPie.jsx
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  ChevronUp,
-  ChevronDown,
-  X,
-} from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Sector,
-} from "recharts";
-import { ActionsContext } from "../Actions/ActionsContext"; // Assurez-vous que le chemin est correct
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { ActionsContext } from "../Actions/ActionsContext";
 
-/**
- * Fonction de rendu pour le secteur actif dans le PieChart.
- */
-function renderActiveShape(props) {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-  return (
-    <g>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        style={{ filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.5))" }}
-      />
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={outerRadius + 4}
-        outerRadius={outerRadius + 8}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill="none"
-        stroke="#333"
-        strokeWidth={2}
-        style={{ filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.5))" }}
-      />
-    </g>
-  );
-}
-
-/**
- * Composant de légende personnalisée affichée sous le PieChart.
- */
+// Composant de légende personnalisée affichée sous le PieChart.
 function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
   return (
     <ul className="mt-4 w-full" onClick={(e) => e.stopPropagation()}>
@@ -89,37 +41,49 @@ export default function PeaPie({ onValueClick }) {
 
   // Récupération des actions depuis le contexte
   const { actions } = useContext(ActionsContext);
-  const actionsData = Array.isArray(actions) ? actions : [];
+  const actionsData = useMemo(() => (Array.isArray(actions) ? actions : []), [actions]);
 
   // Calcul de la valeur totale du portefeuille
-  const totalValue = actionsData.reduce((sum, action) => {
-    const price = action.currentPrice || action.price || 0;
-    return sum + action.quantity * price;
-  }, 0);
+  const totalValue = useMemo(() => {
+    return actionsData.reduce((sum, action) => {
+      const price = action.currentPrice || action.price || 1;
+      const quantity = action.quantity || 0;
+      return sum + quantity * price;
+    }, 0);
+  }, [actionsData]);
 
   // Calcul de la répartition par secteur
-  const sectorsMap = actionsData.reduce((acc, action) => {
-    const sector = action.sector || "Non défini";
-    const price = action.currentPrice || action.price || 0;
-    const value = action.quantity * price;
-    acc[sector] = (acc[sector] || 0) + value;
-    return acc;
-  }, {});
-  const dataSectors = Object.entries(sectorsMap).map(([label, value]) => ({
-    label,
-    percentage: totalValue ? (value / totalValue) * 100 : 0,
-  }));
+  const sectorsMap = useMemo(() => {
+    return actionsData.reduce((acc, action) => {
+      const sector = action.sector || "Non défini";
+      const price = action.currentPrice || action.price || 1;
+      const quantity = action.quantity || 0;
+      const value = quantity * price;
+      acc[sector] = (acc[sector] || 0) + value;
+      return acc;
+    }, {});
+  }, [actionsData]);
+
+  const dataSectors = useMemo(() => {
+    return Object.entries(sectorsMap).map(([label, value]) => ({
+      label,
+      percentage: totalValue ? (value / totalValue) * 100 : 0,
+    }));
+  }, [sectorsMap, totalValue]);
 
   // Calcul de la répartition par valeur pour chaque action
-  const dataValues = actionsData.map((action) => {
-    const price = action.currentPrice || action.price || 0;
-    const value = action.quantity * price;
-    return {
-      label: action.name,
-      percentage: totalValue ? (value / totalValue) * 100 : 0,
-      amount: value,
-    };
-  });
+  const dataValues = useMemo(() => {
+    return actionsData.map((action) => {
+      const price = action.currentPrice || action.price || 1;
+      const quantity = action.quantity || 0;
+      const value = quantity * price;
+      return {
+        label: action.name || "Action sans nom",
+        percentage: totalValue ? (value / totalValue) * 100 : 0,
+        amount: value,
+      };
+    });
+  }, [actionsData, totalValue]);
 
   // Couleurs utilisées pour les graphiques
   const COLORS_SECTORS = ["#1abc9c", "#f39c12", "#e74c3c", "#3498db", "#2ecc71", "#9b59b6"];
@@ -145,10 +109,7 @@ export default function PeaPie({ onValueClick }) {
       >
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800">Répartition par secteur</h3>
-          <p
-            onClick={(e) => e.stopPropagation()}
-            className="text-sm text-gray-500"
-          >
+          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-500">
             {dataSectors.length} secteurs
           </p>
         </div>
@@ -164,7 +125,6 @@ export default function PeaPie({ onValueClick }) {
                 outerRadius="80%"
                 innerRadius="40%"
                 activeIndex={selectedSectorIndex}
-                activeShape={renderActiveShape}
                 onClick={(_, index) =>
                   setSelectedSectorIndex(selectedSectorIndex === index ? null : index)
                 }
@@ -178,7 +138,7 @@ export default function PeaPie({ onValueClick }) {
                     fill={
                       selectedSectorIndex === null || selectedSectorIndex === index
                         ? COLORS_SECTORS[index % COLORS_SECTORS.length]
-                        : "#e0e0e0"
+                        : "#e0e0e0" // Griser les autres éléments non sélectionnés
                     }
                     cursor="pointer"
                   />
@@ -202,10 +162,7 @@ export default function PeaPie({ onValueClick }) {
       >
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800">Répartition par valeur</h3>
-          <p
-            onClick={(e) => e.stopPropagation()}
-            className="text-sm text-gray-500"
-          >
+          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-500">
             {dataValues.length} valeurs
           </p>
         </div>
@@ -220,8 +177,8 @@ export default function PeaPie({ onValueClick }) {
                 cy="50%"
                 outerRadius="80%"
                 innerRadius="40%"
+                minAngle={5}
                 activeIndex={selectedValueIndex}
-                activeShape={renderActiveShape}
                 onClick={(_, index) =>
                   setSelectedValueIndex(selectedValueIndex === index ? null : index)
                 }
@@ -235,7 +192,7 @@ export default function PeaPie({ onValueClick }) {
                     fill={
                       selectedValueIndex === null || selectedValueIndex === index
                         ? COLORS_VALUES[index % COLORS_VALUES.length]
-                        : "#e0e0e0"
+                        : "#e0e0e0" // Griser les autres éléments non sélectionnés
                     }
                     cursor="pointer"
                   />

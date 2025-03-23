@@ -1,16 +1,17 @@
 // PeaBarsSecteurs.jsx
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Building2, Zap, Banknote, Car } from "lucide-react";
 import { motion } from "framer-motion";
+import { ActionsContext } from "../Actions/ActionsContext"; // Ajustez le chemin si nécessaire
 
-// Jeu de données complet pour les secteurs (5 valeurs dans cet exemple)
-const fullDataSectors = [
+// Jeu de données statique (fallback)
+const fullDataSectorsStatic = [
   { label: "Services aux collectivités", percentage: 52.75, Icon: Building2 },
   { label: "Énergie", percentage: 23.88, Icon: Zap },
   { label: "Sociétés financières", percentage: 20.84, Icon: Banknote },
   { label: "Biens de consommation durables", percentage: 2.53, Icon: Car },
-  { label: "Technologie", percentage: 15.50, Icon: Building2 }, // Exemple supplémentaire
+  { label: "Technologie", percentage: 15.50, Icon: Building2 },
 ];
 
 const COLORS_SECTORS = [
@@ -21,7 +22,10 @@ const COLORS_SECTORS = [
   "#2ecc71",
 ];
 
-// Composant barre pour afficher visuellement le pourcentage
+/**
+ * Composant Bar
+ * Affiche une barre représentant visuellement le pourcentage d'un secteur.
+ */
 function Bar({ percentage, color }) {
   return (
     <div className="relative w-full h-2 bg-gray-200 rounded-full">
@@ -33,12 +37,56 @@ function Bar({ percentage, color }) {
   );
 }
 
+/**
+ * PeaBarsSecteurs
+ * Ce composant affiche la répartition par secteur.
+ * Il calcule dynamiquement la valeur de chaque secteur à partir du contexte ActionsContext.
+ * Si aucune donnée dynamique n'est présente, il utilise le jeu de données statique.
+ *
+ * Pour garantir que chaque action a une "valeur", si le prix n'est pas défini,
+ * on utilise une valeur par défaut (ici 1).
+ */
 export default function PeaBarsSecteurs() {
   const navigate = useNavigate();
+  const { actions } = useContext(ActionsContext);
+  const actionsData = Array.isArray(actions) ? actions : [];
+
+  // Calcul dynamique de la répartition par secteur
+  const dynamicDataSectors = useMemo(() => {
+    if (actionsData.length === 0) return [];
+    // Calculer la valeur totale par secteur en utilisant une valeur par défaut de 1 pour le prix s'il est manquant
+    const sectorsMap = actionsData.reduce((acc, action) => {
+      const sector = action.sector || "Non défini";
+      const price = action.currentPrice || action.price || 1; // Valeur par défaut = 1
+      const value = action.quantity * price;
+      acc[sector] = (acc[sector] || 0) + value;
+      return acc;
+    }, {});
+    // Calculer la valeur totale de toutes les actions
+    const totalValue = Object.values(sectorsMap).reduce((sum, v) => sum + v, 0);
+    // Retourner un tableau avec le pourcentage pour chaque secteur
+    return Object.entries(sectorsMap).map(([label, value]) => ({
+      label,
+      percentage: totalValue ? (value / totalValue) * 100 : 0,
+    }));
+  }, [actionsData]);
+
+  // Utiliser les données dynamiques si disponibles, sinon le fallback statique
+  const displayData =
+    dynamicDataSectors.length > 0 ? dynamicDataSectors : fullDataSectorsStatic;
+
+  // Mapping pour les icônes dans les données dynamiques
+  const iconMapping = {
+    "Services aux collectivités": Building2,
+    "Énergie": Zap,
+    "Sociétés financières": Banknote,
+    "Biens de consommation durables": Car,
+    "Technologie": Building2,
+  };
 
   return (
     <div className="min-h-screen bg-light w-full p-6">
-      {/* Header avec flèche de retour et titre */}
+      {/* Header avec bouton de retour et titre */}
       <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
@@ -54,35 +102,44 @@ export default function PeaBarsSecteurs() {
         </h1>
       </div>
 
-      {/* Bloc affichant la liste complète des secteurs */}
+      {/* Bloc affichant la liste des secteurs */}
       <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-800"><p className="text-sm text-gray-500">
-            {fullDataSectors.length} valeurs sur {fullDataSectors.length} affichées
-          </p></h3>
+          <h3 className="font-semibold text-gray-800">Répartition par secteur</h3>
+          <p className="text-sm text-gray-500">
+            {displayData.length} secteur{displayData.length > 1 ? "s" : ""} affiché
+            {displayData.length > 1 ? "s" : ""}
+          </p>
         </div>
         <div className="space-y-4">
-          {fullDataSectors.map((item, idx) => (
-            <motion.div
-              key={idx}
-              whileHover={{ scale: 1.03 }}
-              className="cursor-pointer"
-            >
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center space-x-2">
-                  <item.Icon className="w-5 h-5 text-gray-600" />
-                  <span className="text-sm text-gray-700">{item.label}</span>
+          {displayData.map((item, idx) => {
+            // Pour les données dynamiques, utiliser l'icône du mapping, sinon celle fournie
+            const Icon =
+              dynamicDataSectors.length > 0
+                ? iconMapping[item.label] || Building2
+                : item.Icon;
+            return (
+              <motion.div
+                key={idx}
+                whileHover={{ scale: 1.03 }}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center space-x-2">
+                    <Icon className="w-5 h-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{item.label}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">
+                    {item.percentage.toFixed(2)}%
+                  </span>
                 </div>
-                <span className="text-sm font-semibold text-gray-700">
-                  {item.percentage.toFixed(2)}%
-                </span>
-              </div>
-              <Bar
-                percentage={item.percentage}
-                color={COLORS_SECTORS[idx % COLORS_SECTORS.length]}
-              />
-            </motion.div>
-          ))}
+                <Bar
+                  percentage={item.percentage}
+                  color={COLORS_SECTORS[idx % COLORS_SECTORS.length]}
+                />
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -18,7 +18,7 @@ function ConfirmResetModal({ onConfirm, onClose }) {
       onClick={handleBackdropClick}
     >
       <div 
-        className="bg-white rounded-2xl p-6 w-11/12 max-w-md"
+        className="bg-white rounded-3xl p-6 w-11/12 max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-center mb-4">
@@ -27,13 +27,13 @@ function ConfirmResetModal({ onConfirm, onClose }) {
         <div className="flex space-x-4">
           <button 
             onClick={onConfirm} 
-            className="flex-1 bg-blue-500 text-white py-3 rounded-xl text-center hover:bg-blue-600"
+            className="flex-1 bg-blue-500 text-white py-3 rounded-3xl text-center hover:bg-blue-600"
           >
             Oui
           </button>
           <button 
             onClick={onClose} 
-            className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-center hover:bg-gray-200"
+            className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-3xl text-center hover:bg-gray-200"
           >
             Plus tard
           </button>
@@ -76,7 +76,7 @@ function PinKeyboardModal({ onConfirm, onClose }) {
       onClick={handleBackdropClick}
     >
       <div 
-        className="bg-white rounded-2xl shadow-xl p-8 w-11/12 max-w-md"
+        className="bg-white rounded-3xl shadow-xl p-8 w-11/12 max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
@@ -97,7 +97,7 @@ function PinKeyboardModal({ onConfirm, onClose }) {
             />
           ))}
         </div>
-        <div className="grid grid-cols-3 gap-10 text-2xl font-semibold mb-8">
+        <div className="grid grid-cols-3 gap-10 text-3xl font-semibold mb-8">
           {digits.map((num) => (
             <button
               key={num}
@@ -279,7 +279,7 @@ export default function Profile() {
         <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition">
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-secondary">Retour</h1>
+        <h1 className="ml-4 text-3xl font-bold text-secondary">Retour</h1>
       </header>
 
       <div className="flex-1 flex flex-col px-4 pb-20 overflow-hidden">
@@ -289,7 +289,7 @@ export default function Profile() {
             {/* Nom d'utilisateur en lecture seule */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
-              <div className="w-full flex items-center justify-between bg-gray-100 rounded-xl p-3 shadow-sm">
+              <div className="w-full flex items-center justify-between bg-gray-100 rounded-3xl p-3 shadow-sm">
                 <span className="w-full text-gray-900">{username}</span>
                 <ChevronRight className="text-gray-400" />
               </div>
@@ -298,7 +298,7 @@ export default function Profile() {
             {/* Pays */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Pays</label>
-              <div className="w-full flex items-center justify-between bg-white rounded-xl p-3 shadow-sm">
+              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3">
                   <MapPin className="text-gray-600" />
                   <select 
@@ -318,7 +318,7 @@ export default function Profile() {
             {/* Adresse */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-              <div className="w-full flex items-center justify-between bg-white rounded-xl p-3 shadow-sm">
+              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3 w-full">
                   <Home className="text-gray-600" />
                   <input 
@@ -336,7 +336,7 @@ export default function Profile() {
             {/* Ville */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-              <div className="w-full flex items-center justify-between bg-white rounded-xl p-3 shadow-sm">
+              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3 w-full">
                   <Building className="text-gray-600" />
                   <input 
@@ -354,7 +354,7 @@ export default function Profile() {
             {/* Code postal */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Code Postal</label>
-              <div className="w-full flex items-center justify-between bg-white rounded-xl p-3 shadow-sm">
+              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3 w-full">
                   <Mailbox className="text-gray-600" />
                   <input 
@@ -375,7 +375,7 @@ export default function Profile() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Adresse e-mail
               </label>
-              <div className="w-full flex items-center justify-between bg-white rounded-xl p-3 shadow-sm">
+              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3 w-full">
                   <Mail className="text-gray-600" />
                   <input
@@ -400,7 +400,7 @@ export default function Profile() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
               <div 
                 onClick={() => setShowConfirmReset(true)} 
-                className="w-full flex items-center justify-between bg-white rounded-xl p-3 shadow-sm cursor-pointer"
+                className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm cursor-pointer"
               >
                 <div className="flex items-center space-x-3 w-full">
                   <Lock className="text-gray-600" />
@@ -417,7 +417,7 @@ export default function Profile() {
       <div className="absolute bottom-5 w-full flex justify-end px-4 py-3">
         <button 
           onClick={handleSubmit} 
-          className="bg-primary text-white w-5/12 p-3 rounded-xl font-bold"
+          className="bg-primary text-white w-5/12 p-3 rounded-3xl font-bold"
         >
           Valider
         </button>

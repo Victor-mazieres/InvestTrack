@@ -1,68 +1,24 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// src/components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs.jsx
+import React, { useContext, useState, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Sector,
-} from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
+import { ActionsContext } from "../Actions/ActionsContext"; // Vérifiez le chemin
 
-// Jeu de données pour les valeurs
-const fullDataValues = [
-  { label: "ENGIE", percentage: 52.75 },
-  { label: "TOTALENERGIES SE", percentage: 23.88 },
-  { label: "CREDIT AGRICOLE S.A.", percentage: 13.24 },
-  { label: "BNP PARIBAS ACTIONS A", percentage: 7.6 },
-  // Vous pouvez en ajouter d'autres si nécessaire
+// Jeu de données statique (fallback) pour les valeurs
+const fullDataValuesStatic = [
+  { label: "ENGIE", percentage: 52.75, amount: 513.9 },
+  { label: "TOTALENERGIES SE", percentage: 23.88, amount: 232.68 },
+  { label: "CREDIT AGRICOLE S.A.", percentage: 13.24, amount: 129.04 },
+  { label: "BNP PARIBAS ACTIONS A", percentage: 7.6, amount: 74.02 },
 ];
 
 // Palette de couleurs pour les valeurs
-const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e"];
+const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e", "#3498db"];
 
-/**
- * Dessine le secteur actif avec un contour et un drop-shadow pour accentuer le focus.
- * (même logique que dans le code "Répartition par secteur")
- */
-function renderActiveShape(props) {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-  return (
-    <g>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        style={{ filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.5))" }}
-      />
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={outerRadius + 4}
-        outerRadius={outerRadius + 8}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill="none"
-        stroke="#333"
-        strokeWidth={2}
-        style={{ filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.5))" }}
-      />
-    </g>
-  );
-}
-
-/**
- * Légende personnalisée affichée en liste sous le donut.
- * Identique au code de la répartition par secteur, 
- * sauf qu'on utilise ici les données de "fullDataValues".
- */
 function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
   return (
-    <ul className="mt-4 w-full">
+    <ul className="mt-4 w-full" onClick={(e) => e.stopPropagation()}>
       {data.map((item, index) => (
         <li
           key={index}
@@ -87,9 +43,47 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
   );
 }
 
-export default function PeaPieValeurs() {
+export default function PeaPieValeurs({ onValueClick }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedValueIndex, setSelectedValueIndex] = useState(null);
+
+  // Récupération des actions depuis le contexte
+  const { actions } = useContext(ActionsContext);
+  const actionsData = useMemo(() => (Array.isArray(actions) ? actions : []), [actions]);
+
+  // Calcul de la valeur totale du portefeuille
+  const totalValue = useMemo(() => {
+    return actionsData.reduce((sum, action) => {
+      const price = action.currentPrice || action.price || 1; // valeur par défaut = 1
+      const quantity = action.quantity || 0;
+      return sum + quantity * price;
+    }, 0);
+  }, [actionsData]);
+
+  // Calcul de la répartition par valeur pour chaque action
+  const dataValues = useMemo(() => {
+    return actionsData.map((action) => {
+      const price = action.currentPrice || action.price || 1;
+      const quantity = action.quantity || 0;
+      const value = quantity * price;
+      return {
+        label: action.name || "Action sans nom",
+        percentage: totalValue ? (value / totalValue) * 100 : 0,
+        amount: value,
+      };
+    });
+  }, [actionsData, totalValue]);
+
+  // Fallback statique si aucune donnée dynamique n'est disponible
+  const displayData =
+    dataValues.length > 0 && totalValue > 0 ? dataValues : fullDataValuesStatic;
+
+  // Fonction de navigation par défaut
+  const defaultValueClick = () => {
+    navigate("/RepartitionCamembertValeurs", { state: { background: location.pathname } });
+  };
+  const handleValueClick = onValueClick || defaultValueClick;
 
   return (
     <div className="min-h-screen bg-light w-full p-6">
@@ -109,55 +103,60 @@ export default function PeaPieValeurs() {
         </h1>
       </div>
 
-      {/* Donut pour Répartition par valeur */}
-      <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-12">
+      {/* Carte Donut pour Répartition par valeur */}
+      <div
+        onClick={handleValueClick}
+        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-12 cursor-pointer"
+      >
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800">Répartition par valeur</h3>
-          <p
-            onClick={(e) => {
-              e.stopPropagation();
-              // Vous pouvez ajouter une fonction au clic si nécessaire
-            }}
-            className="text-sm text-gray-500"
-          >
-            {fullDataValues.length} valeurs sur 5 affichées
+          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-500">
+            {displayData.length} valeur(s)
           </p>
         </div>
-        <div className="w-full h-[300px] mb-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-              <Pie
-                data={fullDataValues}
-                dataKey="percentage"
-                nameKey="label"
-                cx="50%"
-                cy="50%"
-                outerRadius="80%"
-                innerRadius="40%"
-                activeIndex={selectedValueIndex}
-                activeShape={renderActiveShape}
-                onClick={(_, index) => setSelectedValueIndex(index)}
-                isAnimationActive={true}
-                animationDuration={1000}
-                animationEasing="ease-in-out"
-              >
-                {fullDataValues.map((entry, index) => (
-                  <Cell
-                    key={`cell-value-${index}`}
-                    fill={
-                      selectedValueIndex === null || selectedValueIndex === index
-                        ? COLORS_VALUES[index % COLORS_VALUES.length]
-                        : "#e0e0e0"
-                    }
-                    cursor="pointer"
-                  />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="w-full h-[300px] mb-4" onClick={(e) => e.stopPropagation()}>
+          {totalValue > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                <Pie
+                  data={displayData}
+                  dataKey="percentage"
+                  nameKey="label"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius="80%"
+                  innerRadius="40%"
+                  minAngle={5}
+                  activeIndex={selectedValueIndex}
+                  onClick={(_, index) =>
+                    setSelectedValueIndex(selectedValueIndex === index ? null : index)
+                  }
+                  isAnimationActive={true}
+                  animationDuration={1000}
+                  animationEasing="ease-in-out"
+                >
+                  {displayData.map((entry, index) => (
+                    <Cell
+                      key={`cell-value-${index}`}
+                      fill={
+                        selectedValueIndex === null || selectedValueIndex === index
+                          ? COLORS_VALUES[index % COLORS_VALUES.length]
+                          : "#e0e0e0"
+                      }
+                      cursor="pointer"
+                    />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              Aucune donnée disponible
+            </div>
+          )}
         </div>
         <CustomLegendList
-          data={fullDataValues}
+          data={displayData}
           colors={COLORS_VALUES}
           onItemClick={setSelectedValueIndex}
           selectedIndex={selectedValueIndex}

@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { TrendingUp, Trash, ChevronRight, LineChart, PlusCircle } from "lucide-react";
+import { ArrowLeft, TrendingUp, Trash, ChevronRight, LineChart, PlusCircle } from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomSelect from "./CustomSelect";
 import CustomDatePicker from "./CustomDatePicker";
@@ -116,6 +116,16 @@ export default function MoreActions() {
 
   return (
     <div className="w-full p-4 min-h-screen bg-gray-100">
+      {/* Bouton de retour */}
+      <div className="mb-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
+        >
+          <ArrowLeft className="w-6 h-6 text-greenLight" />
+        </button>
+      </div>
+
       {showPopup && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -228,13 +238,12 @@ export default function MoreActions() {
               className="w-full p-3 border rounded-3xl bg-gray-50"
             />
             <CustomSelect
-  name="sector"
-  value={newAction.sector}
-  onChange={(selectedValue) => handleSectorChange(selectedValue)}
-  options={sectorOptions}
-  placeholder="Catégorie"
-/>
-
+              name="sector"
+              value={newAction.sector}
+              onChange={(selectedValue) => handleSectorChange(selectedValue)}
+              options={sectorOptions}
+              placeholder="Catégorie"
+            />
             <input
               type="number"
               name="dividendPrice"

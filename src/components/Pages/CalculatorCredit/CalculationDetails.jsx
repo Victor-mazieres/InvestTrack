@@ -145,16 +145,17 @@ const CalculationDetails = () => {
       </main>
       {/* Pied de page avec boutons */}
       <footer className="flex-none px-4 py-4 bg-white shadow">
-        <div className="flex justify-between">
-          <button onClick={() => navigate(-1)} className="flex items-center space-x-2 bg-blue-500 text-white w-full p-3 rounded-xl font-bold transition">
-            <span>Retour</span>
-            <ChevronRight className="text-white" />
-          </button>
-          <button onClick={downloadPDF} className="flex items-center space-x-2 bg-green-500 text-white w-full p-3 rounded-xl font-bold transition ml-4">
-            <span>PDF</span>
-            <ChevronRight className="text-white" />
-          </button>
-        </div>
+      <div >
+      <div className="flex justify-end">
+        <button
+          onClick={downloadPDF}
+          className="flex items-center space-x-2 bg-greenLight text-white w-1/2 p-3 rounded-xl font-bold transition"
+        >
+          <span>PDF</span>
+          <ChevronRight className="text-white" />
+        </button>
+      </div>
+</div>
       </footer>
     </div>
   );

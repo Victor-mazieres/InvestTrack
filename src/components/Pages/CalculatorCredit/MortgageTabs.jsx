@@ -29,9 +29,9 @@ export default function MortgageTabs() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       {/* Conteneur principal */}
-      <div className="max-w-xl mx-auto bg-white shadow-lg rounded-2xl overflow-hidden">
+      <div className="max-w-xl mx-auto overflow-hidden ">
         {/* Barre d’onglets */}
         <div className="flex border-b border-gray-200">
           <button
