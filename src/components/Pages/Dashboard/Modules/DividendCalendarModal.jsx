@@ -4,18 +4,30 @@ import DividendCalendar from "./DividendCalendar";
 
 export default function DividendCalendarModal({ dividends, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black bg-opacity-60">
-      <div className="relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end backdrop-blur-sm bg-black bg-opacity-60">
+      <style>
+        {`
+          @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+          }
+          .animate-slide-up {
+            animation: slide-up 0.3s ease-out forwards;
+          }
+        `}
+      </style>
+      <div className="w-full h-3/4 bg-white rounded-t-3xl overflow-hidden shadow-2xl animate-slide-up">
         {/* Bouton de fermeture */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-300 hover:text-white transition z-10"
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 transition z-10"
         >
           <span className="sr-only">Fermer</span>
           &#x2715;
         </button>
-        <div className="bg-[#1f2b36] p-6">
-          <h2 className="text-2xl font-bold text-white text-center mb-4">
+        <div className="p-6 h-full overflow-y-auto">
+          {/* Ajout d'une marge supérieure pour baisser le texte */}
+          <h2 className="mt-6 text-2xl font-bold text-primary text-center mb-4">
             Calendrier des Dividendes
           </h2>
           <DividendCalendar dividends={dividends} />

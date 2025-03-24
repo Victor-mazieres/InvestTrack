@@ -18,6 +18,7 @@ import { AnimatePresence } from "framer-motion";
 // Import des composants
 import TotalActions from "./Modules/TotalActions";
 import NextDividend from "./Modules/NextDividend";
+import DividendCalendar from "./Modules/DividendCalendar";
 import DividendCalendarModal from "./Modules/DividendCalendarModal";
 import EmailVerificationModal from "../ConnexionPage/EmailVerificationModal";
 
@@ -41,49 +42,38 @@ const dataImmo = [
 
 const COLORS = ["#2e8e97", "#bdced3", "#d2dde1"];
 
+// Hook personnalisé pour obtenir la largeur de la fenêtre
+function useWindowWidth() {
+  const [width, setWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  return width;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth < 768; // seuil pour mobile
 
-  // États du profil utilisateur
+  // Gestion de la vérification d'e-mail via modal
   const [showEmailVerification, setShowEmailVerification] = useState(false);
-  const [country, setCountry] = useState("France");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
+  const handleVerified = () => {
+    localStorage.setItem("emailVerified", "true");
+    setShowEmailVerification(false);
+  };
 
-  // Récupération du contexte d'actions
-  const { actions, fetchActions } = useContext(ActionsContext);
-
-  // État pour l'ouverture de la modale du calendrier
+  // État pour l'ouverture de la modale du calendrier (sur mobile)
   const [modalOpen, setModalOpen] = useState(false);
-  // État pour les événements de dividendes (format { date: Date, amount: Number })
+  // État pour les événements de dividendes : { date: Date, amount: Number, name: String }
   const [dividendEvents, setDividendEvents] = useState([]);
 
-  // Charger le profil utilisateur
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/connexion");
-      return;
-    }
-    fetch("http://localhost:5000/auth/profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setUsername(data.username || "");
-        setCountry(data.country || "France");
-        setAddress(data.address || "");
-        setCity(data.city || "");
-        setPostalCode(data.postalCode || "");
-        setEmail(data.email || "");
-      })
-      .catch((err) => console.error("Erreur de chargement du profil :", err));
-  }, [navigate]);
+  // Utilisation du contexte pour récupérer les actions
+  const { actions, fetchActions } = useContext(ActionsContext);
 
-  // Vérification de l'email
+  // Vérifier si un email a déjà été validé
   useEffect(() => {
     const verified = localStorage.getItem("emailVerified");
     if (verified !== "true") {
@@ -91,46 +81,49 @@ export default function Dashboard() {
     }
   }, []);
 
-  const handleVerified = () => {
-    localStorage.setItem("emailVerified", "true");
-    setShowEmailVerification(false);
-  };
-
-  // Charger les actions si elles ne sont pas déjà chargées
+  // Charger les actions si elles ne sont pas déjà présentes
   useEffect(() => {
     if (actions.length === 0) {
       fetchActions();
     }
   }, [actions, fetchActions]);
 
-  // Extraction et fusion des dividendes à partir de chaque action
+  // Préparation des données pour les dividendes
   useEffect(() => {
     if (actions.length > 0) {
       let events = [];
       actions.forEach((action) => {
+        // Déterminer le nombre total d'actions (via l'historique ou la propriété 'quantity')
+        const totalQuantity =
+          action.history && action.history.length > 0
+            ? action.history.reduce((sum, a) => sum + a.quantity, 0)
+            : action.quantity || 1;
+        // Extraction depuis l'historique des dividendes
         if (action.dividendsHistory && Array.isArray(action.dividendsHistory)) {
           action.dividendsHistory.forEach((div) => {
             if (div.date && div.amount) {
               const d = new Date(div.date);
-              // Normaliser la date (ignorer l'heure)
               const normalizedDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-              events.push({ date: normalizedDate, amount: Number(div.amount) });
+              events.push({
+                date: normalizedDate,
+                amount: Number(div.amount) * totalQuantity,
+                name: action.name,
+              });
             }
           });
         }
-      });
-      // Fusionner les événements ayant la même date (additionner les montants)
-      const merged = {};
-      events.forEach((ev) => {
-        const key = ev.date.getTime();
-        if (merged[key]) {
-          merged[key].amount += ev.amount;
-        } else {
-          merged[key] = { date: ev.date, amount: ev.amount };
+        // Extraction du dividende principal défini dans la fiche de détail
+        if (action.dividendDate && action.dividendPrice) {
+          const d = new Date(action.dividendDate);
+          const normalizedDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+          events.push({
+            date: normalizedDate,
+            amount: Number(action.dividendPrice) * totalQuantity,
+            name: action.name,
+          });
         }
       });
-      const mergedEvents = Object.values(merged).sort((a, b) => a.date - b.date);
-      setDividendEvents(mergedEvents);
+      setDividendEvents(events);
     }
   }, [actions]);
 
@@ -139,7 +132,6 @@ export default function Dashboard() {
       {/* Header */}
       <header className="w-full flex justify-between items-center mb-4 px-4">
         <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
-        <div className="w-6"></div>
       </header>
 
       {/* Graphique de performance du PEA */}
@@ -156,29 +148,30 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </div>
 
-      {/* 4 carrés en dessous du graphique */}
+      {/* Grille avec TotalActions, NextDividend et Calendrier Dividende */}
       <div className="w-full mt-6 grid grid-cols-2 gap-4">
-        {/* Carré 1 : TotalActions */}
         <div className="bg-white p-4 rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
           <TotalActions />
         </div>
-        {/* Carré 2 : NextDividend */}
         <div className="bg-white p-4 rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
           <NextDividend />
         </div>
-        {/* Carré 3 : Placeholder */}
-        <div className="bg-white p-4 rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
-          <h3 className="text-md font-semibold text-gray-800">Carré 3</h3>
-          <p className="text-sm text-gray-600">Contenu futur</p>
-        </div>
-        {/* Carré 4 : Ouvre la modale du calendrier des dividendes */}
-        <div
-          className="bg-white p-4 rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer"
-          onClick={() => setModalOpen(true)}
-        >
-          <h3 className="text-md font-semibold text-gray-800">Calendrier dividende</h3>
-          <p className="text-sm text-gray-600">Cliquez pour ouvrir</p>
-        </div>
+        {isMobile ? (
+          // Sur mobile : bouton ouvrant la modale du calendrier
+          <div
+            className="col-span-2 bg-white p-4 rounded-3xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer"
+            onClick={() => setModalOpen(true)}
+          >
+            <h3 className="text-md font-semibold text-gray-800">Calendrier dividende</h3>
+            <p className="text-sm text-gray-600">Cliquez pour ouvrir</p>
+          </div>
+        ) : (
+          // Sur desktop : affichage direct du calendrier
+          <div className="col-span-2 bg-white p-4 rounded-3xl shadow-lg">
+            <h3 className="text-md font-semibold text-gray-800 mb-4">Calendrier dividende</h3>
+            <DividendCalendar dividends={dividendEvents} />
+          </div>
+        )}
       </div>
 
       {/* Graphique de répartition immobilière */}
@@ -206,12 +199,9 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* Modal pour le calendrier des dividendes */}
-      {modalOpen && (
-        <DividendCalendarModal
-          dividends={dividendEvents}
-          onClose={() => setModalOpen(false)}
-        />
+      {/* Modal pour le calendrier des dividendes (affiché uniquement sur mobile) */}
+      {isMobile && modalOpen && (
+        <DividendCalendarModal dividends={dividendEvents} onClose={() => setModalOpen(false)} />
       )}
     </div>
   );

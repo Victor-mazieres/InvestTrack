@@ -2,11 +2,10 @@ import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, TrendingUp, Trash, ChevronRight, LineChart, PlusCircle } from "lucide-react";
-import "react-datepicker/dist/react-datepicker.css";
 import CustomSelect from "./CustomSelect";
-import CustomDatePicker from "./CustomDatePicker";
+import CustomDatePicker from "./CustomDatePickerAddAction/CustomDatePicker";
 import { ActionsContext } from "../Actions/ActionsContext";
-import { sectors } from "../Actions/constants/sectors"; // Ajuste le chemin si nécessaire
+import { sectors } from "../Actions/constants/sectors";
 
 export default function MoreActions() {
   const navigate = useNavigate();
@@ -48,7 +47,6 @@ export default function MoreActions() {
     if (!newAction.name || !newAction.quantity || !newAction.purchasePrice) return;
 
     try {
-      // Créer une entrée initiale dans l'historique
       const initialHistoryEntry = {
         date: new Date().toISOString().slice(0, 10),
         quantity: parseInt(newAction.quantity, 10),
@@ -108,7 +106,6 @@ export default function MoreActions() {
   );
   const bénéficeColor = totalBénéfice >= 0 ? "text-checkgreen" : "text-checkred";
 
-  // Transformation de la liste des secteurs en options pour le dropdown
   const sectorOptions = sectors.map((sector) => ({
     value: sector === "Tous les secteurs" ? "" : sector,
     label: sector,
@@ -116,7 +113,6 @@ export default function MoreActions() {
 
   return (
     <div className="w-full p-4 min-h-screen bg-gray-100">
-      {/* Bouton de retour */}
       <div className="mb-4">
         <button
           onClick={() => navigate(-1)}
@@ -136,6 +132,7 @@ export default function MoreActions() {
           Action ajoutée !
         </motion.div>
       )}
+
       <div className="text-center mb-6">
         <h1 className="text-xl font-bold text-primary flex items-center justify-center">
           <span className="text-xl font-bold text-primary">€ Valorisation totale</span>
@@ -147,6 +144,7 @@ export default function MoreActions() {
             : `${totalBénéfice.toFixed(2)}€`} (bénéfice)
         </p>
       </div>
+
       <div className="flex justify-around bg-white rounded-3xl shadow-md p-2 mb-4 border border-gray-200">
         <button
           onClick={() => setActiveTab("details")}
@@ -165,6 +163,7 @@ export default function MoreActions() {
           Ajouter
         </button>
       </div>
+
       {activeTab === "details" && (
         <div>
           <h2 className="text-lg font-bold text-primary mb-4 flex items-center">
@@ -209,6 +208,7 @@ export default function MoreActions() {
           </ul>
         </div>
       )}
+
       {activeTab === "add" && (
         <div className="p-6 bg-white rounded-3xl shadow-md border border-gray-200">
           <h2 className="text-lg font-bold text-primary mb-4">Ajouter une action</h2>

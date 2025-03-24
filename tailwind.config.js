@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#0a2436",   // Bleu turquoise foncé
+        primary: "#233d4d",   // Bleu turquoise foncé
         secondary: "#0b2237", // Bleu nuit profond
         light: "#ebf1f3",     // Blanc légèrement teinté
         grayBlue: "#bdced3",  // Gris bleuté doux
