@@ -1,7 +1,9 @@
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, Trash } from "lucide-react";
 import { format, parse } from "date-fns";
+import { ActionsContext } from "../ActionsContext"; // Ajustez le chemin si nécessaire
+import CustomSelect from "../CustomSelect"; // Import du CustomSelect
 
 /**
  * Formate une date ISO ("yyyy-MM-dd") en "dd/MM/yyyy".
@@ -12,56 +14,35 @@ function formatIsoDate(dateString) {
   return format(parsed, "dd/MM/yyyy");
 }
 
-// Exemple de données par défaut (si localStorage est vide)
-const fakeActionsDB = [
-  {
-    id: "1",
-    name: "Tesla",
-    history: [
-      { date: "2024-01-10", quantity: 5, price: 800, fees: 3 },
-      { date: "2024-02-12", quantity: 4, price: 850, fees: 4 },
-      { date: "2024-03-15", quantity: 6, price: 900, fees: 5 },
-      { date: "2025-01-10", quantity: 5, price: 780, fees: 2 },
-      { date: "2025-02-12", quantity: 3, price: 820, fees: 1 },
-      { date: "2025-03-15", quantity: 7, price: 910, fees: 3 },
-    ],
-  },
-];
-
 export default function HistoriqueOrderPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  const [action, setAction] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { actions, loading, updateAction } = useContext(ActionsContext);
   const [sortOption, setSortOption] = useState("dateAsc");
 
-  useEffect(() => {
-    let storedActions = JSON.parse(localStorage.getItem("actions"));
-    if (!storedActions || storedActions.length === 0) {
-      storedActions = fakeActionsDB;
-      localStorage.setItem("actions", JSON.stringify(fakeActionsDB));
-    }
-    const foundAction = storedActions.find(
-      (a) => a.id === Number(id) || a.id === id
-    );
-    setAction(foundAction || null);
-    setIsLoaded(true);
-  }, [id]);
+  // Options de tri avec flèches à la place de "asc"/"desc"
+  const sortOptions = [
+    { value: "dateAsc", label: "Date ↑" },
+    { value: "dateDesc", label: "Date ↓" },
+    { value: "priceAsc", label: "Prix ↑" },
+    { value: "priceDesc", label: "Prix ↓" },
+    { value: "quantityAsc", label: "Quantité ↑" },
+    { value: "quantityDesc", label: "Quantité ↓" },
+    { value: "totalAsc", label: "Total ↑" },
+    { value: "totalDesc", label: "Total ↓" },
+  ];
 
-  // Supprimer un achat
-  const deletePurchase = (index) => {
-    if (!action) return;
-    const updatedHistory = action.history.filter((_, i) => i !== index);
-    const updatedAction = { ...action, history: updatedHistory };
-    setAction(updatedAction);
+  // Recherche de l'action dans le contexte
+  const action = actions.find(
+    (a) => a.id === id || a.id === Number(id)
+  );
 
-    let storedActions = JSON.parse(localStorage.getItem("actions")) || [];
-    const updatedActions = storedActions.map((a) =>
-      a.id === action.id ? updatedAction : a
-    );
-    localStorage.setItem("actions", JSON.stringify(updatedActions));
-  };
+  if (loading) {
+    return <p className="text-center text-gray-500">Chargement...</p>;
+  }
+  if (!action) {
+    return <p className="text-center text-red-500">Action non trouvée !</p>;
+  }
 
   // Tri global des achats
   const sortedHistory = useMemo(() => {
@@ -98,18 +79,17 @@ export default function HistoriqueOrderPage() {
     return copy;
   }, [action, sortOption]);
 
-  // Groupement par mois
+  // Groupement des achats par mois
   const groupedHistory = useMemo(() => {
     if (!sortedHistory.length) return [];
     const groups = {};
     sortedHistory.forEach((entry) => {
       const dateObj = new Date(entry.date);
-      // On utilise l'année et le mois (0-11) comme clé
+      // Clé basée sur l'année et le mois
       const key = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
       if (!groups[key]) groups[key] = [];
       groups[key].push(entry);
     });
-    // Préparer les labels pour chaque groupe
     const monthNames = [
       "Janvier",
       "Février",
@@ -136,21 +116,21 @@ export default function HistoriqueOrderPage() {
       else if (key === prevKey) label = "Le mois dernier";
       return { key, label, entries };
     });
-    // Trier les groupes par ordre décroissant (le plus récent en premier)
     grouped.sort((a, b) => {
       const [yearA, monthA] = a.key.split("-").map(Number);
       const [yearB, monthB] = b.key.split("-").map(Number);
-      return (yearB - yearA) || (monthB - monthA);
+      return yearB - yearA || monthB - monthA;
     });
     return grouped;
   }, [sortedHistory]);
 
-  if (!isLoaded) {
-    return <p className="text-center text-gray-500">Chargement...</p>;
-  }
-  if (!action) {
-    return <p className="text-center text-red-500">Action non trouvée !</p>;
-  }
+  // Supprimer un achat via le contexte
+  const deletePurchase = (index) => {
+    if (!action) return;
+    const updatedHistory = action.history.filter((_, i) => i !== index);
+    const updatedAction = { ...action, history: updatedHistory };
+    updateAction(action.id, updatedAction);
+  };
 
   return (
     <div className="p-4 min-h-screen bg-gray-50">
@@ -170,24 +150,22 @@ export default function HistoriqueOrderPage() {
         <span className="text-greenLight inline-block">{action.name}</span>
       </h1>
 
-
-      {/* Sélecteur de tri */}
+      {/* Sélecteur de tri avec CustomSelect */}
       <div className="mb-4 flex items-center space-x-2">
         <label className="text-gray-600 text-sm font-medium">Trier par :</label>
-        <select
-          value={sortOption}
-          onChange={(e) => setSortOption(e.target.value)}
-          className="border rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:border-teal-500"
-        >
-          <option value="dateAsc">Date (asc)</option>
-          <option value="dateDesc">Date (desc)</option>
-          <option value="priceAsc">Prix unitaire (asc)</option>
-          <option value="priceDesc">Prix unitaire (desc)</option>
-          <option value="quantityAsc">Quantité (asc)</option>
-          <option value="quantityDesc">Quantité (desc)</option>
-          <option value="totalAsc">Total (asc)</option>
-          <option value="totalDesc">Total (desc)</option>
-        </select>
+        {/* Le conteneur du bouton reste à moitié largeur */}
+        <div className="w-1/2">
+          <CustomSelect
+            name="sortOption"
+            value={sortOption}
+            onChange={setSortOption}
+            options={sortOptions}
+            placeholder="Trier par"
+            className="p-2 text-sm w-half"
+            // Ici, on rend le dropdown plus large que le bouton (par exemple, w-80)
+            dropdownClassName="w-full"
+          />
+        </div>
       </div>
 
       {/* Affichage groupé par mois */}
@@ -195,16 +173,20 @@ export default function HistoriqueOrderPage() {
         <div className="space-y-6">
           {groupedHistory.map((group) => (
             <div key={group.key}>
-              <h2 className="text-xl font-bold text-gray-800 mb-4">{group.label}</h2>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">
+                {group.label}
+              </h2>
               <div className="space-y-3">
                 {group.entries.map((entry, index) => {
                   const total = entry.quantity * entry.price + entry.fees;
                   const average =
-                    entry.quantity > 0 ? (total / entry.quantity).toFixed(2) : "0.00";
+                    entry.quantity > 0
+                      ? (total / entry.quantity).toFixed(2)
+                      : "0.00";
                   return (
                     <div
                       key={index}
-                      className="bg-white border-l-4 border-greenLight shadow-sm rounded p-2 text-sm flex flex-col gap-1"
+                      className="bg-white border-l-4 border-greenLight shadow-xl rounded-3xl p-4 text-sm flex flex-col gap-1"
                     >
                       {/* Ligne supérieure : date + bouton suppression */}
                       <div className="flex items-center justify-between">
@@ -221,13 +203,16 @@ export default function HistoriqueOrderPage() {
                       {/* Infos principales */}
                       <div className="text-gray-700 flex flex-wrap gap-2">
                         <p>
-                          <span className="font-semibold">Quantité :</span> {entry.quantity}
+                          <span className="font-semibold">Quantité :</span>{" "}
+                          {entry.quantity}
                         </p>
                         <p>
-                          <span className="font-semibold">Prix unitaire :</span> {entry.price}€
+                          <span className="font-semibold">Prix unitaire :</span>{" "}
+                          {entry.price}€
                         </p>
                         <p>
-                          <span className="font-semibold">Frais :</span> {entry.fees}€
+                          <span className="font-semibold">Frais :</span>{" "}
+                          {entry.fees}€
                         </p>
                       </div>
                       {/* Montants calculés */}
@@ -240,7 +225,9 @@ export default function HistoriqueOrderPage() {
                         </p>
                         <p>
                           <span className="font-semibold">Prix moyen :</span>{" "}
-                          <span className="text-teal-700 font-bold">{average}€</span>
+                          <span className="text-teal-700 font-bold">
+                            {average}€
+                          </span>
                         </p>
                       </div>
                     </div>

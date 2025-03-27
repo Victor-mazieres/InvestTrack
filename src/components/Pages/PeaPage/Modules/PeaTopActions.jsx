@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useContext } from "react";
+import { useState, useContext, useMemo } from "react";
 import {
   ChevronUp,
   ChevronDown,
@@ -9,22 +9,100 @@ import {
   ChevronRight,
   Minus,
   Filter,
-  LineChart,
-  PlusCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CustomSelect from "./Actions/CustomSelect";
 import { ActionsContext } from "./Actions/ActionsContext";
 
+// Composant extrait pour la modale de filtres
+function FiltersModal({
+  searchTerm,
+  setSearchTerm,
+  minQuantity,
+  setMinQuantity,
+  selectedSector,
+  setSelectedSector,
+  performanceFilter,
+  setPerformanceFilter,
+  onClose,
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 50 }}
+        animate={{ y: 0 }}
+        exit={{ y: 50 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl shadow-lg p-6 w-4/5 max-w-md relative"
+      >
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-600 hover:text-primary">
+          <X className="w-5 h-5" />
+        </button>
+        <h3 className="text-lg font-bold text-primary mb-4">Filtres</h3>
+        <input
+          type="text"
+          placeholder="Rechercher une action..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 border rounded-3xl mb-3"
+        />
+        <input
+          type="number"
+          placeholder="Min quantité"
+          value={minQuantity}
+          onChange={(e) => setMinQuantity(e.target.value)}
+          className="w-full p-2 border rounded-3xl mb-3"
+        />
+        <div className="mb-3">
+          <CustomSelect
+            name="selectedSector"
+            value={selectedSector}
+            onChange={(e) => setSelectedSector(e.target.value)}
+            options={[
+              { value: "", label: "Tous les secteurs" },
+              { value: "Tech", label: "Tech" },
+              { value: "E-commerce", label: "E-commerce" },
+              { value: "Finance", label: "Finance" },
+            ]}
+            placeholder="Secteur"
+          />
+        </div>
+        <CustomSelect
+          name="performanceFilter"
+          value={performanceFilter}
+          onChange={(e) => setPerformanceFilter(e.target.value)}
+          options={[
+            { value: "", label: "Toutes les variations", icon: <Filter className="w-4 h-4 text-gray-600" /> },
+            { value: "Hausses", label: "Hausses", icon: <ChevronUp className="w-4 h-4 text-checkgreen" /> },
+            { value: "Baisses", label: "Baisses", icon: <ChevronDown className="w-4 h-4 text-checkred" /> },
+            { value: "Stable", label: "Stable", icon: <Minus className="w-4 h-4 text-gray-600" /> },
+          ]}
+          placeholder="Performance"
+        />
+        <button
+          onClick={onClose}
+          className="w-full bg-greenLight text-white p-2 rounded-3xl hover:bg-greenLight transition mt-4"
+        >
+          Appliquer
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function PeaTopActions() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Récupère les actions depuis le contexte
   const { actions } = useContext(ActionsContext);
-  // Assure-toi que "actions" est bien un tableau
   const actionsData = Array.isArray(actions) ? actions : [];
 
+  // États locaux
   const [displayMode, setDisplayMode] = useState("percent");
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,31 +110,24 @@ export default function PeaTopActions() {
   const [selectedSector, setSelectedSector] = useState("");
   const [performanceFilter, setPerformanceFilter] = useState("");
 
-  // Filtrer les actions selon les critères
-  const filteredActions = actionsData
-    .filter((action) => action.name !== undefined)
-    .filter((action) =>
-      action.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter((action) =>
-      minQuantity ? action.quantity >= parseInt(minQuantity, 10) : true
-    )
-    .filter((action) =>
-      selectedSector ? action.sector === selectedSector : true
-    )
-    .filter((action) => {
-      // Utilisation d'une valeur par défaut pour change
+  // Utilisation de useMemo pour recalculer uniquement si un des critères change
+  const filteredActions = useMemo(() => {
+    return actionsData.filter((action) => {
+      if (!action.name) return false;
+      if (!action.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      if (minQuantity && action.quantity < parseInt(minQuantity, 10)) return false;
+      if (selectedSector && action.sector !== selectedSector) return false;
       const change = action.change ?? 0;
-      if (performanceFilter === "Hausses") return change > 0;
-      if (performanceFilter === "Baisses") return change < 0;
-      if (performanceFilter === "Stable") return change === 0;
+      if (performanceFilter === "Hausses" && change <= 0) return false;
+      if (performanceFilter === "Baisses" && change >= 0) return false;
+      if (performanceFilter === "Stable" && change !== 0) return false;
       return true;
-    })
-    .slice(0, 5);
+    }).slice(0, 5);
+  }, [actionsData, searchTerm, minQuantity, selectedSector, performanceFilter]);
 
   return (
     <div className="w-full p-4 relative">
-      {/* Titre avec icône et engrenage */}
+      {/* En-tête */}
       <div className="flex items-center justify-between p-3 bg-white rounded-3xl shadow-lg">
         <h2 className="text-lg font-bold text-primary flex items-center">
           <TrendingUp className="w-5 h-5 mr-2 ml-2 text-primary" /> Top 5 Actions
@@ -69,20 +140,16 @@ export default function PeaTopActions() {
       {/* Liste des actions */}
       <ul className="space-y-4 mt-3 relative">
         {filteredActions.map((action) => {
-          // Utilisation de valeurs par défaut pour les propriétés
           const change = action.change ?? 0;
           const currentPrice = action.currentPrice ?? 0;
           const price = action.price ?? 0;
           const quantity = action.quantity ?? 0;
-
           return (
             <motion.li
               key={action.id}
               className="flex items-center justify-between p-3 rounded-3xl shadow-sm transition-all duration-300 cursor-pointer hover:bg-gray-100"
               whileHover={{ scale: 1.02 }}
-              onClick={() =>
-                navigate(`/DetailPage/${action.id}`, { state: { background: location } })
-              }
+              onClick={() => navigate(`/DetailPage/${action.id}`, { state: { background: location } })}
             >
               <div>
                 <p className="text-primary font-medium">{action.name}</p>
@@ -100,11 +167,7 @@ export default function PeaTopActions() {
                       change > 0 ? "text-checkgreen" : "text-checkred"
                     }`}
                   >
-                    {change > 0 ? (
-                      <ChevronUp className="w-4 h-4 mr-1" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 mr-1" />
-                    )}
+                    {change > 0 ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
                     {displayMode === "percent"
                       ? `${change.toFixed(1)}%`
                       : `${((currentPrice - price) * quantity).toFixed(2)}€`}
@@ -117,93 +180,27 @@ export default function PeaTopActions() {
         })}
       </ul>
 
-      {/* Bouton Voir Plus */}
+      {/* Bouton Voir plus */}
       <div className="relative mt-4 flex justify-center">
         <button onClick={() => navigate("/MoreActions")} className="text-greenLight font-semibold hover:text-secondary transition text-base">
           Voir plus →
         </button>
       </div>
 
-      {/* Fenêtre pop-up des filtres */}
+      {/* Affichage conditionnel de la modale des filtres */}
       <AnimatePresence>
         {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-            onClick={() => setShowFilters(false)}
-          >
-            <motion.div
-              initial={{ y: 50 }}
-              animate={{ y: 0 }}
-              exit={{ y: 50 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl shadow-lg p-6 w-4/5 max-w-md relative"
-            >
-              {/* Bouton de fermeture */}
-              <button onClick={() => setShowFilters(false)} className="absolute top-3 right-3 text-gray-600 hover:text-primary">
-                <X className="w-5 h-5" />
-              </button>
-
-              <h3 className="text-lg font-bold text-primary mb-4">Filtres</h3>
-
-              {/* Filtre par nom */}
-              <input
-                type="text"
-                placeholder="Rechercher une action..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-2 border rounded-3xl mb-3"
-              />
-
-              {/* Filtre par quantité */}
-              <input
-                type="number"
-                placeholder="Min quantité"
-                value={minQuantity}
-                onChange={(e) => setMinQuantity(e.target.value)}
-                className="w-full p-2 border rounded-3xl mb-3"
-              />
-
-              {/* Filtre par secteur */}
-              <div className="mb-3">
-                <CustomSelect
-                  name="selectedSector"
-                  value={selectedSector}
-                  onChange={(e) => setSelectedSector(e.target.value)}
-                  options={[
-                    { value: "", label: "Tous les secteurs" },
-                    { value: "Tech", label: "Tech" },
-                    { value: "E-commerce", label: "E-commerce" },
-                    { value: "Finance", label: "Finance" },
-                  ]}
-                  placeholder="Secteur"
-                />
-              </div>
-
-              {/* Filtre par performance */}
-              <CustomSelect
-                name="performanceFilter"
-                value={performanceFilter}
-                onChange={(e) => setPerformanceFilter(e.target.value)}
-                options={[
-                  { value: "", label: "Toutes les variations", icon: <Filter className="w-4 h-4 text-gray-600" /> },
-                  { value: "Hausses", label: "Hausses", icon: <ChevronUp className="w-4 h-4 text-checkgreen" /> },
-                  { value: "Baisses", label: "Baisses", icon: <ChevronDown className="w-4 h-4 text-checkred" /> },
-                  { value: "Stable", label: "Stable", icon: <Minus className="w-4 h-4 text-gray-600" /> },
-                ]}
-                placeholder="Performance"
-              />
-
-              <button
-                onClick={() => setShowFilters(false)}
-                className="w-full bg-greenLight text-white p-2 rounded-3xl hover:bg-greenLight transition mt-4"
-              >
-                Appliquer
-              </button>
-            </motion.div>
-          </motion.div>
+          <FiltersModal
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            minQuantity={minQuantity}
+            setMinQuantity={setMinQuantity}
+            selectedSector={selectedSector}
+            setSelectedSector={setSelectedSector}
+            performanceFilter={performanceFilter}
+            setPerformanceFilter={setPerformanceFilter}
+            onClose={() => setShowFilters(false)}
+          />
         )}
       </AnimatePresence>
     </div>

@@ -43,7 +43,7 @@ export default function NextDividend() {
       <h3 className="text-md font-semibold text-primary">
         Prochain dividende
       </h3>
-      <p className="text-2xl font-bold text-greenLight">
+      <p className="text-xl font-bold text-greenLight">
         {format(nextDividend, "dd/MM/yyyy")}
       </p>
     </div>

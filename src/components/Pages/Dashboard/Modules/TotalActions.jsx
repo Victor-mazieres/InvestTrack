@@ -22,7 +22,7 @@ export default function TotalActions() {
     return (
       <div >
         <h3 className="text-md font-semibold text-primary">Total d'actions</h3>
-        <p className="text-2xl font-bold text-greenLight">{totalShares}</p>
+        <p className="text-xl font-bold text-greenLight">{totalShares}</p>
       </div>
     );
   }

@@ -26,7 +26,7 @@ import RegisterPage from "./components/Pages/ConnexionPage/RegisterPage/Register
 // Lazy Loading pour les modales (optimisation)
 const DetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DetailPage"));
 const DividendeDetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DividendeDetailPage"));
-const HistoriqueOrderPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/HistoriqueOrderPage"));
+const HistoriqueOrderPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/HistoriqueOrderPage"));
 const CalculatorCredit = lazy(() => import("./components/Pages/CalculatorCredit/CalculatorCredit"));
 const PeaPie = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPie"));
 const PeaBarsSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsSecteurs"));
@@ -36,6 +36,7 @@ const PeaPieValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Port
 const SavedCalculations = lazy(() => import("./components/Pages/CalculatorCredit/SavedCalculations"));
 const CalculationDetails = lazy(() => import("./components/Pages/CalculatorCredit/CalculationDetails"));
 const MortgageTabs  = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
+const DividendHistoryPage  = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/DividendHistoryPage"));
 
 // Import du contexte pour les actions
 import { ActionsProvider } from "./components/Pages/PeaPage/Modules/Actions/ActionsContext";
@@ -132,6 +133,15 @@ function AppContent() {
                   </ModalWrapper>
                 }
               />
+              <Route
+                path="/HistoriqueDividendePage/:id"
+                element={
+                  <ModalWrapper onClose={() => navigate(-1)}>
+                    <DividendHistoryPage />
+                  </ModalWrapper>
+                }
+              />
+
             </Routes>
           </Suspense>
         </AnimatePresence>
@@ -195,7 +205,6 @@ function MainContent({ location }) {
             <Route path="/calculimmobilier" element={<SavedCalculations />} />
             <Route path="/calculimmobilier/:timestamp" element={<SavedCalculations />} />
             <Route path="/detailscalcul/:id" element={<CalculationDetails />} />
-            {/* Nouvelle route pour DetailPage */}
             <Route path="/DetailPage/:id" element={<DetailPage />} />
           </Routes>
         </motion.div>
@@ -217,7 +226,7 @@ function ModalWrapper({ children, onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg shadow-lg"
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-lg"
         style={{ height: "99vh" }}
         initial={{ y: "100%" }}
         animate={{ y: "1%" }}

@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const CustomSelect = ({ name, value, onChange, options, placeholder = "Catégorie" }) => {
+const CustomSelect = ({
+  name,
+  value,
+  onChange,
+  options,
+  placeholder = "Catégorie",
+  className = "",
+  dropdownClassName = "" // Nouveau prop pour personnaliser le dropdown
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -35,7 +43,7 @@ const CustomSelect = ({ name, value, onChange, options, placeholder = "Catégori
       <button
         type="button"
         onClick={toggleOpen}
-        className="w-full p-3 border rounded-3xl bg-gray-50 flex justify-between items-center focus:outline-none"
+        className={`w-full p-3 border rounded-3xl bg-gray-50 flex justify-between items-center focus:outline-none ${className}`}
       >
         <span>{selectedLabel || placeholder}</span>
         <svg className="w-4 h-4 ml-2 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -45,7 +53,10 @@ const CustomSelect = ({ name, value, onChange, options, placeholder = "Catégori
 
       {/* Liste des options avec scroll */}
       {isOpen && (
-        <div className="absolute mt-1 w-full bg-white border rounded-3xl shadow-lg z-10 overflow-y-auto" style={{ maxHeight: "200px" }}>
+        <div
+          className={`absolute mt-1 bg-white border rounded-3xl shadow-lg z-10 overflow-y-auto ${dropdownClassName}`}
+          style={{ maxHeight: "200px" }}
+        >
           {options.map((option) => (
             <div
               key={option.value}
