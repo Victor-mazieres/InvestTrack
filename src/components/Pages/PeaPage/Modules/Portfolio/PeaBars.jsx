@@ -3,7 +3,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronUp, ChevronDown } from "lucide-react";
-import { ActionsContext } from "../Actions/ActionsContext"; // Adaptez le chemin selon votre structure
+import { ActionsContext } from "../Reutilisable/ActionsContext"; // Adaptez le chemin selon votre structure
 
 export default function PeaBars({ onSectorClick, onValueClick }) {
   const navigate = useNavigate();

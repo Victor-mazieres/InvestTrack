@@ -9,11 +9,12 @@ import {
   LineChart,
   PlusCircle,
 } from "lucide-react";
-import CustomSelect from "./CustomSelect";
+import CustomSelect from "../Reutilisable/CustomSelect";
 import CustomDatePicker from "./CustomDatePickerAddAction/CustomDatePicker";
 import ActionAutoComplete from "./ActionAutoComplete";
-import { ActionsContext } from "../Actions/ActionsContext";
+import { ActionsContext } from "../Reutilisable/ActionsContext";
 import { sectors } from "../Actions/constants/sectors";
+import FloatingLabelInput from "../Reutilisable/FloatingLabelInput";
 
 const sectorOptions = sectors.map((sector) => ({
   value: sector === "Tous les secteurs" ? "" : sector,
@@ -245,25 +246,34 @@ export default function MoreActions() {
         <div className="p-6 bg-white rounded-3xl shadow-md border border-gray-200">
           <h2 className="text-lg font-bold text-primary mb-4">Ajouter une action</h2>
           <div className="space-y-3">
-            <ActionAutoComplete onSelect={handleSelectAction} />
-
-            <input
-              type="number"
+            <FloatingLabelInput
+              label="Nom de l'action"
+              name="name"
+              value={newAction.name}
+              onChange={handleInputChange}
+            />
+            <FloatingLabelInput
+              label="Quantité"
               name="quantity"
-              placeholder="Quantité"
+              type="number"
               value={newAction.quantity}
               onChange={handleInputChange}
-              className="w-full p-3 border rounded-3xl bg-gray-50"
             />
-            <input
-              type="number"
+            <FloatingLabelInput
+              label="Prix d'achat (€)"
               name="purchasePrice"
-              placeholder="Prix d'achat (€)"
+              type="number"
               value={newAction.purchasePrice}
               onChange={handleInputChange}
-              className="w-full p-3 border rounded-3xl bg-gray-50"
             />
-            
+            <FloatingLabelInput
+              label="Dividende (€)"
+              name="dividendPrice"
+              type="number"
+              value={newAction.dividendPrice}
+              onChange={handleInputChange}
+            />
+
             {newAction.isSectorAutoFilled ? (
               <div className="relative">
                 <input
@@ -295,14 +305,6 @@ export default function MoreActions() {
               />
             )}
 
-            <input
-              type="number"
-              name="dividendPrice"
-              placeholder="Dividende (€)"
-              value={newAction.dividendPrice}
-              onChange={handleInputChange}
-              className="w-full p-3 border rounded-3xl bg-gray-50"
-            />
             <div className="w-full">
               <CustomDatePicker
                 selected={newAction.dividendDate}
@@ -314,7 +316,7 @@ export default function MoreActions() {
             <motion.button
               onClick={handleAddAction}
               whileTap={{ scale: 0.95 }}
-              className="w-full bg-greenLight text-white p-3 rounded-3xl hover:bg-greenLight transition flex items-center justify-center"
+              className="w-full bg-primary text-white p-3 rounded-3xl hover:bg-greenLight transition flex items-center justify-center"
             >
               <PlusCircle className="w-5 h-5 mr-2" /> Ajouter l'action
             </motion.button>

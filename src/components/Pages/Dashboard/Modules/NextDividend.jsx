@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { ActionsContext } from "../../PeaPage/Modules/Actions/ActionsContext"; // Vérifiez le chemin
+import { ActionsContext } from "../../PeaPage/Modules/Reutilisable/ActionsContext"; // Vérifiez le chemin
 import { format } from "date-fns";
 
 export default function NextDividend() {

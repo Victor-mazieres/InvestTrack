@@ -9,16 +9,6 @@ export default function FloatingMenu() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const toggleMenu = () => {
-    // Si le menu est ouvert et que l'on clique pour le fermer,
-    // réinitialiser l'état hover afin que le bouton revienne à 50%
-    if (isOpen) {
-      setIsHovered(false);
-    }
-    setIsOpen(!isOpen);
-  };
-
-  // Fermer le menu en cliquant à l'extérieur
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isOpen && !event.target.closest(".floating-menu-container")) {
@@ -26,14 +16,23 @@ export default function FloatingMenu() {
         setIsHovered(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  // Positions des bulles pour un bon équilibre
+  const toggleMenu = () => {
+    if (isOpen) setIsHovered(false);
+    setIsOpen(!isOpen);
+  };
+
+  const errorPages = ["/401", "/500"];
+  const isErrorPage =
+    errorPages.includes(location.pathname) ||
+    location.state?.error404 ||
+    location.pathname === "/404";
+
+  if (isErrorPage) return null;
+
   const bubbles = [
     { icon: <Home size={24} />, path: "/dashboard", x: -100, y: -40 },
     { icon: <LineChart size={24} />, path: "/pea", x: -75, y: -115 },
@@ -84,7 +83,6 @@ export default function FloatingMenu() {
             </motion.button>
           ))}
 
-        {/* Bouton central */}
         <button
           onClick={toggleMenu}
           onMouseEnter={() => setIsHovered(true)}

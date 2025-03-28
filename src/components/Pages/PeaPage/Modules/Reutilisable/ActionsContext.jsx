@@ -21,7 +21,7 @@ export function ActionsProvider({ children }) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        navigate("/login");
+        navigate("/connexion");
         return;
       }
       const res = await axios.get(`${API_URL}/api/actions`, {
@@ -47,7 +47,7 @@ export function ActionsProvider({ children }) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        navigate("/login");
+        navigate("/connexion");
         return;
       }
       const res = await axios.post(`${API_URL}/api/actions`, newActionData, {
@@ -64,7 +64,7 @@ export function ActionsProvider({ children }) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        navigate("/login");
+        navigate("/connexion");
         return;
       }
       const res = await axios.put(`${API_URL}/api/actions/${id}`, updatedData, {
@@ -80,7 +80,7 @@ export function ActionsProvider({ children }) {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        navigate("/login");
+        navigate("/connexion");
         return;
       }
       await axios.delete(`${API_URL}/api/actions/${id}`, {

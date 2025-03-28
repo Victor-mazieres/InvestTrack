@@ -11,8 +11,8 @@ import {
   Filter,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import CustomSelect from "./Actions/CustomSelect";
-import { ActionsContext } from "./Actions/ActionsContext";
+import CustomSelect from "./Reutilisable/CustomSelect";
+import { ActionsContext } from "./Reutilisable/ActionsContext";
 
 // Composant extrait pour la modale de filtres
 function FiltersModal({

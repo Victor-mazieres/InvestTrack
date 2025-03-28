@@ -1,7 +1,7 @@
 import React, { useContext, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { ActionsContext } from "../Actions/ActionsContext";
+import { ActionsContext } from "../Reutilisable/ActionsContext";
 
 // Composant de légende personnalisée affichée sous le PieChart.
 function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {

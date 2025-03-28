@@ -12,7 +12,7 @@ import {
 import PeaActionChart from "../Actions/PeaActionChart";
 import CustomDatePicker from "../Actions/CustomDatePickerAddAction/CustomDatePicker"; // Import du CustomDatePicker
 import { format, parse } from "date-fns";
-import { ActionsContext } from "./ActionsContext";
+import { ActionsContext } from "../Reutilisable/ActionsContext";
 
 // Formate une date ISO en "dd/MM/yyyy"
 function formatIsoDate(dateString) {

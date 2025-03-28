@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { ActionsContext } from "../../PeaPage/Modules/Actions/ActionsContext";
+import { ActionsContext } from "../../PeaPage/Modules/Reutilisable/ActionsContext";
 
 export default function TotalActions() {
     const { actions, loading, fetchActions } = useContext(ActionsContext);

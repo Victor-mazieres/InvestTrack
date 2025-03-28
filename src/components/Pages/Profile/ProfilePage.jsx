@@ -121,17 +121,16 @@ export default function ProfilePage() {
       </div>
 
       {/* Bouton de déconnexion */}
-      <div className="mt-auto flex-none px-4 py-3 mb-24">
+      <div className="mt-auto px-4 py-3 mb-24 flex justify-end">
         <button
           onClick={handleLogout}
-          className="bg-checkred text-white w-full p-3 rounded-3xl font-bold hover:bg-red-600 transition"
+          className="bg-checkred text-white px-8 py-3 rounded-3xl font-semibold hover:bg-checkred transition flex items-center space-x-2 shadow-xl"
         >
-          <div className="flex items-center justify-center space-x-2">
-            <LogOut className="w-5 h-5" />
-            <span>Se déconnecter</span>
-          </div>
+          <LogOut className="w-5 h-5" />
+          <span>Se déconnecter</span>
         </button>
       </div>
+
     </div>
   );
 }

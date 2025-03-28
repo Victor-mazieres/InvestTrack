@@ -38,24 +38,25 @@ const CalculationDetails = lazy(() => import("./components/Pages/CalculatorCredi
 const MortgageTabs  = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
 const DividendHistoryPage  = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/DividendHistoryPage"));
 
+// Pages d'erreurs
+import NotFoundPage from "./components/Pages/Errors/NotFoundPage";
+import UnauthorizedPage from "./components/Pages/Errors/UnauthorizedPage";
+import InternalServerError from "./components/Pages/Errors/InternalServerError";
+
 // Import du contexte pour les actions
-import { ActionsProvider } from "./components/Pages/PeaPage/Modules/Actions/ActionsContext";
+import { ActionsProvider } from "./components/Pages/PeaPage/Modules/Reutilisable/ActionsContext";
 
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Si location.state.background existe, cela signifie qu'une modal est ouverte
-  // et que l'on souhaite conserver l'affichage du contenu principal (ex. la page Pea).
   const background = location.state?.background;
   const hideNav = location.pathname === "/connexion" || location.pathname === "/inscription";
 
   return (
     <>
-      {/* Toujours afficher le contenu principal en utilisant la location de background si présente */}
       <MainContent location={background || location} />
 
-      {/* Affichage des modales uniquement si un background est défini */}
       {background && (
         <AnimatePresence>
           <Suspense fallback={<div>Chargement...</div>}>
@@ -68,7 +69,6 @@ function AppContent() {
                   </ModalWrapper>
                 }
               />
-              {/* Autres routes de modale... */}
               <Route
                 path="/HistoriqueOrderPage/:id"
                 element={
@@ -141,13 +141,11 @@ function AppContent() {
                   </ModalWrapper>
                 }
               />
-
             </Routes>
           </Suspense>
         </AnimatePresence>
       )}
 
-      {/* Navbar toujours affichée sauf sur les pages /connexion et /inscription */}
       {!hideNav && (
         <>
           <NavigationButton />
@@ -158,8 +156,6 @@ function AppContent() {
   );
 }
 
-
-// Composant MainContent avec gestion du swipe et animation
 function MainContent({ location }) {
   const navigate = useNavigate();
   const pages = ["/pea", "/immobilier", "/MoreActions"];
@@ -191,7 +187,6 @@ function MainContent({ location }) {
       <AnimatePresence exitBeforeEnter>
         <motion.div {...animationProps}>
           <Routes location={location}>
-            {/* Redirection par défaut vers la page de connexion */}
             <Route path="/" element={<Navigate to="/connexion" replace />} />
             <Route path="/pea" element={<PeaPage />} />
             <Route path="/immobilier" element={<ImmobilierPage />} />
@@ -206,6 +201,11 @@ function MainContent({ location }) {
             <Route path="/calculimmobilier/:timestamp" element={<SavedCalculations />} />
             <Route path="/detailscalcul/:id" element={<CalculationDetails />} />
             <Route path="/DetailPage/:id" element={<DetailPage />} />
+
+            {/* 🔥 Pages d'erreur ajoutées ici sans casser tes routes */}
+            <Route path="/401" element={<UnauthorizedPage />} />
+            <Route path="/500" element={<InternalServerError />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </motion.div>
       </AnimatePresence>
@@ -213,8 +213,6 @@ function MainContent({ location }) {
   );
 }
 
-
-// Composant ModalWrapper optimisé
 function ModalWrapper({ children, onClose }) {
   return (
     <motion.div
@@ -249,7 +247,6 @@ function ModalWrapper({ children, onClose }) {
   );
 }
 
-// Optimisation de la Navbar
 const MemoizedNavbar = memo(Navbar);
 
 export default function App() {

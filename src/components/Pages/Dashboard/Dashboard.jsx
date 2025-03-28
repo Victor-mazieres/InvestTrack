@@ -20,7 +20,7 @@ import NextDividend from "./Modules/NextDividend";
 import DividendCalendar from "./Modules/DividendCalendar";
 import DividendCalendarModal from "./Modules/DividendCalendarModal";
 import EmailVerificationModal from "../ConnexionPage/EmailVerificationModal";
-import { ActionsContext } from "../PeaPage/Modules/Actions/ActionsContext";
+import { ActionsContext } from "../PeaPage/Modules/Reutilisable/ActionsContext";
 
 const dataPEA = [
   { name: "Jan", value: 1200 },
