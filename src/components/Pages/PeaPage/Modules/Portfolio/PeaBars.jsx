@@ -1,4 +1,3 @@
-// src/components/Pages/PeaPage/Modules/Portfolio/PeaBars.jsx
 import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -35,7 +34,7 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
   }));
 
   // Calculer la répartition par valeur (chaque action devient une entrée)
-  const valuesData = actionsData.map(action => {
+  const valuesData = actionsData.map((action) => {
     const price = action.currentPrice || action.price || 1;
     const value = action.quantity * price;
     return {
@@ -46,8 +45,21 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
   });
 
   // Couleurs statiques pour l'affichage
-  const COLORS_SECTORS = ["#1abc9c", "#f39c12", "#e74c3c", "#3498db", "#2ecc71", "#9b59b6"];
-  const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e", "#3498db"];
+  const COLORS_SECTORS = [
+    "#1abc9c",
+    "#f39c12",
+    "#e74c3c",
+    "#3498db",
+    "#2ecc71",
+    "#9b59b6",
+  ];
+  const COLORS_VALUES = [
+    "#9b59b6",
+    "#2ecc71",
+    "#e67e22",
+    "#34495e",
+    "#3498db",
+  ];
 
   // Gestion des clics par défaut
   const defaultSectorClick = () => {
@@ -68,7 +80,9 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
         className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm cursor-pointer"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-medium text-gray-800">Répartition par secteur</h3>
+          <h3 className="font-medium text-gray-800">
+            Répartition par secteur
+          </h3>
           <p
             onClick={(e) => {
               e.stopPropagation();
@@ -80,7 +94,11 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
           </p>
         </div>
         {sectorsData.map((item, idx) => (
-          <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
+          <motion.div
+            key={idx}
+            whileHover={{ scale: 1.03 }}
+            className="mb-4"
+          >
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-700">{item.label}</span>
@@ -90,12 +108,15 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
               </span>
             </div>
             <div className="relative w-full h-2 bg-gray-200 rounded-full">
-              <div
+              <motion.div
                 className="absolute left-0 top-0 h-2 rounded-full"
                 style={{
-                  width: `${item.percentage}%`,
-                  backgroundColor: COLORS_SECTORS[idx % COLORS_SECTORS.length],
+                  backgroundColor:
+                    COLORS_SECTORS[idx % COLORS_SECTORS.length],
                 }}
+                initial={{ width: 0 }}
+                animate={{ width: `${item.percentage}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
           </motion.div>
@@ -120,7 +141,11 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
           </p>
         </div>
         {valuesData.map((item, idx) => (
-          <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
+          <motion.div
+            key={idx}
+            whileHover={{ scale: 1.03 }}
+            className="mb-4"
+          >
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm text-gray-700">{item.label}</span>
               <span className="text-sm font-semibold text-gray-700">
@@ -128,12 +153,15 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
               </span>
             </div>
             <div className="relative w-full h-2 bg-gray-200 rounded-full">
-              <div
+              <motion.div
                 className="absolute left-0 top-0 h-2 rounded-full"
                 style={{
-                  width: `${item.percentage}%`,
-                  backgroundColor: COLORS_VALUES[idx % COLORS_VALUES.length],
+                  backgroundColor:
+                    COLORS_VALUES[idx % COLORS_VALUES.length],
                 }}
+                initial={{ width: 0 }}
+                animate={{ width: `${item.percentage}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
           </motion.div>

@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Trash } from "lucide-react";
 import { format, parse } from "date-fns";
-import { ActionsContext } from "../ActionsContext"; // Ajustez le chemin si nécessaire
-import CustomSelect from "../CustomSelect"; // Import du CustomSelect
+import { motion } from "framer-motion";
+import { ActionsContext } from "../../Reutilisable/ActionsContext";
+import CustomSelect from "../../Reutilisable/CustomSelect";
 
 /**
  * Formate une date ISO ("yyyy-MM-dd") en "dd/MM/yyyy".
@@ -14,13 +15,26 @@ function formatIsoDate(dateString) {
   return format(parsed, "dd/MM/yyyy");
 }
 
+// Variantes d'animation pour les blocs individuels
+const sectionVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+};
+
+const containerVariants = {
+  initial: { opacity: 0, scale: 0.95 },
+  animate: { opacity: 1, scale: 1 },
+  exit: { opacity: 0, scale: 0.95 },
+};
+
 export default function HistoriqueOrderPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { actions, loading, updateAction } = useContext(ActionsContext);
   const [sortOption, setSortOption] = useState("dateAsc");
 
-  // Options de tri avec flèches à la place de "asc"/"desc"
+  // Options de tri
   const sortOptions = [
     { value: "dateAsc", label: "Date ↑" },
     { value: "dateDesc", label: "Date ↓" },
@@ -33,8 +47,9 @@ export default function HistoriqueOrderPage() {
   ];
 
   // Recherche de l'action dans le contexte
-  const action = actions.find(
-    (a) => a.id === id || a.id === Number(id)
+  const action = useMemo(
+    () => actions.find((a) => a.id === id || a.id === Number(id)),
+    [actions, id]
   );
 
   if (loading) {
@@ -85,7 +100,6 @@ export default function HistoriqueOrderPage() {
     const groups = {};
     sortedHistory.forEach((entry) => {
       const dateObj = new Date(entry.date);
-      // Clé basée sur l'année et le mois
       const key = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
       if (!groups[key]) groups[key] = [];
       groups[key].push(entry);
@@ -124,7 +138,6 @@ export default function HistoriqueOrderPage() {
     return grouped;
   }, [sortedHistory]);
 
-  // Supprimer un achat via le contexte
   const deletePurchase = (index) => {
     if (!action) return;
     const updatedHistory = action.history.filter((_, i) => i !== index);
@@ -133,27 +146,52 @@ export default function HistoriqueOrderPage() {
   };
 
   return (
-    <div className="p-4 min-h-screen bg-gray-50">
+    <motion.div
+      className="p-4 min-h-screen bg-gray-50"
+      variants={containerVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       {/* Barre de navigation */}
-      <header className="flex items-center mb-4">
+      <motion.header
+        className="flex items-center mb-4"
+        variants={sectionVariants}
+        transition={{ duration: 0.5 }}
+      >
         <button
           onClick={() => navigate(-1)}
           className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-secondary">Retour</h1>
-      </header>
+        <motion.h1
+          className="ml-4 text-2xl font-bold text-secondary"
+          variants={sectionVariants}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          Retour
+        </motion.h1>
+      </motion.header>
 
-      <h1 className="text-3xl font-bold text-secondary mb-4">
+      {/* Titre principal */}
+      <motion.h1
+        className="text-3xl font-bold text-secondary mb-4"
+        variants={sectionVariants}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
         Historique d'achats –{" "}
         <span className="text-greenLight inline-block">{action.name}</span>
-      </h1>
+      </motion.h1>
 
-      {/* Sélecteur de tri avec CustomSelect */}
-      <div className="mb-4 flex items-center space-x-2">
+      {/* Sélecteur de tri */}
+      <motion.div
+        className="mb-4 flex items-center space-x-2"
+        variants={sectionVariants}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
         <label className="text-gray-600 text-sm font-medium">Trier par :</label>
-        {/* Le conteneur du bouton reste à moitié largeur */}
         <div className="w-1/2">
           <CustomSelect
             name="sortOption"
@@ -161,34 +199,40 @@ export default function HistoriqueOrderPage() {
             onChange={setSortOption}
             options={sortOptions}
             placeholder="Trier par"
-            className="p-2 text-sm w-half"
-            // Ici, on rend le dropdown plus large que le bouton (par exemple, w-80)
+            className="p-2 text-sm"
             dropdownClassName="w-full"
           />
         </div>
-      </div>
+      </motion.div>
 
-      {/* Affichage groupé par mois */}
-      {groupedHistory.length > 0 ? (
-        <div className="space-y-6">
-          {groupedHistory.map((group) => (
-            <div key={group.key}>
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
-                {group.label}
-              </h2>
+      {/* Groupement par mois */}
+      <motion.div
+        className="space-y-6"
+        variants={sectionVariants}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        {groupedHistory.length > 0 ? (
+          groupedHistory.map((group) => (
+            <motion.div
+              key={group.key}
+              className="space-y-4"
+              variants={sectionVariants}
+              transition={{ duration: 0.5 }}
+            >
+              <h2 className="text-xl font-bold text-gray-800 mb-4">{group.label}</h2>
               <div className="space-y-3">
                 {group.entries.map((entry, index) => {
                   const total = entry.quantity * entry.price + entry.fees;
                   const average =
-                    entry.quantity > 0
-                      ? (total / entry.quantity).toFixed(2)
-                      : "0.00";
+                    entry.quantity > 0 ? (total / entry.quantity).toFixed(2) : "0.00";
                   return (
-                    <div
+                    <motion.div
                       key={index}
                       className="bg-white border-l-4 border-greenLight shadow-xl rounded-3xl p-4 text-sm flex flex-col gap-1"
+                      whileHover={{ scale: 1.02 }}
+                      variants={sectionVariants}
+                      transition={{ duration: 0.5, delay: 0.1 }}
                     >
-                      {/* Ligne supérieure : date + bouton suppression */}
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500 font-medium">
                           {entry.date ? formatIsoDate(entry.date) : "—"}
@@ -200,46 +244,39 @@ export default function HistoriqueOrderPage() {
                           <Trash size={16} />
                         </button>
                       </div>
-                      {/* Infos principales */}
                       <div className="text-gray-700 flex flex-wrap gap-2">
                         <p>
-                          <span className="font-semibold">Quantité :</span>{" "}
-                          {entry.quantity}
+                          <span className="font-semibold">Quantité :</span> {entry.quantity}
                         </p>
                         <p>
-                          <span className="font-semibold">Prix unitaire :</span>{" "}
-                          {entry.price}€
+                          <span className="font-semibold">Prix unitaire :</span> {entry.price}€
                         </p>
                         <p>
-                          <span className="font-semibold">Frais :</span>{" "}
-                          {entry.fees}€
+                          <span className="font-semibold">Frais :</span> {entry.fees}€
                         </p>
                       </div>
-                      {/* Montants calculés */}
                       <div className="flex flex-wrap gap-2 text-gray-600">
                         <p>
-                          <span className="font-semibold">Total (frais inclus) :</span>{" "}
-                          <span className="text-teal-700 font-bold">
-                            {total.toFixed(2)}€
-                          </span>
+                          <span className="font-semibold">Total :</span>{" "}
+                          <span className="text-teal-700 font-bold">{total.toFixed(2)}€</span>
                         </p>
                         <p>
                           <span className="font-semibold">Prix moyen :</span>{" "}
-                          <span className="text-teal-700 font-bold">
-                            {average}€
-                          </span>
+                          <span className="text-teal-700 font-bold">{average}€</span>
                         </p>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-500">Aucun achat enregistré.</p>
-      )}
-    </div>
+            </motion.div>
+          ))
+        ) : (
+          <motion.p className="text-gray-500" variants={sectionVariants}>
+            Aucun achat enregistré.
+          </motion.p>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }

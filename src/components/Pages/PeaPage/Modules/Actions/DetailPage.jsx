@@ -9,23 +9,43 @@ import {
   Briefcase,
   List,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import PeaActionChart from "../Actions/PeaActionChart";
-import CustomDatePicker from "../Actions/CustomDatePickerAddAction/CustomDatePicker"; // Import du CustomDatePicker
+import CustomDatePicker from "../Actions/CustomDatePickerAddAction/CustomDatePicker";
 import { format, parse } from "date-fns";
 import { ActionsContext } from "../Reutilisable/ActionsContext";
 
-// Formate une date ISO en "dd/MM/yyyy"
+// Fonction utilitaire pour formater une date ISO en "dd/MM/yyyy"
 function formatIsoDate(dateString) {
   if (!dateString) return "Non défini";
   const parsed = parse(dateString, "yyyy-MM-dd", new Date());
   return format(parsed, "dd/MM/yyyy");
 }
 
-// Composant Modal pour ajouter un achat
+// Fonction qui retourne des variantes d'animation selon l'indice
+const getSectionVariants = (index) => ({
+  initial: { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
+});
+
+// --- Modal d'ajout d'achat ---
 function PurchaseModal({ onClose, newPurchase, setNewPurchase, onAddPurchase }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-6 rounded-3xl shadow-lg w-4/5 max-w-md">
+    <motion.div
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white p-6 rounded-3xl shadow-lg w-4/5 max-w-md"
+        initial={{ y: 50 }}
+        animate={{ y: 0 }}
+        exit={{ y: 50 }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-primary">Ajouter un achat</h2>
           <button onClick={onClose} className="text-gray-500">
@@ -36,9 +56,7 @@ function PurchaseModal({ onClose, newPurchase, setNewPurchase, onAddPurchase }) 
           <div className="w-full">
             <CustomDatePicker
               selected={newPurchase.date}
-              onChange={(date) =>
-                setNewPurchase((prev) => ({ ...prev, date }))
-              }
+              onChange={(date) => setNewPurchase((prev) => ({ ...prev, date }))}
               placeholderText="Sélectionnez une date"
               className="w-full p-3 border rounded-3xl bg-gray-50"
             />
@@ -49,10 +67,7 @@ function PurchaseModal({ onClose, newPurchase, setNewPurchase, onAddPurchase }) 
             placeholder="Quantité"
             value={newPurchase.quantity}
             onChange={(e) =>
-              setNewPurchase((prev) => ({
-                ...prev,
-                quantity: e.target.value,
-              }))
+              setNewPurchase((prev) => ({ ...prev, quantity: e.target.value }))
             }
             className="w-full p-2 border rounded-3xl"
           />
@@ -62,10 +77,7 @@ function PurchaseModal({ onClose, newPurchase, setNewPurchase, onAddPurchase }) 
             placeholder="Prix d'achat (€)"
             value={newPurchase.price}
             onChange={(e) =>
-              setNewPurchase((prev) => ({
-                ...prev,
-                price: e.target.value,
-              }))
+              setNewPurchase((prev) => ({ ...prev, price: e.target.value }))
             }
             className="w-full p-2 border rounded-3xl"
           />
@@ -75,30 +87,40 @@ function PurchaseModal({ onClose, newPurchase, setNewPurchase, onAddPurchase }) 
             placeholder="Frais (€)"
             value={newPurchase.fees}
             onChange={(e) =>
-              setNewPurchase((prev) => ({
-                ...prev,
-                fees: e.target.value,
-              }))
+              setNewPurchase((prev) => ({ ...prev, fees: e.target.value }))
             }
             className="w-full p-2 border rounded-3xl"
           />
-          <button
+          <motion.button
             onClick={onAddPurchase}
+            whileTap={{ scale: 0.95 }}
             className="w-full bg-greenLight text-white p-2 rounded-3xl"
           >
             Ajouter
-          </button>
+          </motion.button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
-// Composant Modal pour ajouter un dividende
+// --- Modal d'ajout de dividende ---
 function DividendModal({ onClose, newDividend, setNewDividend, onAddDividend }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-6 rounded-3xl shadow-lg w-4/5 max-w-md">
+    <motion.div
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white p-6 rounded-3xl shadow-lg w-4/5 max-w-md"
+        initial={{ y: 50 }}
+        animate={{ y: 0 }}
+        exit={{ y: 50 }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-primary">Ajouter un dividende</h2>
           <button onClick={onClose} className="text-gray-500">
@@ -109,9 +131,7 @@ function DividendModal({ onClose, newDividend, setNewDividend, onAddDividend }) 
           <div className="w-full">
             <CustomDatePicker
               selected={newDividend.date}
-              onChange={(date) =>
-                setNewDividend((prev) => ({ ...prev, date }))
-              }
+              onChange={(date) => setNewDividend((prev) => ({ ...prev, date }))}
               placeholderText="Sélectionnez une date"
               className="w-full p-3 border rounded-3xl bg-gray-50"
             />
@@ -126,15 +146,16 @@ function DividendModal({ onClose, newDividend, setNewDividend, onAddDividend }) 
             }
             className="w-full p-2 border rounded-3xl"
           />
-          <button
+          <motion.button
             onClick={onAddDividend}
+            whileTap={{ scale: 0.95 }}
             className="w-full bg-greenLight text-white p-2 rounded-3xl"
           >
             Ajouter
-          </button>
+          </motion.button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -145,14 +166,12 @@ export default function DetailPage() {
   const isEditing = new URLSearchParams(location.search).get("edit") === "true";
   const { actions, updateAction, loading } = useContext(ActionsContext);
 
-  // Récupération de l'action soit depuis le contexte, soit depuis location.state
   const createdAction = location.state?.createdAction;
   const actionFromContext = actions.find(
     (a) => a.id === Number(id) || a.id === id
   );
   const action = actionFromContext || createdAction;
 
-  // États pour les modaux et l'édition de dividende
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [newPurchase, setNewPurchase] = useState({
     date: null,
@@ -164,7 +183,6 @@ export default function DetailPage() {
   const [editDiv, setEditDiv] = useState({ dividendPrice: "", dividendDate: "" });
   const [isAddDividendModalOpen, setIsAddDividendModalOpen] = useState(false);
   const [newDividend, setNewDividend] = useState({ date: null, amount: "" });
-  // Nouvel état pour gérer l'affichage partiel/complet des dividendes
   const [showAllDividends, setShowAllDividends] = useState(false);
 
   useEffect(() => {
@@ -186,7 +204,6 @@ export default function DetailPage() {
     setIsEditingDividend(false);
   };
 
-  // Calculs mémorisés pour éviter des recalculs inutiles
   const totalQuantity = useMemo(() => {
     return action?.history?.length > 0
       ? action.history.reduce((sum, a) => sum + a.quantity, 0)
@@ -230,7 +247,6 @@ export default function DetailPage() {
     ? action.dividendsHistory.reduce((sum, d) => sum + d.amount, 0).toFixed(2)
     : "0.00";
 
-  // Détermine quels dividendes afficher : 3 ou tous
   const displayedDividends = useMemo(() => {
     if (!action?.dividendsHistory) return [];
     return showAllDividends
@@ -238,7 +254,6 @@ export default function DetailPage() {
       : action.dividendsHistory.slice(0, 3);
   }, [action, showAllDividends]);
 
-  // Ajout d'un achat
   const addPurchase = () => {
     if (!newPurchase.date || !newPurchase.quantity || !newPurchase.price) return;
     const dateString = format(newPurchase.date, "yyyy-MM-dd");
@@ -261,7 +276,6 @@ export default function DetailPage() {
     updateAction(action.id, { ...action, history: updatedHistory });
   };
 
-  // Ajout d'un dividende
   const addDividend = () => {
     if (!newDividend.date || !newDividend.amount) return;
     const dateString = format(newDividend.date, "yyyy-MM-dd");
@@ -285,8 +299,21 @@ export default function DetailPage() {
   if (!action)
     return <p className="text-center text-red-500">Action non trouvée !</p>;
 
+  // Variantes d'animation pour chaque bloc, en alternant la direction (x: -50 pour pair, 50 pour impair)
+  const sectionVariants = (index) => ({
+    initial: { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
+  });
+
   return (
-    <div className="relative p-6 min-h-screen bg-light">
+    <motion.div
+      className="relative p-6 min-h-screen bg-light"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <div className="pointer-events-none absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black/20 to-transparent z-10" />
       <header className="flex items-center mb-4">
         <button
@@ -295,9 +322,24 @@ export default function DetailPage() {
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-secondary">Retour</h1>
+        <motion.h1
+          className="ml-4 text-2xl font-bold text-secondary"
+          variants={sectionVariants(0)}
+          initial="initial"
+          animate="animate"
+          transition={{ duration: 0.5 }}
+        >
+          Retour
+        </motion.h1>
       </header>
-      <div className="mb-4">
+
+      <motion.div
+        className="mb-4"
+        variants={sectionVariants(1)}
+        initial="initial"
+        animate="animate"
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
         <h1 className="text-3xl font-bold">
           {isEditing ? "Modifier" : "Détails"} de{" "}
           <span className="text-greenLight">{action.name}</span>
@@ -308,9 +350,23 @@ export default function DetailPage() {
             {action.sector || "Non défini"}
           </span>
         </div>
-        <PeaActionChart data={action.priceHistory || []} />
-      </div>
-      <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6">
+        <motion.div
+          variants={sectionVariants(2)}
+          initial="initial"
+          animate="animate"
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <PeaActionChart data={action.priceHistory || []} />
+        </motion.div>
+      </motion.div>
+
+      <motion.div
+        className="bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6"
+        variants={sectionVariants(3)}
+        initial="initial"
+        animate="animate"
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
         <h2 className="text-2xl font-bold text-primary mb-4">
           Informations & Dividendes
         </h2>
@@ -340,10 +396,15 @@ export default function DetailPage() {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Section Dividende */}
-      <div className="mt-6 bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6 relative">
+      <motion.div
+        className="mt-6 bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6 relative"
+        variants={sectionVariants(4)}
+        initial="initial"
+        animate="animate"
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
         {!isEditingDividend ? (
           <>
             <button
@@ -355,9 +416,7 @@ export default function DetailPage() {
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center w-full">
                 <div className="text-center">
-                  <p className="text-sm text-gray-500">
-                    Dividende par action
-                  </p>
+                  <p className="text-sm text-gray-500">Dividende par action</p>
                   <p className="text-xl font-bold text-greenLight">
                     {action.dividendPrice
                       ? `${action.dividendPrice}€`
@@ -375,9 +434,7 @@ export default function DetailPage() {
                 </div>
               </div>
               <div className="mt-4 text-center">
-                <p className="text-sm text-gray-500">
-                  Date de versement prévue
-                </p>
+                <p className="text-sm text-gray-500">Date de versement prévue</p>
                 <p className="text-xl font-bold">
                   {action.dividendDate
                     ? formatIsoDate(action.dividendDate)
@@ -387,7 +444,13 @@ export default function DetailPage() {
             </div>
           </>
         ) : (
-          <div className="mb-4 p-4 border rounded-3xl bg-gray-50">
+          <motion.div
+            className="mb-4 p-4 border rounded-3xl bg-gray-50"
+            variants={sectionVariants(5)}
+            initial="initial"
+            animate="animate"
+            transition={{ duration: 0.5 }}
+          >
             <div className="flex flex-col items-center mb-4">
               <p className="font-semibold text-primary mb-1">
                 Dividende par action
@@ -406,9 +469,7 @@ export default function DetailPage() {
               <p className="text-sm text-gray-500 mt-2">Date de versement</p>
               <div className="w-full">
                 <CustomDatePicker
-                  selected={
-                    editDiv.dividendDate ? new Date(editDiv.dividendDate) : null
-                  }
+                  selected={editDiv.dividendDate ? new Date(editDiv.dividendDate) : null}
                   onChange={(date) =>
                     setEditDiv((prev) => ({
                       ...prev,
@@ -421,25 +482,32 @@ export default function DetailPage() {
               </div>
             </div>
             <div className="flex space-x-2">
-              <button
+              <motion.button
                 onClick={saveDividendEdits}
+                whileTap={{ scale: 0.95 }}
                 className="bg-greenLight text-white p-2 rounded-3xl w-full"
               >
                 Enregistrer
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={() => setIsEditingDividend(false)}
+                whileTap={{ scale: 0.95 }}
                 className="bg-gray-200 text-gray-800 p-2 rounded-3xl w-full"
               >
                 Annuler
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
-      {/* Section Historique */}
-      <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6">
+      <motion.div
+        className="bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6"
+        variants={sectionVariants(6)}
+        initial="initial"
+        animate="animate"
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
         <h2 className="text-2xl font-bold text-primary mb-4 flex items-center">
           <List className="w-5 h-5 mr-2 text-primary" /> Historique
         </h2>
@@ -447,9 +515,7 @@ export default function DetailPage() {
           {/* Colonne Achats */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xl font-semibold text-secondary">
-                Achats
-              </h3>
+              <h3 className="text-xl font-semibold text-secondary">Achats</h3>
               <button
                 onClick={() => setIsPurchaseModalOpen(true)}
                 className="text-greenLight flex items-center"
@@ -460,9 +526,10 @@ export default function DetailPage() {
             <div className="max-h-[150px] overflow-y-auto">
               <ul className="space-y-3">
                 {action.history?.map((entry, index) => (
-                  <li
+                  <motion.li
                     key={index}
                     className="flex justify-between items-center border-b pb-2"
+                    whileHover={{ scale: 1.02 }}
                   >
                     <span className="text-xs text-secondary">
                       {entry.date ? formatIsoDate(entry.date) : "—"}
@@ -482,11 +549,12 @@ export default function DetailPage() {
                     >
                       <Trash size={16} />
                     </button>
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
             </div>
             {action.history && action.history.length > 3 && (
+              <div className="text-right">
               <button
                 onClick={() =>
                   navigate(`/HistoriqueOrderPage/${action.id}`, {
@@ -496,10 +564,11 @@ export default function DetailPage() {
                     },
                   })
                 }
-                className="font-bold text-greenLight"
+                className="font-semi-bold text-primary mt-2 underline"
               >
                 Voir plus
               </button>
+            </div>
             )}
           </div>
           {/* Colonne Dividendes */}
@@ -519,23 +588,22 @@ export default function DetailPage() {
               <ul className="space-y-3">
                 {displayedDividends && displayedDividends.length > 0 ? (
                   displayedDividends.map((div, index) => (
-                    <li
+                    <motion.li
                       key={index}
                       className="flex justify-between items-center border-b pb-2"
+                      whileHover={{ scale: 1.02 }}
                     >
                       <span className="text-xs text-secondary">
                         {div.date ? formatIsoDate(div.date) : "—"}
                       </span>
-                      <span className="text-l text-primary">
-                        {div.amount}€
-                      </span>
+                      <span className="text-l text-primary">{div.amount}€</span>
                       <button
                         onClick={() => deleteDividend(index)}
                         className="text-red-500"
                       >
                         <Trash size={16} />
                       </button>
-                    </li>
+                    </motion.li>
                   ))
                 ) : (
                   <p className="text-gray-600 text-sm">
@@ -544,21 +612,24 @@ export default function DetailPage() {
                 )}
               </ul>
             </div>
-            {/* Bouton "Voir plus" pour les dividendes */}
             {action.dividendsHistory &&
               action.dividendsHistory.length > 3 && (
+                <div className="text-right">
                 <button
                   onClick={() =>
                     navigate(`/HistoriqueDividendePage/${action.id}`, {
-                      state: { background: location },
+                      state: {
+                        background: location.state?.background || location,
+                        detailBackground: location,
+                      },
                     })
                   }
-                  className="mt-4 font-bold text-greenLight"
+                  className="font-semi-bold text-primary mt-2 underline"
                 >
                   Voir plus
                 </button>
+              </div>
               )}
-
             <div className="mt-4 text-right">
               <p className="text-sm text-gray-500">
                 Total des dividendes reçus
@@ -569,25 +640,29 @@ export default function DetailPage() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {isPurchaseModalOpen && (
-        <PurchaseModal
-          onClose={() => setIsPurchaseModalOpen(false)}
-          newPurchase={newPurchase}
-          setNewPurchase={setNewPurchase}
-          onAddPurchase={addPurchase}
-        />
-      )}
+      <AnimatePresence>
+        {isPurchaseModalOpen && (
+          <PurchaseModal
+            onClose={() => setIsPurchaseModalOpen(false)}
+            newPurchase={newPurchase}
+            setNewPurchase={setNewPurchase}
+            onAddPurchase={addPurchase}
+          />
+        )}
+      </AnimatePresence>
 
-      {isAddDividendModalOpen && (
-        <DividendModal
-          onClose={() => setIsAddDividendModalOpen(false)}
-          newDividend={newDividend}
-          setNewDividend={setNewDividend}
-          onAddDividend={addDividend}
-        />
-      )}
-    </div>
+      <AnimatePresence>
+        {isAddDividendModalOpen && (
+          <DividendModal
+            onClose={() => setIsAddDividendModalOpen(false)}
+            newDividend={newDividend}
+            setNewDividend={setNewDividend}
+            onAddDividend={addDividend}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

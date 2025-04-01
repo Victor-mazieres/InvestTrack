@@ -6,143 +6,161 @@ import {
   Route,
   useLocation,
   useNavigate,
-  Navigate,
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useSwipeable } from "react-swipeable";
+import Skeleton from "react-loading-skeleton";
+import 'react-loading-skeleton/dist/skeleton.css';
 
 // Composants standards
 import Navbar from "./components/Navbar/Navbar";
 import NavigationButton from "./components/Navbar/NavigationButton";
-import Dashboard from "./components/Pages/Dashboard/Dashboard";
-import PeaPage from "./components/Pages/PeaPage/PeaPage";
-import ImmobilierPage from "./components/Pages/ImmobilierPage/ImmobilierPage";
-import MoreActions from "./components/Pages/PeaPage/Modules/Actions/MoreActions";
-import ProfilePage from "./components/Pages/Profile/ProfilePage";
-import Profile from "./components/Pages/Profile/Modules/Profile";
-import LoginPinPage from "./components/Pages/ConnexionPage/LoginPage/LoginPage";
-import RegisterPage from "./components/Pages/ConnexionPage/RegisterPage/RegisterPage";
+import { ActionsProvider } from "./components/Pages/PeaPage/Modules/Reutilisable/ActionsContext";
 
-// Lazy Loading pour les modales (optimisation)
+// Import de votre Error Boundary existant
+import GeneralErrorBoundary from "./components/Pages/Errors/GeneralErrorBoundary";
+
+// Import du hook personnalisé pour la navigation par swipe
+import useSwipeNavigation from "./components/hooks/useSwipeNavigation";
+
+// Lazy loaded pour les modales
 const DetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DetailPage"));
 const DividendeDetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DividendeDetailPage"));
 const HistoriqueOrderPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/HistoriqueOrderPage"));
-const CalculatorCredit = lazy(() => import("./components/Pages/CalculatorCredit/CalculatorCredit"));
-const PeaPie = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPie"));
+const MortgageTabs  = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
 const PeaBarsSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsSecteurs"));
 const PeaBarsValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsValeurs"));
 const PeaPieSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs"));
 const PeaPieValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs"));
-const SavedCalculations = lazy(() => import("./components/Pages/CalculatorCredit/SavedCalculations"));
 const CalculationDetails = lazy(() => import("./components/Pages/CalculatorCredit/CalculationDetails"));
-const MortgageTabs  = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
 const DividendHistoryPage  = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/DividendHistoryPage"));
 
-// Pages d'erreurs
-import NotFoundPage from "./components/Pages/Errors/NotFoundPage";
-import UnauthorizedPage from "./components/Pages/Errors/UnauthorizedPage";
-import InternalServerError from "./components/Pages/Errors/InternalServerError";
+// Import de la configuration des routes principales
+import { mainRoutes } from "./components/Navbar/routes";
 
-// Import du contexte pour les actions
-import { ActionsProvider } from "./components/Pages/PeaPage/Modules/Reutilisable/ActionsContext";
+// Composant LoadingSkeleton pour le fallback
+function LoadingSkeleton() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <Skeleton height={40} width={300} />
+      <div className="w-full mt-4">
+         <Skeleton count={5} />
+      </div>
+    </div>
+  );
+}
+
+// Centralisation des propriétés d'animation
+const animationProps = {
+  initial: { x: "100%", opacity: 0 },
+  animate: { x: 0, opacity: 1 },
+  exit: { x: "-100%", opacity: 0 },
+  transition: { duration: 0.3, ease: "easeOut" },
+};
 
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Gestion de la location pour les modales
   const background = location.state?.background;
   const hideNav = location.pathname === "/connexion" || location.pathname === "/inscription";
 
   return (
     <>
-      <MainContent location={background || location} />
+      <GeneralErrorBoundary>
+        <Suspense fallback={<LoadingSkeleton />}>
+          <MainContent location={background || location} />
+        </Suspense>
+      </GeneralErrorBoundary>
 
       {background && (
         <AnimatePresence>
-          <Suspense fallback={<div>Chargement...</div>}>
-            <Routes location={location}>
-              <Route
-                path="/DetailPage/:id"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <DetailPage />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/HistoriqueOrderPage/:id"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <HistoriqueOrderPage />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/DividendeDetailPage/:id"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <DividendeDetailPage />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/Calcul"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <MortgageTabs />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/RepartitionBarreSecteurs"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <PeaBarsSecteurs />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/RepartitionBarreValeurs"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <PeaBarsValeurs />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/RepartitionCamembertSecteurs"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <PeaPieSecteurs />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/RepartitionCamembertValeurs"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <PeaPieValeurs />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/detailscalcul/:id"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <CalculationDetails />
-                  </ModalWrapper>
-                }
-              />
-              <Route
-                path="/HistoriqueDividendePage/:id"
-                element={
-                  <ModalWrapper onClose={() => navigate(-1)}>
-                    <DividendHistoryPage />
-                  </ModalWrapper>
-                }
-              />
-            </Routes>
-          </Suspense>
+          <GeneralErrorBoundary>
+            <Suspense fallback={<LoadingSkeleton />}>
+              <Routes location={location}>
+                <Route
+                  path="/DetailPage/:id"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <DetailPage />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/HistoriqueOrderPage/:id"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <HistoriqueOrderPage />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/DividendeDetailPage/:id"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <DividendeDetailPage />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/Calcul"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <MortgageTabs />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/RepartitionBarreSecteurs"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <PeaBarsSecteurs />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/RepartitionBarreValeurs"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <PeaBarsValeurs />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/RepartitionCamembertSecteurs"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <PeaPieSecteurs />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/RepartitionCamembertValeurs"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <PeaPieValeurs />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/detailscalcul/:id"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <CalculationDetails />
+                    </ModalWrapper>
+                  }
+                />
+                <Route
+                  path="/HistoriqueDividendePage/:id"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <DividendHistoryPage />
+                    </ModalWrapper>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </GeneralErrorBoundary>
         </AnimatePresence>
       )}
 
@@ -157,57 +175,22 @@ function AppContent() {
 }
 
 function MainContent({ location }) {
-  const navigate = useNavigate();
+  // Pages pour la navigation par swipe
   const pages = ["/pea", "/immobilier", "/MoreActions"];
-  const currentIndex = pages.indexOf(location.pathname);
-  const handlers = useSwipeable({
-    onSwipedLeft: () => {
-      if (currentIndex !== -1 && currentIndex < pages.length - 1) {
-        navigate(pages[currentIndex + 1]);
-      }
-    },
-    onSwipedRight: () => {
-      if (currentIndex > 0) {
-        navigate(pages[currentIndex - 1]);
-      }
-    },
-    delta: 10,
-    preventDefaultTouchmoveEvent: true,
-    trackMouse: true,
-  });
-  const animationProps = {
-    initial: { x: "100%", opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: "-100%", opacity: 0 },
-    transition: { duration: 0.3, ease: "easeOut" },
-  };
+  const swipeHandlers = useSwipeNavigation(pages, location.pathname);
 
   return (
-    <div {...handlers} className="h-full flex flex-col overflow-hidden pt-16">
+    <div {...swipeHandlers} className="h-full flex flex-col overflow-hidden pt-16">
       <AnimatePresence exitBeforeEnter>
-        <motion.div {...animationProps}>
-          <Routes location={location}>
-            <Route path="/" element={<Navigate to="/connexion" replace />} />
-            <Route path="/pea" element={<PeaPage />} />
-            <Route path="/immobilier" element={<ImmobilierPage />} />
-            <Route path="/MoreActions" element={<MoreActions />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/info-profile" element={<Profile />} />
-            <Route path="/RepartitionBarreSecteurs" element={<PeaBarsSecteurs />} />
-            <Route path="/connexion" element={<LoginPinPage />} />
-            <Route path="/inscription" element={<RegisterPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/calculimmobilier" element={<SavedCalculations />} />
-            <Route path="/calculimmobilier/:timestamp" element={<SavedCalculations />} />
-            <Route path="/detailscalcul/:id" element={<CalculationDetails />} />
-            <Route path="/DetailPage/:id" element={<DetailPage />} />
-
-            {/* 🔥 Pages d'erreur ajoutées ici sans casser tes routes */}
-            <Route path="/401" element={<UnauthorizedPage />} />
-            <Route path="/500" element={<InternalServerError />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </motion.div>
+        <Suspense fallback={<LoadingSkeleton />}>
+          <motion.div {...animationProps}>
+            <Routes location={location}>
+              {mainRoutes.map(({ path, element }) => (
+                <Route key={path} path={path} element={element} />
+              ))}
+            </Routes>
+          </motion.div>
+        </Suspense>
       </AnimatePresence>
     </div>
   );
@@ -216,6 +199,8 @@ function MainContent({ location }) {
 function ModalWrapper({ children, onClose }) {
   return (
     <motion.div
+      role="dialog"
+      aria-modal="true"
       className="fixed inset-0 z-50 bg-black bg-opacity-40"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}

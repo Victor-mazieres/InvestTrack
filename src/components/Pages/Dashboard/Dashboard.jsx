@@ -13,7 +13,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 import TotalActions from "./Modules/TotalActions";
 import NextDividend from "./Modules/NextDividend";
@@ -117,12 +117,23 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col items-center p-4 bg-light min-h-screen pt-16">
-      <header className="w-full flex justify-between items-center mb-4 px-4">
+      {/* Header animé */}
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full flex justify-between items-center mb-4 px-4"
+      >
         <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
-      </header>
+      </motion.header>
 
       {/* Graphique de performance du PEA */}
-      <div className="w-full mt-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="w-full mt-6 bg-white rounded-3xl p-2 shadow-xl"
+      >
         <h2 className="text-lg font-semibold text-secondary">Performance PEA</h2>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={dataPEA}>
@@ -133,21 +144,38 @@ export default function Dashboard() {
             <Line type="monotone" dataKey="value" stroke="#2e8e97" strokeWidth={3} />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </motion.div>
 
+      {/* Grid des cards TotalActions et NextDividend */}
       <div className="w-full mt-6 grid grid-cols-[1.25fr_1.5fr] gap-4">
-        <div className="bg-white p-4 rounded-3xl shadow-lg">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="bg-white p-4 rounded-3xl shadow-lg"
+        >
           <TotalActions />
-        </div>
-        <div className="bg-white p-4 rounded-3xl shadow-lg">
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="bg-white p-4 rounded-3xl shadow-lg"
+        >
           <NextDividend />
-        </div>
+        </motion.div>
       </div>
 
       {/* Calendrier des dividendes */}
-      <div className="w-full mt-6 grid grid-cols-1 gap-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="w-full mt-6 grid grid-cols-1 gap-4"
+      >
         {isMobile ? (
-          <div
+          <motion.div
+            whileTap={{ scale: 0.95 }}
             className="bg-white p-4 rounded-3xl shadow-lg cursor-pointer flex items-center justify-between"
             onClick={() => setModalOpen(true)}
           >
@@ -156,17 +184,27 @@ export default function Dashboard() {
               <p className="text-sm text-gray-600">Cliquez pour ouvrir</p>
             </div>
             <CalendarIcon className="h-9 w-9 text-gray-400" />
-          </div>
+          </motion.div>
         ) : (
-          <div className="bg-white p-4 rounded-3xl shadow-lg">
-          <h3 className="text-md font-semibold text-gray-800 mb-4">Calendrier dividende</h3>
-          <DividendCalendar dividends={dividendEvents} />
-        </div>
-      )}
-      </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="bg-white p-4 rounded-3xl shadow-lg"
+          >
+            <h3 className="text-md font-semibold text-gray-800 mb-4">Calendrier dividende</h3>
+            <DividendCalendar dividends={dividendEvents} />
+          </motion.div>
+        )}
+      </motion.div>
 
       {/* Graphique de répartition immobilière */}
-      <div className="w-full mt-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="w-full mt-6"
+      >
         <h2 className="text-lg font-semibold text-secondary">Répartition Immobilière</h2>
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
@@ -178,7 +216,7 @@ export default function Dashboard() {
             <Tooltip />
           </PieChart>
         </ResponsiveContainer>
-      </div>
+      </motion.div>
 
       {/* Modal de vérification d'e-mail */}
       <AnimatePresence>

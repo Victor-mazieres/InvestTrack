@@ -1,3 +1,4 @@
+// src/components/Pages/PeaPage/Modules/MoreActions.jsx
 import React, { useState, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,10 +52,10 @@ export default function MoreActions() {
   const handleDateChange = (date) => setNewAction((prev) => ({ ...prev, dividendDate: date }));
 
   const handleSectorChange = (selectedValue) => {
-    setNewAction((prev) => ({ 
-      ...prev, 
+    setNewAction((prev) => ({
+      ...prev,
       sector: selectedValue,
-      isSectorAutoFilled: false
+      isSectorAutoFilled: false,
     }));
   };
 
@@ -63,7 +64,7 @@ export default function MoreActions() {
       const response = await fetch(`/api/stock_profile/${selectedAction.symbol}`);
       if (response.ok) {
         const profile = await response.json();
-  
+
         setNewAction((prev) => ({
           ...prev,
           name: selectedAction.name,
@@ -148,8 +149,20 @@ export default function MoreActions() {
 
   const bénéficeColor = totalBénéfice >= 0 ? "text-checkgreen" : "text-checkred";
 
+  // Variantes pour l'animation des onglets
+  const tabVariants = {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -10 },
+  };
+
   return (
-    <div className="w-full p-4 min-h-screen bg-gray-100">
+    <motion.div
+      className="w-full p-4 min-h-screen bg-gray-100"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <button
         onClick={() => navigate(-1)}
         className="mb-4 p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
@@ -160,6 +173,7 @@ export default function MoreActions() {
       <AnimatePresence>
         {showPopup && (
           <motion.div
+            key="popup"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -199,130 +213,149 @@ export default function MoreActions() {
         </button>
       </div>
 
-      {activeTab === "details" ? (
-        <div>
-          <h2 className="text-lg font-bold text-primary mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" /> Toutes les actions
-          </h2>
-          <ul className="space-y-4">
-            {actionsData.map((action) => (
-              <motion.li
-                key={action.id}
-                className="flex items-center justify-between p-4 rounded-3xl shadow-sm bg-white cursor-pointer hover:shadow-md transition"
-                whileHover={{ scale: 1.02 }}
-                onClick={() =>
-                  navigate(`/DetailPage/${action.id}`, {
-                    state: { background: location, createdAction: action },
-                  })
-                }
-              >
-                <div className="flex items-center space-x-4">
-                  <LineChart className="w-6 h-6 text-primary" />
-                  <div>
-                    <p className="text-primary font-semibold text-lg">{action.name}</p>
-                    <p className="text-greenLight font-medium text-sm">
-                      {action.quantity} actions
-                    </p>
-                  </div>
-                </div>
-                <p className="text-lg font-bold">{action.purchasePrice}€</p>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteAction(action.id);
-                    }}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <Trash size={18} />
-                  </button>
-                  <ChevronRight className="text-gray-400" />
-                </div>
-              </motion.li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="p-6 bg-white rounded-3xl shadow-md border border-gray-200">
-          <h2 className="text-lg font-bold text-primary mb-4">Ajouter une action</h2>
-          <div className="space-y-3">
-            <FloatingLabelInput
-              label="Nom de l'action"
-              name="name"
-              value={newAction.name}
-              onChange={handleInputChange}
-            />
-            <FloatingLabelInput
-              label="Quantité"
-              name="quantity"
-              type="number"
-              value={newAction.quantity}
-              onChange={handleInputChange}
-            />
-            <FloatingLabelInput
-              label="Prix d'achat (€)"
-              name="purchasePrice"
-              type="number"
-              value={newAction.purchasePrice}
-              onChange={handleInputChange}
-            />
-            <FloatingLabelInput
-              label="Dividende (€)"
-              name="dividendPrice"
-              type="number"
-              value={newAction.dividendPrice}
-              onChange={handleInputChange}
-            />
-
-            {newAction.isSectorAutoFilled ? (
-              <div className="relative">
-                <input
-                  type="text"
-                  value={newAction.sector}
-                  readOnly
-                  className="w-full p-3 border rounded-3xl bg-gray-100"
-                  placeholder="Secteur auto-rempli"
-                />
-                <button
-                  type="button"
-                  onClick={() => setNewAction(prev => ({
-                    ...prev,
-                    isSectorAutoFilled: false,
-                    sector: ""
-                  }))}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-blue-500"
+      <AnimatePresence exitBeforeEnter>
+        {activeTab === "details" ? (
+          <motion.div
+            key="details"
+            variants={tabVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-lg font-bold text-primary mb-4 flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2" /> Toutes les actions
+            </h2>
+            <ul className="space-y-4">
+              {actionsData.map((action) => (
+                <motion.li
+                  key={action.id}
+                  className="flex items-center justify-between p-4 rounded-3xl shadow-sm bg-white cursor-pointer hover:shadow-md transition-all duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  onClick={() =>
+                    navigate(`/DetailPage/${action.id}`, {
+                      state: { background: location, createdAction: action },
+                    })
+                  }
                 >
-                  Modifier
-                </button>
-              </div>
-            ) : (
-              <CustomSelect
-                name="sector"
-                value={newAction.sector}
-                onChange={handleSectorChange}
-                options={sectorOptions}
-                placeholder="Catégorie"
+                  <div className="flex items-center space-x-4">
+                    <LineChart className="w-6 h-6 text-primary" />
+                    <div>
+                      <p className="text-primary font-semibold text-lg">{action.name}</p>
+                      <p className="text-greenLight font-medium text-sm">
+                        {action.quantity} actions
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-bold">{action.purchasePrice}€</p>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteAction(action.id);
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash size={18} />
+                    </button>
+                    <ChevronRight className="text-gray-400" />
+                  </div>
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="add"
+            variants={tabVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.5 }}
+            className="p-6 bg-white rounded-3xl shadow-md border border-gray-200"
+          >
+            <h2 className="text-lg font-bold text-primary mb-4">Ajouter une action</h2>
+            <div className="space-y-3">
+              <FloatingLabelInput
+                label="Nom de l'action"
+                name="name"
+                value={newAction.name}
+                onChange={handleInputChange}
               />
-            )}
+              <FloatingLabelInput
+                label="Quantité"
+                name="quantity"
+                type="number"
+                value={newAction.quantity}
+                onChange={handleInputChange}
+              />
+              <FloatingLabelInput
+                label="Prix d'achat (€)"
+                name="purchasePrice"
+                type="number"
+                value={newAction.purchasePrice}
+                onChange={handleInputChange}
+              />
+              <FloatingLabelInput
+                label="Dividende (€)"
+                name="dividendPrice"
+                type="number"
+                value={newAction.dividendPrice}
+                onChange={handleInputChange}
+              />
 
-            <div className="w-full">
-              <CustomDatePicker
-                selected={newAction.dividendDate}
-                onChange={handleDateChange}
-                placeholderText="Sélectionnez la date du dividende"
-                className="w-full p-3 border rounded-3xl bg-gray-50"
-              />
+              {newAction.isSectorAutoFilled ? (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newAction.sector}
+                    readOnly
+                    className="w-full p-3 border rounded-3xl bg-gray-100"
+                    placeholder="Secteur auto-rempli"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setNewAction((prev) => ({
+                        ...prev,
+                        isSectorAutoFilled: false,
+                        sector: "",
+                      }))
+                    }
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-blue-500"
+                  >
+                    Modifier
+                  </button>
+                </div>
+              ) : (
+                <CustomSelect
+                  name="sector"
+                  value={newAction.sector}
+                  onChange={handleSectorChange}
+                  options={sectorOptions}
+                  placeholder="Catégorie"
+                />
+              )}
+
+              <div className="w-full">
+                <CustomDatePicker
+                  selected={newAction.dividendDate}
+                  onChange={handleDateChange}
+                  placeholderText="Sélectionnez la date du dividende"
+                  className="w-full p-3 border rounded-3xl bg-gray-50"
+                />
+              </div>
+              <motion.button
+                onClick={handleAddAction}
+                whileTap={{ scale: 0.95 }}
+                className="w-full bg-primary text-white p-3 rounded-3xl hover:bg-greenLight transition flex items-center justify-center"
+              >
+                <PlusCircle className="w-5 h-5 mr-2" /> Ajouter l'action
+              </motion.button>
             </div>
-            <motion.button
-              onClick={handleAddAction}
-              whileTap={{ scale: 0.95 }}
-              className="w-full bg-primary text-white p-3 rounded-3xl hover:bg-greenLight transition flex items-center justify-center"
-            >
-              <PlusCircle className="w-5 h-5 mr-2" /> Ajouter l'action
-            </motion.button>
-          </div>
-        </div>
-      )}
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

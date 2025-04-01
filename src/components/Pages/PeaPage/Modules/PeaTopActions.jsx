@@ -1,3 +1,4 @@
+// src/components/Pages/PeaPage/Modules/PeaTopActions.jsx
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useContext, useMemo } from "react";
 import {
@@ -14,7 +15,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import CustomSelect from "./Reutilisable/CustomSelect";
 import { ActionsContext } from "./Reutilisable/ActionsContext";
 
-// Composant extrait pour la modale de filtres
 function FiltersModal({
   searchTerm,
   setSearchTerm,
@@ -28,10 +28,10 @@ function FiltersModal({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onClick={onClose}
     >
       <motion.div
@@ -41,7 +41,10 @@ function FiltersModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white rounded-3xl shadow-lg p-6 w-4/5 max-w-md relative"
       >
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-600 hover:text-primary">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-600 hover:text-primary transition"
+        >
           <X className="w-5 h-5" />
         </button>
         <h3 className="text-lg font-bold text-primary mb-4">Filtres</h3>
@@ -78,10 +81,26 @@ function FiltersModal({
           value={performanceFilter}
           onChange={(e) => setPerformanceFilter(e.target.value)}
           options={[
-            { value: "", label: "Toutes les variations", icon: <Filter className="w-4 h-4 text-gray-600" /> },
-            { value: "Hausses", label: "Hausses", icon: <ChevronUp className="w-4 h-4 text-checkgreen" /> },
-            { value: "Baisses", label: "Baisses", icon: <ChevronDown className="w-4 h-4 text-checkred" /> },
-            { value: "Stable", label: "Stable", icon: <Minus className="w-4 h-4 text-gray-600" /> },
+            {
+              value: "",
+              label: "Toutes les variations",
+              icon: <Filter className="w-4 h-4 text-gray-600" />,
+            },
+            {
+              value: "Hausses",
+              label: "Hausses",
+              icon: <ChevronUp className="w-4 h-4 text-checkgreen" />,
+            },
+            {
+              value: "Baisses",
+              label: "Baisses",
+              icon: <ChevronDown className="w-4 h-4 text-checkred" />,
+            },
+            {
+              value: "Stable",
+              label: "Stable",
+              icon: <Minus className="w-4 h-4 text-gray-600" />,
+            },
           ]}
           placeholder="Performance"
         />
@@ -102,7 +121,6 @@ export default function PeaTopActions() {
   const { actions } = useContext(ActionsContext);
   const actionsData = Array.isArray(actions) ? actions : [];
 
-  // États locaux
   const [displayMode, setDisplayMode] = useState("percent");
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,35 +128,44 @@ export default function PeaTopActions() {
   const [selectedSector, setSelectedSector] = useState("");
   const [performanceFilter, setPerformanceFilter] = useState("");
 
-  // Utilisation de useMemo pour recalculer uniquement si un des critères change
   const filteredActions = useMemo(() => {
-    return actionsData.filter((action) => {
-      if (!action.name) return false;
-      if (!action.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-      if (minQuantity && action.quantity < parseInt(minQuantity, 10)) return false;
-      if (selectedSector && action.sector !== selectedSector) return false;
-      const change = action.change ?? 0;
-      if (performanceFilter === "Hausses" && change <= 0) return false;
-      if (performanceFilter === "Baisses" && change >= 0) return false;
-      if (performanceFilter === "Stable" && change !== 0) return false;
-      return true;
-    }).slice(0, 5);
+    return actionsData
+      .filter((action) => {
+        if (!action.name) return false;
+        if (!action.name.toLowerCase().includes(searchTerm.toLowerCase()))
+          return false;
+        if (minQuantity && action.quantity < parseInt(minQuantity, 10))
+          return false;
+        if (selectedSector && action.sector !== selectedSector) return false;
+        const change = action.change ?? 0;
+        if (performanceFilter === "Hausses" && change <= 0) return false;
+        if (performanceFilter === "Baisses" && change >= 0) return false;
+        if (performanceFilter === "Stable" && change !== 0) return false;
+        return true;
+      })
+      .slice(0, 5);
   }, [actionsData, searchTerm, minQuantity, selectedSector, performanceFilter]);
 
   return (
-    <div className="w-full p-4 relative">
-      {/* En-tête */}
+    <motion.div
+      className="w-full p-4 relative"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <div className="flex items-center justify-between p-3 bg-white rounded-3xl shadow-lg">
         <h2 className="text-lg font-bold text-primary flex items-center">
           <TrendingUp className="w-5 h-5 mr-2 ml-2 text-primary" /> Top 5 Actions
         </h2>
-        <button onClick={() => setShowFilters(true)} className="text-gray-600 hover:text-primary transition">
+        <button
+          onClick={() => setShowFilters(true)}
+          className="text-gray-600 hover:text-primary transition"
+        >
           <Settings className="w-5 h-5 mr-2" />
         </button>
       </div>
 
-      {/* Liste des actions */}
-      <ul className="space-y-4 mt-3 relative">
+      <ul className="space-y-4 mt-3 relative bg-white rounded-3xl shadow-xl p-1">
         {filteredActions.map((action) => {
           const change = action.change ?? 0;
           const currentPrice = action.currentPrice ?? 0;
@@ -149,7 +176,11 @@ export default function PeaTopActions() {
               key={action.id}
               className="flex items-center justify-between p-3 rounded-3xl shadow-sm transition-all duration-300 cursor-pointer hover:bg-gray-100"
               whileHover={{ scale: 1.02 }}
-              onClick={() => navigate(`/DetailPage/${action.id}`, { state: { background: location } })}
+              onClick={() =>
+                navigate(`/DetailPage/${action.id}`, {
+                  state: { background: location },
+                })
+              }
             >
               <div>
                 <p className="text-primary font-medium">{action.name}</p>
@@ -167,7 +198,11 @@ export default function PeaTopActions() {
                       change > 0 ? "text-checkgreen" : "text-checkred"
                     }`}
                   >
-                    {change > 0 ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
+                    {change > 0 ? (
+                      <ChevronUp className="w-4 h-4 mr-1" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 mr-1" />
+                    )}
                     {displayMode === "percent"
                       ? `${change.toFixed(1)}%`
                       : `${((currentPrice - price) * quantity).toFixed(2)}€`}
@@ -180,14 +215,15 @@ export default function PeaTopActions() {
         })}
       </ul>
 
-      {/* Bouton Voir plus */}
       <div className="relative mt-4 flex justify-center">
-        <button onClick={() => navigate("/MoreActions")} className="text-greenLight font-semibold hover:text-secondary transition text-base">
+        <button
+          onClick={() => navigate("/MoreActions")}
+          className="text-greenLight font-semibold hover:text-secondary transition text-base"
+        >
           Voir plus →
         </button>
       </div>
 
-      {/* Affichage conditionnel de la modale des filtres */}
       <AnimatePresence>
         {showFilters && (
           <FiltersModal
@@ -203,6 +239,6 @@ export default function PeaTopActions() {
           />
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

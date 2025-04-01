@@ -2,8 +2,9 @@
 import React, { useContext, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
-import { ActionsContext } from "../Actions/ActionsContext"; // Vérifiez le chemin
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
+import { ActionsContext } from "../Reutilisable/ActionsContext"; // Vérifiez le chemin
 
 // Jeu de données statique (fallback) pour les valeurs
 const fullDataValuesStatic = [
@@ -16,15 +17,21 @@ const fullDataValuesStatic = [
 // Palette de couleurs pour les valeurs
 const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e", "#3498db"];
 
-function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
+/**
+ * CustomLegendList
+ * Affiche une légende personnalisée avec un tooltip animé qui indique le montant.
+ */
+function CustomLegendList({ data, colors, onItemClick, selectedIndex, tooltipData, setTooltipData }) {
   return (
-    <ul className="mt-4 w-full" onClick={(e) => e.stopPropagation()}>
+    <ul className="mt-4 w-full relative" onClick={(e) => e.stopPropagation()}>
       {data.map((item, index) => (
         <li
           key={index}
           onClick={() => onItemClick(index)}
-          className={`cursor-pointer flex justify-between items-center px-4 py-1 ${
-            selectedIndex === index ? "font-bold" : ""
+          onMouseEnter={() => setTooltipData({ index, amount: item.amount })}
+          onMouseLeave={() => setTooltipData(null)}
+          className={`cursor-pointer flex justify-between items-center px-4 py-1 transition-colors duration-200 ${
+            selectedIndex === index ? "font-bold text-primary" : "text-gray-700"
           }`}
         >
           <div className="flex items-center space-x-2">
@@ -32,21 +39,39 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
               style={{ backgroundColor: colors[index % colors.length] }}
               className="w-3 h-3 rounded-full"
             />
-            <span className="text-sm text-gray-700">{item.label}</span>
+            <span className="text-sm">{item.label}</span>
           </div>
-          <span className="text-sm font-semibold text-gray-700">
+          <span className="text-sm font-semibold">
             {item.percentage.toFixed(2)}%
           </span>
         </li>
       ))}
+      <AnimatePresence>
+        {tooltipData && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.3 }}
+            className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 z-10"
+          >
+            Montant : {tooltipData.amount.toFixed(2)}€
+          </motion.div>
+        )}
+      </AnimatePresence>
     </ul>
   );
 }
 
+/**
+ * PeaPieValeurs
+ * Composant affichant la répartition par valeur sous forme de donut animé.
+ */
 export default function PeaPieValeurs({ onValueClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedValueIndex, setSelectedValueIndex] = useState(null);
+  const [tooltipData, setTooltipData] = useState(null);
 
   // Récupération des actions depuis le contexte
   const { actions } = useContext(ActionsContext);
@@ -55,7 +80,7 @@ export default function PeaPieValeurs({ onValueClick }) {
   // Calcul de la valeur totale du portefeuille
   const totalValue = useMemo(() => {
     return actionsData.reduce((sum, action) => {
-      const price = action.currentPrice || action.price || 1; // valeur par défaut = 1
+      const price = action.currentPrice || action.price || 1;
       const quantity = action.quantity || 0;
       return sum + quantity * price;
     }, 0);
@@ -75,9 +100,9 @@ export default function PeaPieValeurs({ onValueClick }) {
     });
   }, [actionsData, totalValue]);
 
-  // Fallback statique si aucune donnée dynamique n'est disponible
-  const displayData =
-    dataValues.length > 0 && totalValue > 0 ? dataValues : fullDataValuesStatic;
+  // Fallback statique si aucune donnée n'est disponible
+  const fallbackData = [{ label: "Aucune donnée", percentage: 100, amount: 0 }];
+  const displayData = dataValues.length > 0 && totalValue > 0 ? dataValues : fallbackData;
 
   // Fonction de navigation par défaut
   const defaultValueClick = () => {
@@ -86,12 +111,13 @@ export default function PeaPieValeurs({ onValueClick }) {
   const handleValueClick = onValueClick || defaultValueClick;
 
   return (
-    <div className="min-h-screen bg-light w-full p-6">
-      {/* Header avec bouton Retour et titre */}
+    <div className="min-h-screen bg-light w-full p-6 relative">
+      {/* Header avec bouton de retour */}
       <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
           className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
+          aria-label="Retour"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
@@ -160,6 +186,8 @@ export default function PeaPieValeurs({ onValueClick }) {
           colors={COLORS_VALUES}
           onItemClick={setSelectedValueIndex}
           selectedIndex={selectedValueIndex}
+          tooltipData={tooltipData}
+          setTooltipData={setTooltipData}
         />
       </div>
     </div>

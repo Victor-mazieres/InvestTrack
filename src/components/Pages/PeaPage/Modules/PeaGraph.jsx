@@ -1,4 +1,15 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
+// src/components/Pages/PeaPage/Modules/PeaGraph.jsx
+import React from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import { motion } from "framer-motion";
 
 const dataPEA = [
   { date: "Jan", valeur: 1200 },
@@ -6,12 +17,17 @@ const dataPEA = [
   { date: "Mar", valeur: 900 },
   { date: "Avr", valeur: 1400 },
   { date: "Mai", valeur: 1800 },
-  { date: "Mai", valeur: 1100 },
+  { date: "Jun", valeur: 1100 },
 ];
 
 export default function PeaGraph() {
   return (
-    <div className="w-full p-4">
+    <motion.div
+      className="w-full p-4"
+      initial={{ opacity: 0, x: -50 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={dataPEA}>
           <XAxis dataKey="date" />
@@ -21,6 +37,6 @@ export default function PeaGraph() {
           <Line type="monotone" dataKey="valeur" stroke="#2e8e97" strokeWidth={3} />
         </LineChart>
       </ResponsiveContainer>
-    </div>
+    </motion.div>
   );
 }

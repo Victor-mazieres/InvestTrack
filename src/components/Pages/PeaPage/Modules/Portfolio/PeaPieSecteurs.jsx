@@ -2,8 +2,9 @@
 import React, { useContext, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
-import { ActionsContext } from "../Actions/ActionsContext"; // Vérifiez le chemin
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
+import { ActionsContext } from "../Reutilisable/ActionsContext"; // Vérifiez le chemin
 
 // Composant de légende personnalisée affichée sous le PieChart.
 function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
@@ -13,8 +14,8 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
         <li
           key={index}
           onClick={() => onItemClick(index)}
-          className={`cursor-pointer flex justify-between items-center px-4 py-1 ${
-            selectedIndex === index ? "font-bold" : ""
+          className={`cursor-pointer flex justify-between items-center px-4 py-1 transition-colors duration-200 ${
+            selectedIndex === index ? "font-bold text-primary" : "text-gray-700"
           }`}
         >
           <div className="flex items-center space-x-2">
@@ -22,9 +23,9 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
               style={{ backgroundColor: colors[index % colors.length] }}
               className="w-3 h-3 rounded-full"
             />
-            <span className="text-sm text-gray-700">{item.label}</span>
+            <span className="text-sm">{item.label}</span>
           </div>
-          <span className="text-sm font-semibold text-gray-700">
+          <span className="text-sm font-semibold">
             {item.percentage.toFixed(2)}%
           </span>
         </li>
@@ -33,19 +34,25 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
   );
 }
 
+CustomLegendList.propTypes = {};
+
 export default function PeaPieSecteurs({ onValueClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   // Récupération des actions depuis le contexte
   const { actions } = useContext(ActionsContext);
-  const actionsData = useMemo(() => (Array.isArray(actions) ? actions : []), [actions]);
+  const actionsData = useMemo(
+    () => (Array.isArray(actions) ? actions : []),
+    [actions]
+  );
 
   // Calcul de la valeur totale du portefeuille
   const totalValue = useMemo(() => {
     return actionsData.reduce((sum, action) => {
-      const price = action.currentPrice || action.price || 1; // valeur par défaut = 1
+      const price = action.currentPrice || action.price || 1;
       const quantity = action.quantity || 0;
       return sum + quantity * price;
     }, 0);
@@ -73,7 +80,8 @@ export default function PeaPieSecteurs({ onValueClick }) {
   // Fallback statique si aucune donnée n'est disponible
   const fallbackData = [{ label: "Aucune donnée", percentage: 100 }];
 
-  const displayData = dataSectors.length > 0 && totalValue > 0 ? dataSectors : fallbackData;
+  const displayData =
+    dataSectors.length > 0 && totalValue > 0 ? dataSectors : fallbackData;
 
   // Palette de couleurs
   const COLORS_SECTORS = [
@@ -97,6 +105,19 @@ export default function PeaPieSecteurs({ onValueClick }) {
   const handleSectorClick = defaultSectorClick;
   const handleValueClick = onValueClick || defaultValueClick;
 
+  // Variante pour l'effet d'agrandissement sur le secteur actif
+  const activeSectorAnimation = {
+    scale: 1.08,
+    transition: { duration: 0.4, ease: "easeOut" },
+  };
+
+  // Variante pour le tooltip
+  const tooltipVariants = {
+    initial: { opacity: 0, y: -5 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -5 },
+  };
+
   return (
     <div className="relative min-h-screen bg-light w-full p-6">
       {/* Header */}
@@ -104,6 +125,7 @@ export default function PeaPieSecteurs({ onValueClick }) {
         <button
           onClick={() => navigate(-1)}
           className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
+          aria-label="Retour"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
@@ -138,7 +160,9 @@ export default function PeaPieSecteurs({ onValueClick }) {
                   innerRadius="40%"
                   minAngle={5}
                   activeIndex={selectedIndex}
-                  onClick={(_, index) => setSelectedIndex(selectedIndex === index ? null : index)}
+                  onClick={(_, index) =>
+                    setSelectedIndex(selectedIndex === index ? null : index)
+                  }
                   isAnimationActive={true}
                   animationDuration={1000}
                   animationEasing="ease-in-out"
@@ -152,6 +176,10 @@ export default function PeaPieSecteurs({ onValueClick }) {
                           : "#e0e0e0"
                       }
                       cursor="pointer"
+                      onMouseEnter={() => setHoveredIndex(index)}
+                      onMouseLeave={() => setHoveredIndex(null)}
+                      // Si le secteur est actif, appliquer un effet d'agrandissement
+                      {...(selectedIndex === index ? activeSectorAnimation : {})}
                     />
                   ))}
                 </Pie>
