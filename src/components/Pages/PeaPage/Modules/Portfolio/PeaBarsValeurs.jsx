@@ -3,7 +3,7 @@ import React, { useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { ActionsContext } from "../Actions/ActionsContext"; // Ajustez le chemin si nécessaire
+import { ActionsContext } from "../Reutilisable/ActionsContext"; // Ajustez le chemin si nécessaire
 
 // Jeu de données statique (fallback)
 const fullDataValuesStatic = [
