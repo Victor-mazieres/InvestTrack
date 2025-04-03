@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 
 // Lazy loaded pages
 const PeaPage = lazy(() => import("../Pages/PeaPage/PeaPage"));
-const ImmobilierPage = lazy(() => import("../Pages/ImmobilierPage/ImmobilierPage"));
+const ImmobilierDashboard = lazy(() => import("../Pages/ImmobilierPage/ImmobilierDashboard"));
 const MoreActions = lazy(() => import("../Pages/PeaPage/Modules/Actions/MoreActions"));
 const ProfilePage = lazy(() => import("../Pages/Profile/ProfilePage"));
 const Profile = lazy(() => import("../Pages/Profile/Modules/Profile"));
@@ -13,6 +13,11 @@ const RegisterPage = lazy(() => import("../Pages/ConnexionPage/RegisterPage/Regi
 const Dashboard = lazy(() => import("../Pages/Dashboard/Dashboard"));
 const SavedCalculations = lazy(() => import("../Pages/CalculatorCredit/SavedCalculations"));
 const CalculationDetails = lazy(() => import("../Pages/CalculatorCredit/CalculationDetails"));
+const CreatePropertyStep1 = lazy(() => import("../Pages/ImmobilierPage/CreateProperty/CreatePropertyStep1"))
+const CreatePropertyStep2 = lazy(() => import("../Pages/ImmobilierPage/CreateProperty/CreatePropertyStep2"))
+const PropertyDetail = lazy(() => import("../Pages/ImmobilierPage/PropertyDetail/PropertyDetail"))
+const CreateTenant = lazy(() => import("../Pages/ImmobilierPage/Tenant/CreateTenant/"))
+const TenantDetails = lazy(() => import("../Pages/ImmobilierPage/Tenant/TenantDetails"))
 
 // Error Pages
 const NotFoundPage = lazy(() => import("../Pages/Errors/NotFoundPage"));
@@ -22,7 +27,7 @@ const InternalServerError = lazy(() => import("../Pages/Errors/InternalServerErr
 export const mainRoutes = [
   { path: "/", element: <Navigate to="/connexion" replace /> },
   { path: "/pea", element: <PeaPage /> },
-  { path: "/immobilier", element: <ImmobilierPage /> },
+  { path: "/immobilier", element: <ImmobilierDashboard /> },
   { path: "/MoreActions", element: <MoreActions /> },
   { path: "/profile", element: <ProfilePage /> },
   { path: "/info-profile", element: <Profile /> },
@@ -33,6 +38,11 @@ export const mainRoutes = [
   { path: "/calculimmobilier/:timestamp", element: <SavedCalculations /> },
   { path: "/detailscalcul/:id", element: <CalculationDetails /> },
   { path: "/DetailPage/:id", element: <CalculationDetails /> },
+  { path: "/nouveau-bien", element: <CreatePropertyStep1 /> },
+  { path: "/nouveau-bien/etape-2", element: <CreatePropertyStep2 /> },
+  { path: "/property/:id", element: <PropertyDetail />},
+  { path: "/nouveau-locataire", element: <CreateTenant  />},
+  { path: "/locataire/:id", element: <TenantDetails />},
   { path: "/401", element: <UnauthorizedPage /> },
   { path: "/500", element: <InternalServerError /> },
   { path: "*", element: <NotFoundPage /> },

@@ -14,6 +14,7 @@ import PeaActionChart from "../Actions/PeaActionChart";
 import CustomDatePicker from "../Actions/CustomDatePickerAddAction/CustomDatePicker";
 import { format, parse } from "date-fns";
 import { ActionsContext } from "../Reutilisable/ActionsContext";
+import FloatingLabelInput from "../../Modules/Reutilisable/FloatingLabelInput"; // Vérifiez le chemin d'importation
 
 // Fonction utilitaire pour formater une date ISO en "dd/MM/yyyy"
 function formatIsoDate(dateString) {
@@ -22,8 +23,8 @@ function formatIsoDate(dateString) {
   return format(parsed, "dd/MM/yyyy");
 }
 
-// Fonction qui retourne des variantes d'animation selon l'indice
-const getSectionVariants = (index) => ({
+// Variantes d'animation pour chaque bloc
+const sectionVariants = (index) => ({
   initial: { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
   animate: { opacity: 1, x: 0 },
   exit: { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
@@ -40,15 +41,15 @@ function PurchaseModal({ onClose, newPurchase, setNewPurchase, onAddPurchase }) 
       onClick={onClose}
     >
       <motion.div
-        className="bg-white p-6 rounded-3xl shadow-lg w-4/5 max-w-md"
+        className="bg-gradient-to-br from-gray-800 to-gray-700 p-6 rounded-3xl shadow-xl w-4/5 max-w-md relative"
         initial={{ y: 50 }}
         animate={{ y: 0 }}
         exit={{ y: 50 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-primary">Ajouter un achat</h2>
-          <button onClick={onClose} className="text-gray-500">
+          <h2 className="text-lg font-semibold text-gray-100">Ajouter un achat</h2>
+          <button onClick={onClose} className="text-gray-400">
             <X size={20} />
           </button>
         </div>
@@ -58,43 +59,42 @@ function PurchaseModal({ onClose, newPurchase, setNewPurchase, onAddPurchase }) 
               selected={newPurchase.date}
               onChange={(date) => setNewPurchase((prev) => ({ ...prev, date }))}
               placeholderText="Sélectionnez une date"
-              className="w-full p-3 border rounded-3xl bg-gray-50"
+              className="w-full p-3 border border-gray-600 rounded-3xl bg-gray-800 text-gray-100"
             />
           </div>
-          <input
-            type="number"
-            name="quantity"
-            placeholder="Quantité"
-            value={newPurchase.quantity}
-            onChange={(e) =>
-              setNewPurchase((prev) => ({ ...prev, quantity: e.target.value }))
-            }
-            className="w-full p-2 border rounded-3xl"
-          />
-          <input
-            type="number"
-            name="price"
-            placeholder="Prix d'achat (€)"
-            value={newPurchase.price}
-            onChange={(e) =>
-              setNewPurchase((prev) => ({ ...prev, price: e.target.value }))
-            }
-            className="w-full p-2 border rounded-3xl"
-          />
-          <input
-            type="number"
-            name="fees"
-            placeholder="Frais (€)"
-            value={newPurchase.fees}
-            onChange={(e) =>
-              setNewPurchase((prev) => ({ ...prev, fees: e.target.value }))
-            }
-            className="w-full p-2 border rounded-3xl"
-          />
+          <div className="space-y-3">
+            <FloatingLabelInput
+              label="Quantité"
+              name="quantity"
+              type="number"
+              value={newPurchase.quantity}
+              onChange={(e) =>
+                setNewPurchase((prev) => ({ ...prev, quantity: e.target.value }))
+              }
+            />
+            <FloatingLabelInput
+              label="Prix d'achat (€)"
+              name="price"
+              type="number"
+              value={newPurchase.price}
+              onChange={(e) =>
+                setNewPurchase((prev) => ({ ...prev, price: e.target.value }))
+              }
+            />
+            <FloatingLabelInput
+              label="Frais (€)"
+              name="fees"
+              type="number"
+              value={newPurchase.fees}
+              onChange={(e) =>
+                setNewPurchase((prev) => ({ ...prev, fees: e.target.value }))
+              }
+            />
+          </div>
           <motion.button
             onClick={onAddPurchase}
             whileTap={{ scale: 0.95 }}
-            className="w-full bg-greenLight text-white p-2 rounded-3xl"
+            className="w-full bg-greenLight text-white p-2 rounded-3xl shadow-xl"
           >
             Ajouter
           </motion.button>
@@ -115,41 +115,40 @@ function DividendModal({ onClose, newDividend, setNewDividend, onAddDividend }) 
       onClick={onClose}
     >
       <motion.div
-        className="bg-white p-6 rounded-3xl shadow-lg w-4/5 max-w-md"
+        className="bg-gradient-to-br from-gray-800 to-gray-700 p-6 rounded-3xl shadow-xl w-4/5 max-w-md relative"
         initial={{ y: 50 }}
         animate={{ y: 0 }}
         exit={{ y: 50 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-primary">Ajouter un dividende</h2>
-          <button onClick={onClose} className="text-gray-500">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold text-gray-100">Ajouter un dividende</h2>
+          <button onClick={onClose} className="text-gray-400">
             <X size={20} />
           </button>
         </div>
         <div className="space-y-3">
-          <div className="w-full">
+          <div className="w-full mb-4">
             <CustomDatePicker
               selected={newDividend.date}
               onChange={(date) => setNewDividend((prev) => ({ ...prev, date }))}
               placeholderText="Sélectionnez une date"
-              className="w-full p-3 border rounded-3xl bg-gray-50"
+              className="w-full p-3 border border-gray-600 rounded-3xl bg-gray-800 text-gray-100"
             />
           </div>
-          <input
-            type="number"
+          <FloatingLabelInput
+            label="Montant (€)"
             name="amount"
-            placeholder="Montant (€)"
+            type="number"
             value={newDividend.amount}
             onChange={(e) =>
               setNewDividend((prev) => ({ ...prev, amount: e.target.value }))
             }
-            className="w-full p-2 border rounded-3xl"
           />
           <motion.button
             onClick={onAddDividend}
             whileTap={{ scale: 0.95 }}
-            className="w-full bg-greenLight text-white p-2 rounded-3xl"
+            className="w-full bg-greenLight text-white p-2 rounded-3xl shadow-xl"
           >
             Ajouter
           </motion.button>
@@ -255,7 +254,8 @@ export default function DetailPage() {
   }, [action, showAllDividends]);
 
   const addPurchase = () => {
-    if (!newPurchase.date || !newPurchase.quantity || !newPurchase.price) return;
+    if (!newPurchase.date || !newPurchase.quantity || !newPurchase.price)
+      return;
     const dateString = format(newPurchase.date, "yyyy-MM-dd");
     const updatedHistory = [
       ...(action.history || []),
@@ -295,20 +295,14 @@ export default function DetailPage() {
     updateAction(action.id, { ...action, dividendsHistory: updatedDividends });
   };
 
-  if (loading) return <p>Chargement...</p>;
+  if (loading)
+    return <p className="text-center text-gray-100">Chargement...</p>;
   if (!action)
     return <p className="text-center text-red-500">Action non trouvée !</p>;
 
-  // Variantes d'animation pour chaque bloc, en alternant la direction (x: -50 pour pair, 50 pour impair)
-  const sectionVariants = (index) => ({
-    initial: { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
-  });
-
   return (
     <motion.div
-      className="relative p-6 min-h-screen bg-light"
+      className="relative p-6 min-h-screen bg-gray-900 text-gray-100"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
@@ -318,12 +312,12 @@ export default function DetailPage() {
       <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-blue-900 transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
         <motion.h1
-          className="ml-4 text-2xl font-bold text-secondary"
+          className="ml-4 text-2xl font-bold text-gray-100"
           variants={sectionVariants(0)}
           initial="initial"
           animate="animate"
@@ -340,13 +334,13 @@ export default function DetailPage() {
         animate="animate"
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold text-white">
           {isEditing ? "Modifier" : "Détails"} de{" "}
           <span className="text-greenLight">{action.name}</span>
         </h1>
         <div className="flex items-center mt-2 mb-4">
-          <Briefcase className="w-5 h-5 text-gray-500 mr-2" />
-          <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+          <Briefcase className="w-5 h-5 text-gray-400 mr-2" />
+          <span className="bg-gray-700 text-gray-200 px-3 py-1 rounded-full text-sm font-medium">
             {action.sector || "Non défini"}
           </span>
         </div>
@@ -360,81 +354,74 @@ export default function DetailPage() {
         </motion.div>
       </motion.div>
 
+      {/* Bloc Valorisation et Dividendes */}
       <motion.div
-        className="bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6"
+        className="bg-gradient-to-br from-gray-800 to-gray-700 p-6 rounded-3xl shadow-xl border border-gray-600 mb-6 relative overflow-visible"
         variants={sectionVariants(3)}
         initial="initial"
         animate="animate"
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        <h2 className="text-2xl font-bold text-primary mb-4">
-          Informations & Dividendes
+        <h2 className="text-2xl font-bold text-gray-100 mb-6 flex items-center gap-2">
+          <List className="w-6 h-6 text-gray-100" />
+          Valorisation
         </h2>
-        <div className="grid grid-cols-2 gap-4">
+
+        {/* Bouton Pencil en haut à droite */}
+        {!isEditingDividend && (
+          <button
+            onClick={() => setIsEditingDividend(true)}
+            className="absolute -top-2 -right-2 bg-greenLight p-2 rounded-full shadow-md text-white hover:text-blue-300 transition z-50"
+          >
+            <Pencil className="w-5 h-5" />
+          </button>
+        )}
+
+        <h3 className="text-xl font-semibold text-gray-100 mb-3">Informations</h3>
+        <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="flex flex-col items-center">
-            <p className="text-sm text-gray-500">Valorisation totale</p>
+            <p className="text-sm text-gray-400">Valorisation totale</p>
             <p className="text-xl font-bold text-greenLight">
               {totalValorisation}€
             </p>
           </div>
           <div className="flex flex-col items-center">
-            <p className="text-sm text-gray-500">Performance</p>
+            <p className="text-sm text-gray-400">Performance</p>
             <p className="text-xl font-bold text-greenLight">
               {performancePercent}%
             </p>
           </div>
           <div className="flex flex-col items-center">
-            <p className="text-sm text-gray-500">Nombre d'actions</p>
-            <p className="text-xl font-bold text-greenLight">
-              {totalQuantity}
-            </p>
+            <p className="text-sm text-gray-400">Nombre d'actions</p>
+            <p className="text-xl font-bold text-greenLight">{totalQuantity}</p>
           </div>
           <div className="flex flex-col items-center">
-            <p className="text-sm text-gray-500">Gain/Perte</p>
-            <p className={`text-xl font-bold ${gainColor}`}>
-              {gainOrLoss}€
-            </p>
+            <p className="text-sm text-gray-400">Gain/Perte</p>
+            <p className={`text-xl font-bold ${gainColor}`}>{gainOrLoss}€</p>
           </div>
         </div>
-      </motion.div>
 
-      <motion.div
-        className="mt-6 bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6 relative"
-        variants={sectionVariants(4)}
-        initial="initial"
-        animate="animate"
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        {!isEditingDividend ? (
-          <>
-            <button
-              onClick={() => setIsEditingDividend(true)}
-              className="absolute -top-3 -right-3 bg-white p-2 rounded-full shadow-md text-primary hover:text-blue-700 transition z-50"
-            >
-              <Pencil className="w-5 h-5" />
-            </button>
+        <h3 className="text-xl font-semibold text-gray-100 mb-3">Dividendes</h3>
+        <div className="relative">
+          {!isEditingDividend ? (
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center w-full">
                 <div className="text-center">
-                  <p className="text-sm text-gray-500">Dividende par action</p>
+                  <p className="text-sm text-gray-400">Dividende par action</p>
                   <p className="text-xl font-bold text-greenLight">
-                    {action.dividendPrice
-                      ? `${action.dividendPrice}€`
-                      : "—"}
+                    {action.dividendPrice ? `${action.dividendPrice}€` : "—"}
                   </p>
                 </div>
-                <div className="w-px bg-gray-300 h-12 mx-4"></div>
+                <div className="w-px bg-gray-600 h-12 mx-4"></div>
                 <div className="text-center">
-                  <p className="text-sm text-gray-500">
-                    Dividendes totaux attendus
-                  </p>
+                  <p className="text-sm text-gray-400">Dividendes totaux attendus</p>
                   <p className="text-xl font-bold text-greenLight">
                     {expectedTotalDividend}
                   </p>
                 </div>
               </div>
               <div className="mt-4 text-center">
-                <p className="text-sm text-gray-500">Date de versement prévue</p>
+                <p className="text-sm text-gray-400">Date de versement prévue</p>
                 <p className="text-xl font-bold">
                   {action.dividendDate
                     ? formatIsoDate(action.dividendDate)
@@ -442,105 +429,110 @@ export default function DetailPage() {
                 </p>
               </div>
             </div>
-          </>
-        ) : (
-          <motion.div
-            className="mb-4 p-4 border rounded-3xl bg-gray-50"
-            variants={sectionVariants(5)}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.5 }}
-          >
-            <div className="flex flex-col items-center mb-4">
-              <p className="font-semibold text-primary mb-1">
-                Dividende par action
-              </p>
-              <input
-                type="number"
-                value={editDiv.dividendPrice}
-                onChange={(e) =>
-                  setEditDiv((prev) => ({
-                    ...prev,
-                    dividendPrice: e.target.value,
-                  }))
-                }
-                className="text-xl font-bold border rounded-3xl p-2 w-32 text-center"
-              />
-              <p className="text-sm text-gray-500 mt-2">Date de versement</p>
-              <div className="w-full">
-                <CustomDatePicker
-                  selected={editDiv.dividendDate ? new Date(editDiv.dividendDate) : null}
-                  onChange={(date) =>
+          ) : (
+            <motion.div
+              className="p-4 border border-gray-600 rounded-3xl bg-gray-800"
+              variants={sectionVariants(5)}
+              initial="initial"
+              animate="animate"
+              transition={{ duration: 0.5 }}
+            >
+              <div className="flex flex-col items-center mb-4">
+                <p className="font-semibold text-gray-100 mb-1">
+                  Dividende par action
+                </p>
+                <input
+                  type="number"
+                  value={editDiv.dividendPrice}
+                  onChange={(e) =>
                     setEditDiv((prev) => ({
                       ...prev,
-                      dividendDate: date ? format(date, "yyyy-MM-dd") : "",
+                      dividendPrice: e.target.value,
                     }))
                   }
-                  placeholderText="Sélectionnez la date du dividende"
-                  className="w-full p-3 border rounded-3xl bg-gray-50"
+                  className="text-xl font-semibold border border-gray-600 rounded-3xl p-2 w-28 text-center text-gray-100 bg-gray-800"
                 />
+                <p className="text-sm text-gray-400 mt-2">Date de versement</p>
+                <div className="w-full">
+                  <CustomDatePicker
+                    selected={
+                      editDiv.dividendDate ? new Date(editDiv.dividendDate) : null
+                    }
+                    onChange={(date) =>
+                      setEditDiv((prev) => ({
+                        ...prev,
+                        dividendDate: date ? format(date, "yyyy-MM-dd") : "",
+                      }))
+                    }
+                    placeholderText="Sélectionnez la date du dividende"
+                    className="w-full p-3 border border-gray-600 rounded-3xl bg-gray-800 text-gray-100"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex space-x-2">
-              <motion.button
-                onClick={saveDividendEdits}
-                whileTap={{ scale: 0.95 }}
-                className="bg-greenLight text-white p-2 rounded-3xl w-full"
-              >
-                Enregistrer
-              </motion.button>
-              <motion.button
-                onClick={() => setIsEditingDividend(false)}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gray-200 text-gray-800 p-2 rounded-3xl w-full"
-              >
-                Annuler
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
+              <div className="flex space-x-2">
+                <motion.button
+                  onClick={saveDividendEdits}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-greenLight text-white p-2 rounded-3xl w-full shadow-xl"
+                >
+                  Enregistrer
+                </motion.button>
+                <motion.button
+                  onClick={() => setIsEditingDividend(false)}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gray-600 text-gray-200 p-2 rounded-3xl w-full"
+                >
+                  Annuler
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </div>
       </motion.div>
 
+      {/* Bloc Historique */}
       <motion.div
-        className="bg-white p-6 rounded-3xl shadow-xl border border-gray-200 mb-6"
+        className="bg-gradient-to-br from-gray-800 to-gray-700 p-8 rounded-3xl shadow-xl border border-gray-600 mb-8 relative"
         variants={sectionVariants(6)}
         initial="initial"
         animate="animate"
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        <h2 className="text-2xl font-bold text-primary mb-4 flex items-center">
-          <List className="w-5 h-5 mr-2 text-primary" /> Historique
+        <h2 className="text-3xl font-bold text-gray-100 mb-6 flex items-center gap-2">
+          <List className="w-6 h-6 text-gray-100" />
+          Historique
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Colonne Achats */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xl font-semibold text-secondary">Achats</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-2xl font-bold text-gray-200">Achats</h3>
               <button
                 onClick={() => setIsPurchaseModalOpen(true)}
-                className="text-greenLight flex items-center"
+                className="flex items-center bg-greenLight hover:bg-greenLight/90 text-white text-sm font-semibold py-1 px-3 rounded-full transition"
               >
-                <PlusCircle className="w-4 h-4 mr-1 text-greenLight" /> Ajouter
+                <PlusCircle className="w-4 h-4 mr-1" /> Ajouter
               </button>
             </div>
-            <div className="max-h-[150px] overflow-y-auto">
-              <ul className="space-y-3">
+            <div className="max-h-40 overflow-y-auto">
+              <ul className="divide-y divide-gray-600">
                 {action.history?.map((entry, index) => (
                   <motion.li
                     key={index}
-                    className="flex justify-between items-center border-b pb-2"
-                    whileHover={{ scale: 1.02 }}
+                    className="flex justify-between items-center py-2"
+                    whileHover={{ scale: 1.01 }}
                   >
-                    <span className="text-xs text-secondary">
+                    <span className="text-xs text-gray-200">
                       {entry.date ? formatIsoDate(entry.date) : "—"}
                     </span>
-                    <span className="text-gray-900 text-sm">
+                    <span className="text-sm text-gray-100">
                       {entry.quantity} actions
                     </span>
-                    <span className="text-primary text-sm">
+                    <span className="text-sm text-greenLight">
                       {entry.price}€
                     </span>
-                    <span className="text-gray-600 text-xs">
+                    <span className="text-xs text-gray-400">
                       {entry.fees}€ frais
                     </span>
                     <button
@@ -554,49 +546,48 @@ export default function DetailPage() {
               </ul>
             </div>
             {action.history && action.history.length > 3 && (
-              <div className="text-right">
-              <button
-                onClick={() =>
-                  navigate(`/HistoriqueOrderPage/${action.id}`, {
-                    state: {
-                      background: location.state?.background || location,
-                      detailBackground: location,
-                    },
-                  })
-                }
-                className="font-semi-bold text-primary mt-2 underline"
-              >
-                Voir plus
-              </button>
-            </div>
+              <div className="text-right mt-4">
+                <button
+                  onClick={() =>
+                    navigate(`/HistoriqueOrderPage/${action.id}`, {
+                      state: {
+                        background: location.state?.background || location,
+                        detailBackground: location,
+                      },
+                    })
+                  }
+                  className="font-semibold text-greenLight underline text-sm"
+                >
+                  Voir plus →
+                </button>
+              </div>
             )}
           </div>
+
           {/* Colonne Dividendes */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold text-primary mb-4 flex items-center">
-                Dividende reçu
-              </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-2xl font-bold text-gray-200">Dividende reçu</h3>
               <button
                 onClick={() => setIsAddDividendModalOpen(true)}
-                className="text-greenLight flex items-center"
+                className="flex items-center bg-greenLight hover:bg-greenLight/90 text-white text-sm font-semibold py-1 px-3 rounded-full transition"
               >
-                <PlusCircle className="w-4 h-4 mr-1 text-greenLight" /> Ajouter
+                <PlusCircle className="w-4 h-4 mr-1" /> Ajouter
               </button>
             </div>
-            <div className="max-h-[150px] overflow-y-auto">
-              <ul className="space-y-3">
+            <div className="max-h-40 overflow-y-auto">
+              <ul className="divide-y divide-gray-600">
                 {displayedDividends && displayedDividends.length > 0 ? (
                   displayedDividends.map((div, index) => (
                     <motion.li
                       key={index}
-                      className="flex justify-between items-center border-b pb-2"
-                      whileHover={{ scale: 1.02 }}
+                      className="flex justify-between items-center py-2"
+                      whileHover={{ scale: 1.01 }}
                     >
-                      <span className="text-xs text-secondary">
+                      <span className="text-xs text-gray-200">
                         {div.date ? formatIsoDate(div.date) : "—"}
                       </span>
-                      <span className="text-l text-primary">{div.amount}€</span>
+                      <span className="text-sm text-greenLight">{div.amount}€</span>
                       <button
                         onClick={() => deleteDividend(index)}
                         className="text-red-500"
@@ -606,15 +597,14 @@ export default function DetailPage() {
                     </motion.li>
                   ))
                 ) : (
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-gray-500 text-xs">
                     Aucun dividende enregistré.
                   </p>
                 )}
               </ul>
             </div>
-            {action.dividendsHistory &&
-              action.dividendsHistory.length > 3 && (
-                <div className="text-right">
+            {action.dividendsHistory && action.dividendsHistory.length > 3 && (
+              <div className="text-right mt-4">
                 <button
                   onClick={() =>
                     navigate(`/HistoriqueDividendePage/${action.id}`, {
@@ -624,17 +614,17 @@ export default function DetailPage() {
                       },
                     })
                   }
-                  className="font-semi-bold text-primary mt-2 underline"
+                  className="font-semibold text-greenLight underline text-sm"
                 >
-                  Voir plus
+                  Voir plus →
                 </button>
               </div>
-              )}
-            <div className="mt-4 text-right">
-              <p className="text-sm text-gray-500">
+            )}
+            <div className="mt-6 text-right">
+              <p className="text-sm text-gray-400">
                 Total des dividendes reçus
               </p>
-              <p className="text-xl font-bold text-greenLight">
+              <p className="text-2xl font-bold text-greenLight">
                 {totalDividends}€
               </p>
             </div>

@@ -1,4 +1,3 @@
-// src/components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs.jsx
 import React, { useContext, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -9,13 +8,16 @@ import { ActionsContext } from "../Reutilisable/ActionsContext"; // Vérifiez le
 // Composant de légende personnalisée affichée sous le PieChart.
 function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
   return (
-    <ul className="mt-4 w-full" onClick={(e) => e.stopPropagation()}>
+    <ul
+      className="mt-4 w-full"
+      onClick={(e) => e.stopPropagation()}
+    >
       {data.map((item, index) => (
         <li
           key={index}
           onClick={() => onItemClick(index)}
           className={`cursor-pointer flex justify-between items-center px-4 py-1 transition-colors duration-200 ${
-            selectedIndex === index ? "font-bold text-primary" : "text-gray-700"
+            selectedIndex === index ? "font-bold text-greenLight" : "text-gray-400"
           }`}
         >
           <div className="flex items-center space-x-2">
@@ -23,9 +25,9 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
               style={{ backgroundColor: colors[index % colors.length] }}
               className="w-3 h-3 rounded-full"
             />
-            <span className="text-sm">{item.label}</span>
+            <span className="text-sm text-gray-100">{item.label}</span>
           </div>
-          <span className="text-sm font-semibold">
+          <span className="text-sm font-semibold text-gray-100">
             {item.percentage.toFixed(2)}%
           </span>
         </li>
@@ -34,13 +36,11 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
   );
 }
 
-CustomLegendList.propTypes = {};
-
 export default function PeaPieSecteurs({ onValueClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null); // Si nécessaire pour d'éventuels effets
 
   // Récupération des actions depuis le contexte
   const { actions } = useContext(ActionsContext);
@@ -79,7 +79,6 @@ export default function PeaPieSecteurs({ onValueClick }) {
 
   // Fallback statique si aucune donnée n'est disponible
   const fallbackData = [{ label: "Aucune donnée", percentage: 100 }];
-
   const displayData =
     dataSectors.length > 0 && totalValue > 0 ? dataSectors : fallbackData;
 
@@ -103,7 +102,7 @@ export default function PeaPieSecteurs({ onValueClick }) {
   };
 
   const handleSectorClick = defaultSectorClick;
-  const handleValueClick = onValueClick || defaultValueClick;
+  // Pour ce composant, on se focalise sur les secteurs
 
   // Variante pour l'effet d'agrandissement sur le secteur actif
   const activeSectorAnimation = {
@@ -111,28 +110,21 @@ export default function PeaPieSecteurs({ onValueClick }) {
     transition: { duration: 0.4, ease: "easeOut" },
   };
 
-  // Variante pour le tooltip
-  const tooltipVariants = {
-    initial: { opacity: 0, y: -5 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -5 },
-  };
-
   return (
-    <div className="relative min-h-screen bg-light w-full p-6">
+    <div className="min-h-screen bg-gray-900 w-full p-6">
       {/* Header */}
       <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:shadow-lg transition"
           aria-label="Retour"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-secondary">Retour</h1>
+        <h1 className="ml-4 text-2xl font-bold text-gray-100">Retour</h1>
       </header>
       <div className="w-full mb-6">
-        <h1 className="text-3xl font-bold text-primary mt-2">
+        <h1 className="text-3xl font-bold text-gray-100 mt-2">
           Répartition par <span className="text-greenLight">Secteur</span>
         </h1>
       </div>
@@ -140,11 +132,13 @@ export default function PeaPieSecteurs({ onValueClick }) {
       {/* Carte Donut */}
       <div
         onClick={handleSectorClick}
-        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-8 cursor-pointer"
+        className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl cursor-pointer transition-all duration-300"
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-800">Répartition par secteur</h3>
-          <p className="text-sm text-gray-500">{displayData.length} secteur(s)</p>
+          <h3 className="font-semibold text-gray-100">Répartition par secteur</h3>
+          <p className="text-sm text-gray-400">
+            {displayData.length} secteur{displayData.length > 1 ? "s" : ""}
+          </p>
         </div>
         <div className="w-full h-[300px] mb-4" onClick={(e) => e.stopPropagation()}>
           {totalValue > 0 ? (
@@ -173,12 +167,10 @@ export default function PeaPieSecteurs({ onValueClick }) {
                       fill={
                         selectedIndex === null || selectedIndex === index
                           ? COLORS_SECTORS[index % COLORS_SECTORS.length]
-                          : "#e0e0e0"
+                          : "#4a4a4a"
                       }
                       cursor="pointer"
-                      onMouseEnter={() => setHoveredIndex(index)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                      // Si le secteur est actif, appliquer un effet d'agrandissement
+                      // Appliquer l'effet d'agrandissement si actif
                       {...(selectedIndex === index ? activeSectorAnimation : {})}
                     />
                   ))}

@@ -6,16 +6,12 @@ import { motion } from "framer-motion";
 import { ActionsContext } from "../../Reutilisable/ActionsContext";
 import CustomSelect from "../../Reutilisable/CustomSelect";
 
-/**
- * Formate une date ISO ("yyyy-MM-dd") en "dd/MM/yyyy".
- */
 function formatIsoDate(dateString) {
   if (!dateString) return "—";
   const parsed = parse(dateString, "yyyy-MM-dd", new Date());
   return format(parsed, "dd/MM/yyyy");
 }
 
-// Variantes d'animation pour les blocs individuels
 const sectionVariants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
@@ -34,7 +30,6 @@ export default function HistoriqueOrderPage() {
   const { actions, loading, updateAction } = useContext(ActionsContext);
   const [sortOption, setSortOption] = useState("dateAsc");
 
-  // Options de tri
   const sortOptions = [
     { value: "dateAsc", label: "Date ↑" },
     { value: "dateDesc", label: "Date ↓" },
@@ -46,20 +41,18 @@ export default function HistoriqueOrderPage() {
     { value: "totalDesc", label: "Total ↓" },
   ];
 
-  // Recherche de l'action dans le contexte
   const action = useMemo(
     () => actions.find((a) => a.id === id || a.id === Number(id)),
     [actions, id]
   );
 
   if (loading) {
-    return <p className="text-center text-gray-500">Chargement...</p>;
+    return <p className="text-center text-gray-400">Chargement...</p>;
   }
   if (!action) {
     return <p className="text-center text-red-500">Action non trouvée !</p>;
   }
 
-  // Tri global des achats
   const sortedHistory = useMemo(() => {
     if (!action || !action.history) return [];
     const copy = [...action.history];
@@ -94,7 +87,6 @@ export default function HistoriqueOrderPage() {
     return copy;
   }, [action, sortOption]);
 
-  // Groupement des achats par mois
   const groupedHistory = useMemo(() => {
     if (!sortedHistory.length) return [];
     const groups = {};
@@ -147,7 +139,7 @@ export default function HistoriqueOrderPage() {
 
   return (
     <motion.div
-      className="p-4 min-h-screen bg-gray-50"
+      className="p-4 min-h-screen bg-gradient-to-br from-gray-800 to-gray-700 text-gray-100"
       variants={containerVariants}
       initial="initial"
       animate="animate"
@@ -162,12 +154,12 @@ export default function HistoriqueOrderPage() {
       >
         <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
+          className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-blue-900 transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
         <motion.h1
-          className="ml-4 text-2xl font-bold text-secondary"
+          className="ml-4 text-2xl font-bold text-white"
           variants={sectionVariants}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
@@ -177,7 +169,7 @@ export default function HistoriqueOrderPage() {
 
       {/* Titre principal */}
       <motion.h1
-        className="text-3xl font-bold text-secondary mb-4"
+        className="text-3xl font-bold mb-4 text-left text-white"
         variants={sectionVariants}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
@@ -191,8 +183,8 @@ export default function HistoriqueOrderPage() {
         variants={sectionVariants}
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        <label className="text-gray-600 text-sm font-medium">Trier par :</label>
-        <div className="w-1/2">
+        <label className="text-gray-400 text-sm font-medium">Trier par :</label>
+        <div className="w-1/2 text-primary">
           <CustomSelect
             name="sortOption"
             value={sortOption}
@@ -219,22 +211,24 @@ export default function HistoriqueOrderPage() {
               variants={sectionVariants}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-xl font-bold text-gray-800 mb-4">{group.label}</h2>
+              <h2 className="text-xl font-bold mb-4 text-white">{group.label}</h2>
               <div className="space-y-3">
                 {group.entries.map((entry, index) => {
-                  const total = entry.quantity * entry.price + entry.fees;
+                  const total = entry.price * entry.quantity + entry.fees;
                   const average =
-                    entry.quantity > 0 ? (total / entry.quantity).toFixed(2) : "0.00";
+                    entry.quantity > 0
+                      ? (total / entry.quantity).toFixed(2)
+                      : "0.00";
                   return (
                     <motion.div
                       key={index}
-                      className="bg-white border-l-4 border-greenLight shadow-xl rounded-3xl p-4 text-sm flex flex-col gap-1"
-                      whileHover={{ scale: 1.02 }}
+                      className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 text-sm flex flex-col gap-1 shadow-2xl hover:shadow-3xl transition-all duration-300"
+                      whileHover={{ scale: 1.01 }}
                       variants={sectionVariants}
                       transition={{ duration: 0.5, delay: 0.1 }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500 font-medium">
+                        <span className="text-xs font-medium text-gray-400">
                           {entry.date ? formatIsoDate(entry.date) : "—"}
                         </span>
                         <button
@@ -244,25 +238,32 @@ export default function HistoriqueOrderPage() {
                           <Trash size={16} />
                         </button>
                       </div>
-                      <div className="text-gray-700 flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 text-gray-200">
                         <p>
-                          <span className="font-semibold">Quantité :</span> {entry.quantity}
+                          <span className="font-semibold">Quantité :</span>{" "}
+                          {entry.quantity}
                         </p>
                         <p>
-                          <span className="font-semibold">Prix unitaire :</span> {entry.price}€
+                          <span className="font-semibold">Prix unitaire :</span>{" "}
+                          {entry.price}€
                         </p>
                         <p>
-                          <span className="font-semibold">Frais :</span> {entry.fees}€
+                          <span className="font-semibold">Frais :</span>{" "}
+                          {entry.fees}€
                         </p>
                       </div>
-                      <div className="flex flex-wrap gap-2 text-gray-600">
+                      <div className="flex flex-wrap gap-2 text-gray-400">
                         <p>
                           <span className="font-semibold">Total :</span>{" "}
-                          <span className="text-teal-700 font-bold">{total.toFixed(2)}€</span>
+                          <span className="text-teal-700 font-bold">
+                            {total.toFixed(2)}€
+                          </span>
                         </p>
                         <p>
                           <span className="font-semibold">Prix moyen :</span>{" "}
-                          <span className="text-teal-700 font-bold">{average}€</span>
+                          <span className="text-teal-700 font-bold">
+                            {average}€
+                          </span>
                         </p>
                       </div>
                     </motion.div>
@@ -272,7 +273,7 @@ export default function HistoriqueOrderPage() {
             </motion.div>
           ))
         ) : (
-          <motion.p className="text-gray-500" variants={sectionVariants}>
+          <motion.p className="text-gray-400" variants={sectionVariants}>
             Aucun achat enregistré.
           </motion.p>
         )}

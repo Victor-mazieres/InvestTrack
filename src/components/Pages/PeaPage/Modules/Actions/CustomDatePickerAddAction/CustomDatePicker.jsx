@@ -13,7 +13,7 @@ export default function CustomDatePicker({ selected, onChange, placeholderText, 
     <div className="relative">
       <input
         type="text"
-        className={`${className} cursor-pointer`} // Ajout de cursor-pointer
+        className={`${className} cursor-pointer px-4 py-3 border border-gray-600 bg-gray-800 rounded-3xl text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-600 transition`}
         placeholder={placeholderText}
         value={selected ? selected.toLocaleDateString() : ""}
         readOnly

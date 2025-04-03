@@ -13,7 +13,6 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
   const actionsData = Array.isArray(actions) ? actions : [];
 
   // Calculer la valeur totale du portefeuille.
-  // Pour éviter un total de 0 si aucune action n'a de prix renseigné, on utilise 1 comme valeur par défaut.
   const totalValue = actionsData.reduce((sum, action) => {
     const price = action.currentPrice || action.price || 1;
     return sum + action.quantity * price;
@@ -61,7 +60,7 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
     "#3498db",
   ];
 
-  // Gestion des clics par défaut
+  // Fonctions de navigation par défaut
   const defaultSectorClick = () => {
     navigate("/RepartitionBarreSecteurs", { state: { background: location } });
   };
@@ -77,10 +76,10 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
       {/* Bloc Répartition par secteur */}
       <div
         onClick={handleSectorClick}
-        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm cursor-pointer"
+        className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl cursor-pointer transition-all duration-300"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-medium text-gray-800">
+          <h3 className="font-medium text-gray-100">
             Répartition par secteur
           </h3>
           <p
@@ -88,26 +87,22 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
               e.stopPropagation();
               handleSectorClick();
             }}
-            className="text-sm text-gray-500"
+            className="text-sm text-gray-400"
           >
             {sectorsData.length} secteurs
           </p>
         </div>
         {sectorsData.map((item, idx) => (
-          <motion.div
-            key={idx}
-            whileHover={{ scale: 1.03 }}
-            className="mb-4"
-          >
+          <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-700">{item.label}</span>
+                <span className="text-sm text-gray-200">{item.label}</span>
               </div>
-              <span className="text-sm font-semibold text-gray-700">
+              <span className="text-sm font-semibold text-gray-200">
                 {item.percentage.toFixed(2)}%
               </span>
             </div>
-            <div className="relative w-full h-2 bg-gray-200 rounded-full">
+            <div className="relative w-full h-2 bg-gray-600 rounded-full">
               <motion.div
                 className="absolute left-0 top-0 h-2 rounded-full"
                 style={{
@@ -126,33 +121,29 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
       {/* Bloc Répartition par valeur */}
       <div
         onClick={handleValueClick}
-        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm cursor-pointer"
+        className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl cursor-pointer transition-all duration-300"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-medium text-gray-800">Répartition par valeur</h3>
+          <h3 className="font-medium text-gray-100">Répartition par valeur</h3>
           <p
             onClick={(e) => {
               e.stopPropagation();
               handleValueClick();
             }}
-            className="text-sm text-gray-500"
+            className="text-sm text-gray-400"
           >
             {valuesData.length} valeurs
           </p>
         </div>
         {valuesData.map((item, idx) => (
-          <motion.div
-            key={idx}
-            whileHover={{ scale: 1.03 }}
-            className="mb-4"
-          >
+          <motion.div key={idx} whileHover={{ scale: 1.03 }} className="mb-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-gray-700">{item.label}</span>
-              <span className="text-sm font-semibold text-gray-700">
+              <span className="text-sm text-gray-200">{item.label}</span>
+              <span className="text-sm font-semibold text-gray-200">
                 {item.percentage.toFixed(2)}% soit {item.amount.toFixed(2)}€
               </span>
             </div>
-            <div className="relative w-full h-2 bg-gray-200 rounded-full">
+            <div className="relative w-full h-2 bg-gray-600 rounded-full">
               <motion.div
                 className="absolute left-0 top-0 h-2 rounded-full"
                 style={{

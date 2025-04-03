@@ -9,13 +9,11 @@ export default function MortgageTabs() {
 
   const handleTabClick = (tab) => {
     if (tab === activeTab) return;
-    // Si on passe à "saved", on définit la direction à 1 (slide vers la gauche)
-    // Sinon, on définit la direction à -1 (slide vers la droite)
     setDirection(tab === "saved" ? 1 : -1);
     setActiveTab(tab);
   };
 
-  // Variants pour l'animation en fonction de la direction
+  // Variants pour l'animation
   const variants = {
     initial: (direction) => ({
       x: direction > 0 ? 300 : -300,
@@ -29,19 +27,17 @@ export default function MortgageTabs() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      {/* Conteneur principal */}
-      <div className="max-w-xl mx-auto overflow-hidden ">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100">
+      <div className="max-w-xl mx-auto overflow-hidden">
         {/* Barre d’onglets */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-600">
           <button
             onClick={() => handleTabClick("simulation")}
             className={`
-              flex-1 py-3 text-center font-medium focus:outline-none
-              transition-colors duration-300
+              flex-1 py-3 text-center font-medium focus:outline-none transition-colors duration-300
               ${activeTab === "simulation"
-                ? "border-b-4 border-greenLight text-primaru bg-white"
-                : "border-b-4 border-transparent text-gray-600 bg-blue-50 hover:bg-blue-100"}
+                ? "border-b-4 border-greenLight bg-gray-800 text-gray-100"
+                : "border-b-4 border-transparent bg-gray-700 text-gray-400 hover:bg-gray-600"}
             `}
           >
             Simulation
@@ -49,11 +45,10 @@ export default function MortgageTabs() {
           <button
             onClick={() => handleTabClick("saved")}
             className={`
-              flex-1 py-3 text-center font-medium focus:outline-none
-              transition-colors duration-300
+              flex-1 py-3 text-center font-medium focus:outline-none transition-colors duration-300
               ${activeTab === "saved"
-                ? "border-b-4 border-greenLight tprimary bg-white"
-                : "border-b-4 border-transparent text-gray-600 bg-blue-50 hover:bg-blue-100"}
+                ? "border-b-4 border-greenLight bg-gray-800 text-gray-100"
+                : "border-b-4 border-transparent bg-gray-700 text-gray-400 hover:bg-gray-600"}
             `}
           >
             Calculs Sauvegardés

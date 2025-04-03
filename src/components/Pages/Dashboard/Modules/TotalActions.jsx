@@ -12,7 +12,7 @@ export default function TotalActions() {
     }
   }, [actions, fetchActions]);
 
-  if (loading) return <p>Chargement...</p>;
+  if (loading) return <p className="text-gray-100">Chargement...</p>;
 
   // Somme des quantités de chaque action
   const totalShares = actions.reduce(
@@ -21,8 +21,8 @@ export default function TotalActions() {
   );
 
   return (
-    <div className="flex flex-col items-center">
-      <h3 className="text-md font-semibold text-primary mb-2">Total d'actions</h3>
+    <div className="flex flex-col items-center bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300">
+      <h3 className="text-md font-semibold text-gray-100 mb-2">Total d'actions</h3>
       <div className="relative flex items-center justify-center w-24 h-24">
         {/* SVG animé pour dessiner le cercle */}
         <motion.svg
@@ -43,8 +43,8 @@ export default function TotalActions() {
             transition={{ duration: 1, ease: "easeInOut" }}
           />
         </motion.svg>
-        {/* Nombre d'actions affiché au centre */}
-        <p className="text-xl font-bold text-greenLight z-10">{totalShares}</p>
+        {/* Nombre d'actions affiché au centre avec une taille réduite */}
+        <p className="text-lg font-bold text-greenLight z-10">{totalShares}</p>
       </div>
     </div>
   );

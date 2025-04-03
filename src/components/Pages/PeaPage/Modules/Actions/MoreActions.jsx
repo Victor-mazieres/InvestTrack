@@ -1,4 +1,3 @@
-// src/components/Pages/PeaPage/Modules/MoreActions.jsx
 import React, { useState, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -49,7 +48,8 @@ export default function MoreActions() {
     setNewAction((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (date) => setNewAction((prev) => ({ ...prev, dividendDate: date }));
+  const handleDateChange = (date) =>
+    setNewAction((prev) => ({ ...prev, dividendDate: date }));
 
   const handleSectorChange = (selectedValue) => {
     setNewAction((prev) => ({
@@ -64,7 +64,6 @@ export default function MoreActions() {
       const response = await fetch(`/api/stock_profile/${selectedAction.symbol}`);
       if (response.ok) {
         const profile = await response.json();
-
         setNewAction((prev) => ({
           ...prev,
           name: selectedAction.name,
@@ -158,14 +157,14 @@ export default function MoreActions() {
 
   return (
     <motion.div
-      className="w-full p-4 min-h-screen bg-gray-100"
+      className="w-full p-4 min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-100"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <button
         onClick={() => navigate(-1)}
-        className="mb-4 p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
+        className="mb-4 p-2 bg-gray-800 rounded-full shadow-md hover:bg-blue-100 transition"
       >
         <ArrowLeft className="w-6 h-6 text-greenLight" />
       </button>
@@ -177,7 +176,7 @@ export default function MoreActions() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-greenLight text-white p-4 rounded shadow-lg z-50"
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-greenLight text-white p-4 rounded shadow-lg z-50 w-3/4"
           >
             Action ajoutée !
           </motion.div>
@@ -185,7 +184,7 @@ export default function MoreActions() {
       </AnimatePresence>
 
       <div className="text-center mb-6">
-        <h1 className="text-xl font-bold text-primary">€ Valorisation totale</h1>
+        <h1 className="text-xl font-bold text-gray-100">€ Valorisation totale</h1>
         <p className="text-4xl font-extrabold mt-2">{totalValorisation.toFixed(2)}€</p>
         <p className={`text-lg font-semibold mt-1 ${bénéficeColor}`}>
           {totalBénéfice >= 0
@@ -194,11 +193,11 @@ export default function MoreActions() {
         </p>
       </div>
 
-      <div className="flex justify-around bg-white rounded-3xl shadow-md p-2 mb-4 border border-gray-200">
+      <div className="flex justify-around bg-gray-800 rounded-3xl shadow-md p-2 mb-4 border border-gray-600">
         <button
           onClick={() => setActiveTab("details")}
           className={`text-lg font-semibold transition px-4 py-2 rounded-3xl ${
-            activeTab === "details" ? "text-white bg-greenLight shadow" : "text-primary"
+            activeTab === "details" ? "text-white bg-greenLight shadow" : "text-gray-100"
           }`}
         >
           Détails
@@ -206,7 +205,7 @@ export default function MoreActions() {
         <button
           onClick={() => setActiveTab("add")}
           className={`text-lg font-semibold transition px-4 py-2 rounded-3xl ${
-            activeTab === "add" ? "text-white bg-greenLight shadow" : "text-primary"
+            activeTab === "add" ? "text-white bg-greenLight shadow" : "text-gray-100"
           }`}
         >
           Ajouter
@@ -223,14 +222,14 @@ export default function MoreActions() {
             exit="exit"
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-lg font-bold text-primary mb-4 flex items-center">
+            <h2 className="text-lg font-bold text-gray-100 mb-4 flex items-center">
               <TrendingUp className="w-5 h-5 mr-2" /> Toutes les actions
             </h2>
             <ul className="space-y-4">
               {actionsData.map((action) => (
                 <motion.li
                   key={action.id}
-                  className="flex items-center justify-between p-4 rounded-3xl shadow-sm bg-white cursor-pointer hover:shadow-md transition-all duration-300"
+                  className="flex items-center justify-between p-4 rounded-3xl shadow-sm bg-gray-800 cursor-pointer hover:shadow-md transition-all duration-300"
                   whileHover={{ scale: 1.02 }}
                   onClick={() =>
                     navigate(`/DetailPage/${action.id}`, {
@@ -239,22 +238,22 @@ export default function MoreActions() {
                   }
                 >
                   <div className="flex items-center space-x-4">
-                    <LineChart className="w-6 h-6 text-primary" />
+                    <LineChart className="w-6 h-6 text-gray-100" />
                     <div>
-                      <p className="text-primary font-semibold text-lg">{action.name}</p>
+                      <p className="text-gray-100 font-semibold text-lg">{action.name}</p>
                       <p className="text-greenLight font-medium text-sm">
                         {action.quantity} actions
                       </p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold">{action.purchasePrice}€</p>
+                  <p className="text-lg font-bold text-gray-100">{action.purchasePrice}€</p>
                   <div className="flex space-x-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteAction(action.id);
                       }}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-700 transition"
                     >
                       <Trash size={18} />
                     </button>
@@ -272,9 +271,9 @@ export default function MoreActions() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.5 }}
-            className="p-6 bg-white rounded-3xl shadow-md border border-gray-200"
+            className="p-6 bg-gray-800 rounded-3xl shadow-md border border-gray-600"
           >
-            <h2 className="text-lg font-bold text-primary mb-4">Ajouter une action</h2>
+            <h2 className="text-lg font-bold text-gray-100 mb-4">Ajouter une action</h2>
             <div className="space-y-3">
               <FloatingLabelInput
                 label="Nom de l'action"
@@ -303,14 +302,13 @@ export default function MoreActions() {
                 value={newAction.dividendPrice}
                 onChange={handleInputChange}
               />
-
               {newAction.isSectorAutoFilled ? (
                 <div className="relative">
                   <input
                     type="text"
                     value={newAction.sector}
                     readOnly
-                    className="w-full p-3 border rounded-3xl bg-gray-100"
+                    className="w-full p-3 border border-gray-600 rounded-3xl bg-gray-700 text-gray-100"
                     placeholder="Secteur auto-rempli"
                   />
                   <button
@@ -336,13 +334,12 @@ export default function MoreActions() {
                   placeholder="Catégorie"
                 />
               )}
-
               <div className="w-full">
                 <CustomDatePicker
                   selected={newAction.dividendDate}
                   onChange={handleDateChange}
                   placeholderText="Sélectionnez la date du dividende"
-                  className="w-full p-3 border rounded-3xl bg-gray-50"
+                  className="w-full p-3 border border-gray-600 rounded-3xl bg-gray-700 text-gray-100"
                 />
               </div>
               <motion.button

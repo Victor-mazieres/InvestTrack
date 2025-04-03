@@ -1,9 +1,8 @@
-// Profile.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { 
-  MapPin, Home, Building, Mailbox, ChevronRight, Mail, Lock, ArrowLeft, X, Check
-} from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+  MapPin, Home, Building, Mailbox, ChevronRight, Mail, Lock, ArrowLeft, X, Check 
+} from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 
 function ConfirmResetModal({ onConfirm, onClose }) {
   const handleBackdropClick = (e) => {
@@ -18,22 +17,22 @@ function ConfirmResetModal({ onConfirm, onClose }) {
       onClick={handleBackdropClick}
     >
       <div 
-        className="bg-white rounded-3xl p-6 w-11/12 max-w-md"
+        className="bg-gray-800 rounded-3xl p-6 w-11/12 max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-center mb-4">
+        <h2 className="text-lg font-semibold text-center mb-4 text-gray-100">
           Voulez-vous réinitialiser votre mot de passe ?
         </h2>
         <div className="flex space-x-4">
           <button 
             onClick={onConfirm} 
-            className="flex-1 bg-blue-500 text-white py-3 rounded-3xl text-center hover:bg-blue-600"
+            className="flex-1 bg-blue-600 text-white py-3 rounded-3xl text-center hover:bg-blue-700 transition"
           >
             Oui
           </button>
           <button 
             onClick={onClose} 
-            className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-3xl text-center hover:bg-gray-200"
+            className="flex-1 bg-gray-700 text-gray-300 py-3 rounded-3xl text-center hover:bg-gray-600 transition"
           >
             Plus tard
           </button>
@@ -76,23 +75,23 @@ function PinKeyboardModal({ onConfirm, onClose }) {
       onClick={handleBackdropClick}
     >
       <div 
-        className="bg-white rounded-3xl shadow-xl p-8 w-11/12 max-w-md"
+        className="bg-gray-800 rounded-3xl shadow-xl p-8 w-11/12 max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-3xl font-extrabold text-center">
+          <h2 className="text-3xl font-extrabold text-gray-100 text-center">
             Entrez votre nouveau PIN
           </h2>
           <button onClick={onClose}>
-            <X size={24} />
+            <X size={24} className="text-gray-300"/>
           </button>
         </div>
         <div className="flex items-center justify-center mb-8">
           {[0, 1, 2, 3, 4, 5].map((index) => (
             <div
               key={index}
-              className={`w-6 h-6 mx-2 rounded-full border border-gray-400 ${
-                index < displayLength ? "bg-black" : "bg-transparent"
+              className={`w-6 h-6 mx-2 rounded-full border border-gray-500 ${
+                index < displayLength ? "bg-gray-100" : "bg-transparent"
               }`}
             />
           ))}
@@ -102,7 +101,7 @@ function PinKeyboardModal({ onConfirm, onClose }) {
             <button
               key={num}
               onClick={() => handleDigitClick(num.toString())}
-              className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+              className="w-16 h-16 rounded-full bg-gray-700 shadow-lg flex items-center justify-center hover:bg-gray-600 transition"
             >
               {num}
             </button>
@@ -110,21 +109,21 @@ function PinKeyboardModal({ onConfirm, onClose }) {
           <div />
           <button
             onClick={() => handleDigitClick("0")}
-            className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+            className="w-16 h-16 rounded-full bg-gray-700 shadow-lg flex items-center justify-center hover:bg-gray-600 transition"
           >
             0
           </button>
           <button
             onClick={handleBackspace}
-            className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+            className="w-16 h-16 rounded-full bg-gray-700 shadow-lg flex items-center justify-center hover:bg-gray-600 transition"
           >
-            <ArrowLeft size={24} />
+            <ArrowLeft size={24} className="text-gray-100"/>
           </button>
         </div>
         <button
           onClick={handleConfirm}
           disabled={pin.length !== 6}
-          className="w-full bg-primary text-white py-2 rounded-xl font-bold hover:bg-blue-600 disabled:opacity-50"
+          className="w-full bg-primary text-white py-2 rounded-xl font-bold hover:bg-blue-600 disabled:opacity-50 transition"
         >
           Confirmer
         </button>
@@ -150,32 +149,24 @@ export default function Profile() {
     let interval;
     if (notification) {
       setProgress(100);
-  
-      const totalTime = 2000; // 3 secondes
+      const totalTime = 2000;
       const intervalTime = 30;
-      const decrement = 100 / (totalTime / intervalTime);
       const startTime = Date.now();
-  
       interval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const newProgress = 100 - (elapsed / totalTime) * 100;
-  
         if (newProgress <= 0) {
           clearInterval(interval);
           setProgress(0);
           setNotification("");
-          navigate("/profile"); // si tu veux la redirection exactement ici
+          navigate("/profile");
         } else {
           setProgress(newProgress);
         }
       }, intervalTime);
     }
-  
     return () => clearInterval(interval);
   }, [notification, navigate]);
-  
-  
-  
 
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showPinKeyboard, setShowPinKeyboard] = useState(false);
@@ -205,7 +196,6 @@ export default function Profile() {
     e.preventDefault();
     const token = localStorage.getItem("token");
     const updateData = { country, address, city, postalCode, email };
-  
     fetch("http://localhost:5000/auth/profile", {
       method: "PUT",
       headers: {
@@ -230,7 +220,6 @@ export default function Profile() {
         setTimeout(() => setNotification(""), 3000);
       });
   };
-  
 
   const handleResetPassword = (newPin) => {
     const token = localStorage.getItem("token");
@@ -254,57 +243,58 @@ export default function Profile() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}>
-      
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 overflow-hidden p-6">
       {notification && (
-  <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-3 rounded-xl shadow-lg z-50 w-3/4">
-    <div className="flex items-center justify-between">
-      <span className="font-semibold">{notification}</span>
-      <button onClick={() => setNotification("")}>
-        <X className="text-white w-5 h-5 hover:text-gray-200 transition" />
-      </button>
-    </div>
-    <div className="w-full bg-green-300 h-1 mt-2 rounded-xl overflow-hidden">
-      <div
-        className="h-full bg-white transition-all duration-300"
-        style={{ width: `${progress}%` }}
-      />
-    </div>
-  </div>
-)}
-
-
+        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-3 rounded-xl shadow-lg z-50 w-3/4">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold">{notification}</span>
+            <button onClick={() => setNotification("")}>
+              <X className="text-white w-5 h-5 hover:text-gray-200 transition" />
+            </button>
+          </div>
+          <div className="w-full bg-green-300 h-1 mt-2 rounded-xl overflow-hidden">
+            <div
+              className="h-full bg-white transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <header className="p-4 flex items-center mb-4">
-        <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-gray-700 transition"
+        >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-3xl font-bold text-secondary">Retour</h1>
+        <h1 className="ml-4 text-3xl font-bold text-gray-100">Retour</h1>
       </header>
 
       <div className="flex-1 flex flex-col px-4 pb-20 overflow-hidden">
         <section className="flex-1 overflow-hidden">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase mb-2">Informations</h2>
+          <h2 className="text-xs font-semibold uppercase text-gray-500 mb-2">Informations</h2>
           <div className="space-y-4">
-            {/* Nom d'utilisateur en lecture seule */}
+            {/* Nom d'utilisateur */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
-              <div className="w-full flex items-center justify-between bg-gray-100 rounded-3xl p-3 shadow-sm">
-                <span className="w-full text-gray-900">{username}</span>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Nom d'utilisateur
+              </label>
+              <div className="w-full flex items-center justify-between bg-gray-800 rounded-3xl p-3 shadow-sm">
+                <span className="w-full text-gray-100">{username}</span>
                 <ChevronRight className="text-gray-400" />
               </div>
             </div>
-
             {/* Pays */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pays</label>
-              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Pays</label>
+              <div className="w-full flex items-center justify-between bg-gray-800 rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3">
-                  <MapPin className="text-gray-600" />
+                  <MapPin className="text-gray-400" />
                   <select 
                     value={country} 
                     onChange={(e) => setCountry(e.target.value)} 
-                    className="w-full bg-transparent focus:outline-none"
+                    className="w-full bg-transparent focus:outline-none text-gray-100"
                   >
                     <option value="France">🇫🇷 France</option>
                     <option value="Belgique">🇧🇪 Belgique</option>
@@ -314,78 +304,73 @@ export default function Profile() {
                 <ChevronRight className="text-gray-400" />
               </div>
             </div>
-
             {/* Adresse */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Adresse</label>
+              <div className="w-full flex items-center justify-between bg-gray-800 rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3 w-full">
-                  <Home className="text-gray-600" />
+                  <Home className="text-gray-400" />
                   <input 
                     type="text" 
                     value={address} 
                     onChange={(e) => setAddress(e.target.value)} 
                     placeholder="Adresse" 
-                    className="w-full bg-transparent focus:outline-none" 
+                    className="w-full bg-transparent focus:outline-none text-gray-100" 
                   />
                 </div>
                 <ChevronRight className="text-gray-400" />
               </div>
             </div>
-
             {/* Ville */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Ville</label>
+              <div className="w-full flex items-center justify-between bg-gray-800 rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3 w-full">
-                  <Building className="text-gray-600" />
+                  <Building className="text-gray-400" />
                   <input 
                     type="text" 
                     value={city} 
                     onChange={(e) => setCity(e.target.value)} 
                     placeholder="Ville" 
-                    className="w-full bg-transparent focus:outline-none" 
+                    className="w-full bg-transparent focus:outline-none text-gray-100" 
                   />
                 </div>
                 <ChevronRight className="text-gray-400" />
               </div>
             </div>
-
             {/* Code postal */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Code Postal</label>
-              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
+              <label className="block text-sm font-medium text-gray-300 mb-1">Code Postal</label>
+              <div className="w-full flex items-center justify-between bg-gray-800 rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3 w-full">
-                  <Mailbox className="text-gray-600" />
+                  <Mailbox className="text-gray-400" />
                   <input 
                     type="text" 
                     value={postalCode} 
                     onChange={(e) => setPostalCode(e.target.value)} 
                     placeholder="Code Postal" 
-                    className="w-full bg-transparent focus:outline-none" 
+                    className="w-full bg-transparent focus:outline-none text-gray-100" 
                   />
                 </div>
                 <ChevronRight className="text-gray-400" />
               </div>
             </div>
-
             {/* Adresse e-mail */}
-            {/* Adresse e-mail vérifiée avec icône */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Adresse e-mail
               </label>
-              <div className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm">
+              <div className="w-full flex items-center justify-between bg-gray-800 rounded-3xl p-3 shadow-sm">
                 <div className="flex items-center space-x-3 w-full">
-                  <Mail className="text-gray-600" />
+                  <Mail className="text-gray-400" />
                   <input
                     type="email"
                     value={email}
                     placeholder="votre@email.com"
-                    className="w-full bg-transparent focus:outline-none"
+                    className="w-full bg-transparent focus:outline-none text-gray-100"
                     readOnly={localStorage.getItem("emailVerified") === "true"}
                   />
-              </div>
+                </div>
                 {localStorage.getItem("emailVerified") === "true" ? (
                   <Check className="text-green-500" />
                 ) : (
@@ -393,18 +378,16 @@ export default function Profile() {
                 )}
               </div>
             </div>
-
-
             {/* Mot de passe */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Mot de passe</label>
               <div 
                 onClick={() => setShowConfirmReset(true)} 
-                className="w-full flex items-center justify-between bg-white rounded-3xl p-3 shadow-sm cursor-pointer"
+                className="w-full flex items-center justify-between bg-gray-800 rounded-3xl p-3 shadow-sm cursor-pointer"
               >
                 <div className="flex items-center space-x-3 w-full">
-                  <Lock className="text-gray-600" />
-                  <span className="w-full text-gray-700">********</span>
+                  <Lock className="text-gray-400" />
+                  <span className="w-full text-gray-300">********</span>
                 </div>
                 <ChevronRight className="text-gray-400" />
               </div>

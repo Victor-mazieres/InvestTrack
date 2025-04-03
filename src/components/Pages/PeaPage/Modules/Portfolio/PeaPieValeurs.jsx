@@ -1,4 +1,3 @@
-// src/components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs.jsx
 import React, { useContext, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -14,13 +13,9 @@ const fullDataValuesStatic = [
   { label: "BNP PARIBAS ACTIONS A", percentage: 7.6, amount: 74.02 },
 ];
 
-// Palette de couleurs pour les valeurs
 const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e", "#3498db"];
 
-/**
- * CustomLegendList
- * Affiche une légende personnalisée avec un tooltip animé qui indique le montant.
- */
+// Composant de légende personnalisée affichée sous le PieChart.
 function CustomLegendList({ data, colors, onItemClick, selectedIndex, tooltipData, setTooltipData }) {
   return (
     <ul className="mt-4 w-full relative" onClick={(e) => e.stopPropagation()}>
@@ -31,7 +26,7 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex, tooltipDat
           onMouseEnter={() => setTooltipData({ index, amount: item.amount })}
           onMouseLeave={() => setTooltipData(null)}
           className={`cursor-pointer flex justify-between items-center px-4 py-1 transition-colors duration-200 ${
-            selectedIndex === index ? "font-bold text-primary" : "text-gray-700"
+            selectedIndex === index ? "font-bold text-greenLight" : "text-gray-400"
           }`}
         >
           <div className="flex items-center space-x-2">
@@ -39,9 +34,9 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex, tooltipDat
               style={{ backgroundColor: colors[index % colors.length] }}
               className="w-3 h-3 rounded-full"
             />
-            <span className="text-sm">{item.label}</span>
+            <span className="text-sm text-gray-100">{item.label}</span>
           </div>
-          <span className="text-sm font-semibold">
+          <span className="text-sm font-semibold text-gray-100">
             {item.percentage.toFixed(2)}%
           </span>
         </li>
@@ -63,10 +58,6 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex, tooltipDat
   );
 }
 
-/**
- * PeaPieValeurs
- * Composant affichant la répartition par valeur sous forme de donut animé.
- */
 export default function PeaPieValeurs({ onValueClick }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -75,7 +66,10 @@ export default function PeaPieValeurs({ onValueClick }) {
 
   // Récupération des actions depuis le contexte
   const { actions } = useContext(ActionsContext);
-  const actionsData = useMemo(() => (Array.isArray(actions) ? actions : []), [actions]);
+  const actionsData = useMemo(
+    () => (Array.isArray(actions) ? actions : []),
+    [actions]
+  );
 
   // Calcul de la valeur totale du portefeuille
   const totalValue = useMemo(() => {
@@ -102,7 +96,8 @@ export default function PeaPieValeurs({ onValueClick }) {
 
   // Fallback statique si aucune donnée n'est disponible
   const fallbackData = [{ label: "Aucune donnée", percentage: 100, amount: 0 }];
-  const displayData = dataValues.length > 0 && totalValue > 0 ? dataValues : fallbackData;
+  const displayData =
+    dataValues.length > 0 && totalValue > 0 ? dataValues : fallbackData;
 
   // Fonction de navigation par défaut
   const defaultValueClick = () => {
@@ -111,33 +106,33 @@ export default function PeaPieValeurs({ onValueClick }) {
   const handleValueClick = onValueClick || defaultValueClick;
 
   return (
-    <div className="min-h-screen bg-light w-full p-6 relative">
-      {/* Header avec bouton de retour */}
+    <div className="min-h-screen bg-gray-900 w-full p-6 relative">
+      {/* Header */}
       <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-white rounded-full shadow-md hover:bg-blue-100 transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:shadow-lg transition"
           aria-label="Retour"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-secondary">Retour</h1>
+        <h1 className="ml-4 text-2xl font-bold text-gray-100">Retour</h1>
       </header>
       <div className="w-full mb-6">
-        <h1 className="text-3xl font-bold text-primary mt-2">
+        <h1 className="text-3xl font-bold text-gray-100 mt-2">
           Répartition par <span className="text-greenLight">Valeur</span>
         </h1>
       </div>
 
-      {/* Carte Donut pour Répartition par valeur */}
+      {/* Carte Donut */}
       <div
         onClick={handleValueClick}
-        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-12 cursor-pointer"
+        className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl cursor-pointer transition-all duration-300"
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-800">Répartition par valeur</h3>
-          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-500">
-            {displayData.length} valeur(s)
+          <h3 className="font-semibold text-gray-100">Répartition par valeur</h3>
+          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-400">
+            {displayData.length} valeur{displayData.length > 1 ? "s" : ""}
           </p>
         </div>
         <div className="w-full h-[300px] mb-4" onClick={(e) => e.stopPropagation()}>
@@ -167,7 +162,7 @@ export default function PeaPieValeurs({ onValueClick }) {
                       fill={
                         selectedValueIndex === null || selectedValueIndex === index
                           ? COLORS_VALUES[index % COLORS_VALUES.length]
-                          : "#e0e0e0"
+                          : "#4a4a4a"
                       }
                       cursor="pointer"
                     />

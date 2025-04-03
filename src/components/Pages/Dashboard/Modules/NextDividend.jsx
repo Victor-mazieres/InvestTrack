@@ -65,8 +65,8 @@ export default function NextDividend() {
     };
   }, [showRemaining]);
 
-  if (loading) return <p>Chargement...</p>;
-  if (!nextDividend) return <p>Aucun dividende à venir</p>;
+  if (loading) return <p className="text-gray-100">Chargement...</p>;
+  if (!nextDividend) return <p className="text-gray-100">Aucun dividende à venir</p>;
 
   const formattedDate = format(nextDividend, "dd/MM/yyyy");
   const daysLeft = differenceInCalendarDays(nextDividend, new Date());
@@ -83,12 +83,10 @@ export default function NextDividend() {
 
   return (
     <div
-      className="flex flex-col items-center cursor-pointer"
+      className="flex flex-col items-center cursor-pointer bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl transition-transform duration-300 transform hover:scale-105"
       onClick={handleToggle}
     >
-      <h3 className="text-md font-semibold text-primary mb-5">
-        Prochain dividende
-      </h3>
+      <h3 className="text-md font-semibold text-gray-100 mb-5">Prochain dividende</h3>
       {/* Conteneur avec hauteur fixe pour conserver la mise en page */}
       <div className="flex items-center justify-center h-10 w-full">
         {clickLoading ? (
@@ -98,13 +96,11 @@ export default function NextDividend() {
             Encore {daysLeft} jours
           </div>
         ) : (
-          <div className="text-xl font-bold text-greenLight">
-            {formattedDate}
-          </div>
+          <div className="text-xl font-bold text-greenLight">{formattedDate}</div>
         )}
       </div>
       {/* Barre de progression */}
-      <div className="w-full bg-gray-300 h-2 rounded-full mt-2">
+      <div className="w-full bg-gray-700 h-2 rounded-full mt-2">
         <div
           className="bg-greenLight h-2 rounded-full"
           style={{ width: `${progress * 100}%` }}

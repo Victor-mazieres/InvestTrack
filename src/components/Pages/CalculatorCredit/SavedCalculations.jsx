@@ -1,7 +1,6 @@
-// SavedCalculations.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Save } from "lucide-react"; // Import de l'icône Save
+import { Save } from "lucide-react"; // Icône Save
 
 const SavedCalculations = () => {
   const [savedCalculations, setSavedCalculations] = useState([]);
@@ -53,39 +52,37 @@ const SavedCalculations = () => {
     }
   };
 
-  if (loading) return <p>Chargement...</p>;
+  if (loading) return <p className="text-center text-gray-400">Chargement...</p>;
 
   return (
     <div className="flex flex-col h-full p-6 box-border">
-      {/* Header fixe avec icône à gauche du titre */}
-      <header className="mb-4 p-3 flex items-center bg-white rounded-3xl shadow-lg">
-        <Save className="w-5 h-5 mr-2 ml-2 " />
-        <h2 className="text-xl font-semibold text-gray-800">
-          Calculs Sauvegardés
-        </h2>
+      {/* Header fixe */}
+      <header className="mb-4 p-3 flex items-center bg-gray-800 rounded-3xl shadow-lg border border-gray-600">
+        <Save className="w-5 h-5 mr-2 ml-2 text-greenLight" />
+        <h2 className="text-xl font-semibold text-white">Calculs Sauvegardés</h2>
       </header>
       {/* Zone de contenu scrollable */}
       <div className="flex-1 overflow-y-auto">
         {savedCalculations.length === 0 ? (
-          <p className="text-gray-600">Aucun calcul sauvegardé.</p>
+          <p className="text-gray-400">Aucun calcul sauvegardé.</p>
         ) : (
           <ul className="space-y-4">
             {savedCalculations.map((calc) => (
               <li
                 key={calc.id}
-                className="p-4 border rounded-3xl shadow flex justify-between items-center bg-white"
+                className="p-4 border rounded-3xl shadow flex justify-between items-center bg-gray-800 border border-gray-600"
               >
                 <Link to={`/detailscalcul/${calc.id}`} className="block flex-1">
-                  <h3 className="text-lg font-semibold text-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-100">
                     {calc.name}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-400">
                     Enregistré le : {new Date(calc.createdAt).toLocaleString()}
                   </p>
                 </Link>
                 <button
                   onClick={() => handleDelete(calc.id)}
-                  className="ml-4 px-3 py-1 bg-checkred text-white rounded-3xl hover:bg-red-600"
+                  className="ml-4 px-3 py-1 bg-checkred text-white rounded-3xl hover:bg-red-600 transition"
                 >
                   Supprimer
                 </button>

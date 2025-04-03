@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, ChevronRight, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function RegisterPage() {
@@ -27,7 +27,6 @@ export default function RegisterPage() {
   // Passage de l'étape 1 à 2 après validation du nom d'utilisateur
   const handleNextFromUsername = () => {
     const trimmedUsername = username.trim();
-    // Vérification que le username n'est pas vide, est alphanumérique et ne dépasse pas 20 caractères
     const usernameRegex = /^[A-Za-z0-9]+$/;
     if (!trimmedUsername) {
       setError("Veuillez entrer un nom d'utilisateur.");
@@ -46,7 +45,7 @@ export default function RegisterPage() {
     setPin("");
   };
 
-  // Dès que 6 chiffres sont saisis en étape 2, on passe automatiquement à l'étape 3 (confirmation)
+  // Passage automatique de l'étape 2 à 3 dès que 6 chiffres sont saisis
   useEffect(() => {
     if (step === 2 && pin.length === 6) {
       setStep(3);
@@ -54,7 +53,7 @@ export default function RegisterPage() {
     }
   }, [pin, step]);
 
-  // Dès que 6 chiffres sont saisis en étape 3, on vérifie que les PIN correspondent et on lance l'inscription
+  // Vérification automatique en étape 3
   useEffect(() => {
     if (step === 3 && confirmPin.length === 6) {
       if (pin === confirmPin) {
@@ -72,23 +71,23 @@ export default function RegisterPage() {
   }, [confirmPin, pin, step]);
 
   const handleDigitClick = (digit) => {
+    if (error) setError("");
     if (step === 2 && pin.length < 6 && !isVerifying) {
-      setPin(pin + digit);
+      setPin((prev) => prev + digit);
     } else if (step === 3 && confirmPin.length < 6 && !isVerifying) {
-      setConfirmPin(confirmPin + digit);
+      setConfirmPin((prev) => prev + digit);
     }
   };
 
   const handleBackspace = () => {
     if (isVerifying) return;
     if (step === 2) {
-      setPin(pin.slice(0, -1));
+      setPin((prev) => prev.slice(0, -1));
     } else if (step === 3) {
-      setConfirmPin(confirmPin.slice(0, -1));
+      setConfirmPin((prev) => prev.slice(0, -1));
     }
   };
 
-  // Filtrage automatique : ne conserve que les caractères alphanumériques dans le nom d'utilisateur
   const handleUsernameChange = (e) => {
     const { value } = e.target;
     const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, "");
@@ -96,7 +95,6 @@ export default function RegisterPage() {
     setError("");
   };
 
-  // Envoi de la requête POST à l'API backend pour l'inscription
   const handleRegister = async () => {
     try {
       const response = await fetch("http://localhost:5000/auth/register", {
@@ -106,7 +104,6 @@ export default function RegisterPage() {
       });
       const data = await response.json();
       if (response.ok) {
-        // L'inscription a réussi (la contrainte d'unicité côté serveur empêche les doublons)
         navigate("/connexion");
       } else {
         setError(data.message || "Erreur lors de l'inscription");
@@ -116,20 +113,18 @@ export default function RegisterPage() {
     }
   };
 
-  // Variants pour l'animation des transitions entre étapes
   const stepVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -20 },
   };
 
-  // Pour l'affichage des cercles de saisie du PIN
   const displayLength = step === 2 ? pin.length : step === 3 ? confirmPin.length : 0;
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-[#2c3e50] to-[#bdc3c7] p-6 flex items-center justify-center overflow-hidden">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative flex flex-col items-center">
+    <div className="fixed inset-0 bg-gradient-to-b from-gray-900 to-gray-800 p-6 flex items-center justify-center overflow-hidden">
+      <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full relative flex flex-col items-center">
         <AnimatePresence exitBeforeEnter>
           {step === 1 && (
             <motion.div
@@ -141,14 +136,14 @@ export default function RegisterPage() {
               transition={{ duration: 0.5 }}
               className="w-full text-center"
             >
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              <h1 className="text-2xl font-bold text-gray-100 mb-2">
                 Inscription sur Invest<span className="text-greenLight">Track</span> !
               </h1>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-400 mb-6">
                 Entrez votre nom d'utilisateur pour créer votre compte.
               </p>
               <div className="mb-6">
-                <label className="block text-gray-700 text-sm font-medium mb-1 text-center">
+                <label className="block text-gray-300 text-sm font-medium mb-1 text-center">
                   Nom d'utilisateur
                 </label>
                 <input
@@ -156,19 +151,19 @@ export default function RegisterPage() {
                   value={username}
                   onChange={handleUsernameChange}
                   placeholder="Votre nom d'utilisateur"
-                  className="w-full p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+                  className="w-full p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100"
                   maxLength={20}
+                  required
                 />
               </div>
               <button
                 onClick={handleNextFromUsername}
-                className="w-full bg-secondary text-white py-2 rounded-full text-lg font-bold hover:secondary transition"
+                className="w-full bg-greenLight shadow-xl text-white py-2 rounded-full text-lg font-bold hover:bg-secondary-dark transition"
               >
                 Suivant
               </button>
               {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-              <p className="mt-4 text-secondary text-center">
+              <p className="mt-4 text-center text-white">
                 Vous avez déjà un compte ?{" "}
                 <Link to="/connexion" className="text-greenLight hover:underline">
                   Connectez-vous
@@ -187,24 +182,22 @@ export default function RegisterPage() {
               transition={{ duration: 0.5 }}
               className="w-full text-center"
             >
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              <h1 className="text-2xl font-bold text-gray-100 mb-2">
                 Créez votre code PIN
               </h1>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-400 mb-6">
                 Choisissez un code PIN à 6 chiffres.
               </p>
-              {/* Cercles pour le PIN */}
               <div className="flex items-center justify-center mb-8">
                 {[0, 1, 2, 3, 4, 5].map((index) => (
                   <div
                     key={index}
-                    className={`w-6 h-6 mx-2 rounded-full border border-gray-400 ${
-                      index < displayLength ? "bg-black" : "bg-transparent"
+                    className={`w-6 h-6 mx-2 rounded-full border border-gray-300 ${
+                      index < displayLength ? "bg-gray-900" : "bg-transparent"
                     }`}
                   />
                 ))}
               </div>
-              {/* Clavier numérique */}
               <div className="grid grid-cols-3 gap-10 text-2xl font-semibold mb-8">
                 {digits.map((num) => (
                   <button
@@ -243,24 +236,22 @@ export default function RegisterPage() {
               transition={{ duration: 0.5 }}
               className="w-full text-center"
             >
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              <h1 className="text-2xl font-bold text-gray-100 mb-2">
                 Confirmez votre code PIN
               </h1>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-400 mb-6">
                 Saisissez à nouveau votre code PIN.
               </p>
-              {/* Cercles pour la confirmation */}
               <div className="flex items-center justify-center mb-8">
                 {[0, 1, 2, 3, 4, 5].map((index) => (
                   <div
                     key={index}
-                    className={`w-6 h-6 mx-2 rounded-full border border-gray-400 ${
-                      index < displayLength ? "bg-black" : "bg-transparent"
+                    className={`w-6 h-6 mx-2 rounded-full border border-gray-300 ${
+                      index < displayLength ? "bg-gray-900" : "bg-transparent"
                     }`}
                   />
                 ))}
               </div>
-              {/* Clavier numérique pour la confirmation */}
               <div className="grid grid-cols-3 gap-10 text-2xl font-semibold mb-8">
                 {digits.map((num) => (
                   <button
@@ -290,11 +281,10 @@ export default function RegisterPage() {
           )}
         </AnimatePresence>
 
-        {/* Animation de vérification */}
         <AnimatePresence>
           {isVerifying && (
             <motion.div
-              className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-90 rounded-3xl"
+              className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-90 rounded-3xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -304,11 +294,7 @@ export default function RegisterPage() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1.2 }}
                 exit={{ scale: 0 }}
-                transition={{
-                  duration: 0.5,
-                  repeat: Infinity,
-                  repeatType: "mirror",
-                }}
+                transition={{ duration: 0.5 }}
               >
                 <Check size={48} className="text-white" />
               </motion.div>
@@ -316,15 +302,21 @@ export default function RegisterPage() {
           )}
         </AnimatePresence>
 
-        {/* Lien vers la page de connexion */}
-        {step !== 1 && (
-          <p className="mt-4 text-gray-600 text-center">
-            Vous avez déjà un compte ?{" "}
-            <Link to="/connexion" className="text-greenLight hover:underline">
-              Connectez-vous
-            </Link>
-          </p>
+        {error && (
+          <p className="text-red-500 mt-4 text-center">{error}</p>
         )}
+        <div className="flex items-center justify-center mt-4">
+          <input
+            type="checkbox"
+            id="remember"
+            checked={remember}
+            onChange={() => setRemember(!remember)}
+            className="h-5 w-5 rounded border-gray-600 accent-greenLight mr-2"
+          />
+          <label htmlFor="remember" className="text-sm text-gray-300">
+            Se souvenir de moi
+          </label>
+        </div>
       </div>
     </div>
   );

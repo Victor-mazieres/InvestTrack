@@ -1,17 +1,16 @@
-// src/components/Pages/Dashboard/Modules/DividendCalendar.jsx
 import React, { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
 export default function DividendCalendar({ dividends }) {
-  const lightCalendarStyles = `
+  const darkCalendarStyles = `
     .react-calendar {
-      background-color: #ffffff; /* Fond blanc */
+      background-color: #1e1e1e;
       border-radius: 1rem;
-      border: none; /* Suppression totale de la bordure */
+      border: none;
       padding: 1rem;
-      color: #374151; /* text-primary */
-      margin: 0 auto; /* Centre l'élément */
+      color: #d1d5db;
+      margin: 0 auto;
     }
     .react-calendar__navigation {
       display: flex;
@@ -24,7 +23,7 @@ export default function DividendCalendar({ dividends }) {
     .react-calendar__navigation button {
       background: none;
       border: none;
-      color: #374151;
+      color: #d1d5db;
       font-size: 1rem;
       font-weight: 600;
       padding: 0.25rem 0.75rem;
@@ -32,41 +31,42 @@ export default function DividendCalendar({ dividends }) {
       transition: background-color 0.2s ease;
     }
     .react-calendar__navigation button:hover {
-      background-color: #86efac;
+      background-color: #374151;
     }
     .react-calendar__navigation span {
       font-size: 1.1rem;
       font-weight: 600;
-      color: #374151;
+      color: #d1d5db;
     }
     .react-calendar__month-view__weekdays {
       text-transform: uppercase;
       font-size: 0.75rem;
-      color: #6b7280;
+      color: #9ca3af;
       margin-bottom: 0.5rem;
     }
     .react-calendar__tile {
       background: none;
       border: none;
-      color: #374151;
+      color: #d1d5db;
       border-radius: 0.5rem;
       padding: 0.4rem 0;
       position: relative;
       transition: background-color 0.2s ease;
     }
     .react-calendar__tile:enabled:hover {
-      background-color: #f3f4f6;
+      background-color: #2d2d2d;
     }
     .react-calendar__tile--now {
-      background-color: #e0f2fe;
+      background-color: #3b82f6;
       font-weight: bold;
+      color: #fff;
     }
     .react-calendar__tile--active {
-      background-color: #86efac !important;
-      color: #ffffff !important;
+      background-color: #2e8e97 !important;
+      color: #fff !important;
     }
     .react-calendar__month-view__days__day--neighboringMonth {
-      color: #9ca3af;
+      color: #6b7280;
     }
     .react-calendar__month-view__days {
       gap: 0.25rem;
@@ -143,7 +143,7 @@ export default function DividendCalendar({ dividends }) {
 
   return (
     <div className="flex flex-col items-center p-4">
-      <style>{lightCalendarStyles}</style>
+      <style>{darkCalendarStyles}</style>
       <Calendar
         onClickDay={handleClickDay}
         tileContent={tileContent}
@@ -151,7 +151,7 @@ export default function DividendCalendar({ dividends }) {
       />
       <div className="mt-12 w-full max-w-lg">
         {selectedDate ? (
-          <h3 className="text-md font-semibold text-primary mb-2">
+          <h3 className="text-md font-semibold text-gray-100 mb-2">
             Dividendes enregistrés pour{" "}
             <span className="text-greenLight">
               {formatDisplayDate(selectedDate)}
@@ -159,7 +159,7 @@ export default function DividendCalendar({ dividends }) {
           </h3>
         ) : earliestDate ? (
           <>
-            <h3 className="text-md font-semibold text-primary mb-2">
+            <h3 className="text-md font-semibold text-gray-100 mb-2">
               Prochain dividende :{" "}
               <span className="text-greenLight">
                 {formatDisplayDate(earliestDate)}
@@ -167,7 +167,7 @@ export default function DividendCalendar({ dividends }) {
             </h3>
             <ul className="mb-4 space-y-1">
               {earliestDateEvents.map((ev, idx) => (
-                <li key={idx} className="text-md text-primary">
+                <li key={idx} className="text-md text-gray-100">
                   <span className="uppercase font-bold">{ev.name}</span> -{" "}
                   <span className="text-greenLight font-bold">
                     {ev.amount}€
@@ -177,7 +177,7 @@ export default function DividendCalendar({ dividends }) {
             </ul>
           </>
         ) : (
-          <h3 className="text-md font-semibold text-primary mb-2">
+          <h3 className="text-md font-semibold text-gray-100 mb-2">
             Aucun dividende à venir.
           </h3>
         )}
@@ -186,14 +186,14 @@ export default function DividendCalendar({ dividends }) {
           (filteredEvents.length > 0 ? (
             <ul className="max-h-40 overflow-y-auto space-y-1">
               {filteredEvents.map((event, index) => (
-                <li key={index} className="text-md font-bold text-primary pb-1">
+                <li key={index} className="text-md font-bold text-gray-100 pb-1">
                   <span className="uppercase">{event.name}</span> -{" "}
                   <span className="text-greenLight">{event.amount}€</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-primary">
+            <p className="text-sm text-gray-100">
               Aucun dividende enregistré pour cette date.
             </p>
           ))}

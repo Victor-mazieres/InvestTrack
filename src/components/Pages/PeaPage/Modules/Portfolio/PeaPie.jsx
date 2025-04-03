@@ -2,6 +2,7 @@ import React, { useContext, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { ActionsContext } from "../Reutilisable/ActionsContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Composant de légende personnalisée affichée sous le PieChart.
 function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
@@ -11,8 +12,8 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
         <li
           key={index}
           onClick={() => onItemClick(index)}
-          className={`cursor-pointer flex items-center px-4 py-1 ${
-            selectedIndex === index ? "font-bold" : ""
+          className={`cursor-pointer flex items-center px-4 py-1 transition-colors duration-200 ${
+            selectedIndex === index ? "font-bold text-greenLight" : "text-gray-400"
           }`}
         >
           <div className="flex items-center space-x-2 flex-grow">
@@ -20,11 +21,11 @@ function CustomLegendList({ data, colors, onItemClick, selectedIndex }) {
               style={{ backgroundColor: colors[index % colors.length] }}
               className="w-3 h-3 rounded-full flex-shrink-0"
             />
-            <span className="text-sm text-gray-700 break-words">
+            <span className="text-sm text-gray-100 break-words">
               {item.label}
             </span>
           </div>
-          <span className="text-sm font-semibold text-gray-700 whitespace-nowrap ml-4">
+          <span className="text-sm font-semibold text-gray-100 whitespace-nowrap ml-4">
             {item.percentage.toFixed(2)}%
           </span>
         </li>
@@ -41,7 +42,10 @@ export default function PeaPie({ onValueClick }) {
 
   // Récupération des actions depuis le contexte
   const { actions } = useContext(ActionsContext);
-  const actionsData = useMemo(() => (Array.isArray(actions) ? actions : []), [actions]);
+  const actionsData = useMemo(
+    () => (Array.isArray(actions) ? actions : []),
+    [actions]
+  );
 
   // Calcul de la valeur totale du portefeuille
   const totalValue = useMemo(() => {
@@ -86,8 +90,21 @@ export default function PeaPie({ onValueClick }) {
   }, [actionsData, totalValue]);
 
   // Couleurs utilisées pour les graphiques
-  const COLORS_SECTORS = ["#1abc9c", "#f39c12", "#e74c3c", "#3498db", "#2ecc71", "#9b59b6"];
-  const COLORS_VALUES = ["#9b59b6", "#2ecc71", "#e67e22", "#34495e", "#3498db"];
+  const COLORS_SECTORS = [
+    "#1abc9c",
+    "#f39c12",
+    "#e74c3c",
+    "#3498db",
+    "#2ecc71",
+    "#9b59b6",
+  ];
+  const COLORS_VALUES = [
+    "#9b59b6",
+    "#2ecc71",
+    "#e67e22",
+    "#34495e",
+    "#3498db",
+  ];
 
   // Fonctions de navigation par défaut
   const defaultSectorClick = () => {
@@ -101,16 +118,16 @@ export default function PeaPie({ onValueClick }) {
   const handleValueClick = onValueClick || defaultValueClick;
 
   return (
-    <div className="relative min-h-screen bg-light w-full">
+    <div className="relative w-full bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl transition-all duration-300">
       {/* Card pour Répartition par secteur */}
       <div
         onClick={handleSectorClick}
-        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-8 cursor-pointer"
+        className="cursor-pointer mb-8"
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-800">Répartition par secteur</h3>
-          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-500">
-            {dataSectors.length} secteurs
+          <h3 className="font-semibold text-gray-100">Répartition par secteur</h3>
+          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-400">
+            {dataSectors.length} secteur{dataSectors.length > 1 ? "s" : ""}
           </p>
         </div>
         <div className="w-full h-[300px] mb-4" onClick={(e) => e.stopPropagation()}>
@@ -136,9 +153,10 @@ export default function PeaPie({ onValueClick }) {
                   <Cell
                     key={`cell-sector-${index}`}
                     fill={
-                      selectedSectorIndex === null || selectedSectorIndex === index
+                      selectedSectorIndex === null ||
+                      selectedSectorIndex === index
                         ? COLORS_SECTORS[index % COLORS_SECTORS.length]
-                        : "#e0e0e0" // Griser les autres éléments non sélectionnés
+                        : "#4a4a4a"
                     }
                     cursor="pointer"
                   />
@@ -155,15 +173,18 @@ export default function PeaPie({ onValueClick }) {
         />
       </div>
 
+      {/* Séparateur sous forme de border */}
+      <div className="border-t border-gray-600 my-6"></div>
+
       {/* Card pour Répartition par valeur */}
       <div
         onClick={handleValueClick}
-        className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm mb-12 cursor-pointer"
+        className="cursor-pointer mb-12"
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-800">Répartition par valeur</h3>
-          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-500">
-            {dataValues.length} valeurs
+          <h3 className="font-semibold text-gray-100">Répartition par valeur</h3>
+          <p onClick={(e) => e.stopPropagation()} className="text-sm text-gray-400">
+            {dataValues.length} valeur{dataValues.length > 1 ? "s" : ""}
           </p>
         </div>
         <div className="w-full h-[300px] mb-4" onClick={(e) => e.stopPropagation()}>
@@ -190,9 +211,10 @@ export default function PeaPie({ onValueClick }) {
                   <Cell
                     key={`cell-value-${index}`}
                     fill={
-                      selectedValueIndex === null || selectedValueIndex === index
+                      selectedValueIndex === null ||
+                      selectedValueIndex === index
                         ? COLORS_VALUES[index % COLORS_VALUES.length]
-                        : "#e0e0e0" // Griser les autres éléments non sélectionnés
+                        : "#4a4a4a"
                     }
                     cursor="pointer"
                   />

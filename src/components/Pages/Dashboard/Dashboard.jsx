@@ -116,7 +116,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col items-center p-4 bg-light min-h-screen pt-16">
+    <div className="flex flex-col items-center p-4 bg-gray-900 min-h-screen pt-16">
       {/* Header animé */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
@@ -124,7 +124,7 @@ export default function Dashboard() {
         transition={{ duration: 0.5 }}
         className="w-full flex justify-between items-center mb-4 px-4"
       >
-        <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-100">Dashboard</h1>
       </motion.header>
 
       {/* Graphique de performance du PEA */}
@@ -132,27 +132,27 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full mt-6 bg-white rounded-3xl p-2 shadow-xl"
+        className="w-full mt-6 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl transition-all duration-300"
       >
-        <h2 className="text-lg font-semibold text-secondary">Performance PEA</h2>
+        <h2 className="text-lg font-semibold text-gray-300 mb-4">Performance PEA</h2>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={dataPEA}>
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
+            <XAxis dataKey="name" stroke="#bdced3" />
+            <YAxis stroke="#bdced3" />
+            <Tooltip contentStyle={{ backgroundColor: "#2e2e2e", color: "#fff" }} />
+            <CartesianGrid stroke="#444" strokeDasharray="5 5" />
             <Line type="monotone" dataKey="value" stroke="#2e8e97" strokeWidth={3} />
           </LineChart>
         </ResponsiveContainer>
       </motion.div>
 
-      {/* Grid des cards TotalActions et NextDividend */}
-      <div className="w-full mt-6 grid grid-cols-[1.25fr_1.5fr] gap-4">
+      {/* Grille côte à côte pour TotalActions et NextDividend */}
+      <div className="w-full mt-6 grid grid-cols-2 gap-4 items-stretch">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white p-4 rounded-3xl shadow-lg"
+          className="p-4 h-full bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300"
         >
           <TotalActions />
         </motion.div>
@@ -160,7 +160,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white p-4 rounded-3xl shadow-lg"
+          className="p-4 h-full bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300"
         >
           <NextDividend />
         </motion.div>
@@ -176,12 +176,12 @@ export default function Dashboard() {
         {isMobile ? (
           <motion.div
             whileTap={{ scale: 0.95 }}
-            className="bg-white p-4 rounded-3xl shadow-lg cursor-pointer flex items-center justify-between"
+            className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl cursor-pointer flex items-center justify-between transition-all duration-300"
             onClick={() => setModalOpen(true)}
           >
             <div>
-              <h3 className="text-md font-semibold text-gray-800">Calendrier dividende</h3>
-              <p className="text-sm text-gray-600">Cliquez pour ouvrir</p>
+              <h3 className="text-md font-semibold text-gray-100">Calendrier dividende</h3>
+              <p className="text-sm text-gray-400">Cliquez pour ouvrir</p>
             </div>
             <CalendarIcon className="h-9 w-9 text-gray-400" />
           </motion.div>
@@ -190,9 +190,9 @@ export default function Dashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="bg-white p-4 rounded-3xl shadow-lg"
+            className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300"
           >
-            <h3 className="text-md font-semibold text-gray-800 mb-4">Calendrier dividende</h3>
+            <h3 className="text-md font-semibold text-gray-100 mb-4">Calendrier dividende</h3>
             <DividendCalendar dividends={dividendEvents} />
           </motion.div>
         )}
@@ -205,7 +205,9 @@ export default function Dashboard() {
         transition={{ duration: 0.5, delay: 0.5 }}
         className="w-full mt-6"
       >
-        <h2 className="text-lg font-semibold text-secondary">Répartition Immobilière</h2>
+        <h2 className="text-lg font-semibold text-gray-300 mb-4">
+          Répartition Immobilière
+        </h2>
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
             <Pie data={dataImmo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60}>
@@ -213,7 +215,7 @@ export default function Dashboard() {
                 <Cell key={`cell-${index}`} fill={COLORS[index]} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip contentStyle={{ backgroundColor: "#2e2e2e", color: "#fff" }} />
           </PieChart>
         </ResponsiveContainer>
       </motion.div>

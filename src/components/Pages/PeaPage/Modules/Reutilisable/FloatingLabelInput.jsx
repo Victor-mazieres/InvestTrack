@@ -14,13 +14,13 @@ export default function FloatingInput({ label, name, type = "text", value, onCha
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         onChange={onChange}
-        className="w-full px-4 pt-6 pb-2 border border-gray-300 bg-gray-50 rounded-3xl focus:outline-none focus:ring-2 focus:ring-gray-300 transition"
+        className="w-full px-4 pt-6 pb-2 border border-gray-600 bg-gray-800 rounded-3xl focus:outline-none focus:ring-2 focus:ring-gray-600 transition text-gray-100"
       />
       <label
         htmlFor={name}
-        className={`absolute left-4 text-gray-500 transition-all duration-200 pointer-events-none ${
+        className={`absolute left-4 transition-all duration-200 pointer-events-none ${
           showFloating
-            ? "top-1 text-xs font-medium"
+            ? "top-1 text-xs font-medium text-gray-100"
             : "top-1/2 -translate-y-1/2 text-base text-gray-400"
         }`}
       >

@@ -1,4 +1,3 @@
-// src/components/Pages/PeaPage/Modules/PeaTopActions.jsx
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useContext, useMemo } from "react";
 import {
@@ -39,28 +38,28 @@ function FiltersModal({
         animate={{ y: 0 }}
         exit={{ y: 50 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl shadow-lg p-6 w-4/5 max-w-md relative"
+        className="bg-gray-800 rounded-3xl shadow-lg p-6 w-4/5 max-w-md relative"
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-600 hover:text-primary transition"
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-100 transition"
         >
           <X className="w-5 h-5" />
         </button>
-        <h3 className="text-lg font-bold text-primary mb-4">Filtres</h3>
+        <h3 className="text-lg font-bold text-gray-100 mb-4">Filtres</h3>
         <input
           type="text"
           placeholder="Rechercher une action..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 border rounded-3xl mb-3"
+          className="w-full p-2 border border-gray-600 rounded-3xl mb-3 bg-gray-700 text-gray-100"
         />
         <input
           type="number"
           placeholder="Min quantité"
           value={minQuantity}
           onChange={(e) => setMinQuantity(e.target.value)}
-          className="w-full p-2 border rounded-3xl mb-3"
+          className="w-full p-2 border border-gray-600 rounded-3xl mb-3 bg-gray-700 text-gray-100"
         />
         <div className="mb-3">
           <CustomSelect
@@ -84,7 +83,7 @@ function FiltersModal({
             {
               value: "",
               label: "Toutes les variations",
-              icon: <Filter className="w-4 h-4 text-gray-600" />,
+              icon: <Filter className="w-4 h-4 text-gray-400" />,
             },
             {
               value: "Hausses",
@@ -99,7 +98,7 @@ function FiltersModal({
             {
               value: "Stable",
               label: "Stable",
-              icon: <Minus className="w-4 h-4 text-gray-600" />,
+              icon: <Minus className="w-4 h-4 text-gray-400" />,
             },
           ]}
           placeholder="Performance"
@@ -148,24 +147,24 @@ export default function PeaTopActions() {
 
   return (
     <motion.div
-      className="w-full p-4 relative"
+      className="w-full p-4 relative bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      <div className="flex items-center justify-between p-3 bg-white rounded-3xl shadow-lg">
-        <h2 className="text-lg font-bold text-primary flex items-center">
-          <TrendingUp className="w-5 h-5 mr-2 ml-2 text-primary" /> Top 5 Actions
+      <div className="flex items-center justify-between p-3">
+        <h2 className="text-lg font-bold text-gray-100 flex items-center">
+          <TrendingUp className="w-5 h-5 mr-2 ml-2 text-gray-100" /> Top 5 Actions
         </h2>
         <button
           onClick={() => setShowFilters(true)}
-          className="text-gray-600 hover:text-primary transition"
+          className="text-gray-400 hover:text-gray-100 transition"
         >
           <Settings className="w-5 h-5 mr-2" />
         </button>
       </div>
 
-      <ul className="space-y-4 mt-3 relative bg-white rounded-3xl shadow-xl p-1">
+      <ul className="space-y-4 mt-3 bg-gray-800 rounded-3xl shadow-xl p-1">
         {filteredActions.map((action) => {
           const change = action.change ?? 0;
           const currentPrice = action.currentPrice ?? 0;
@@ -174,7 +173,7 @@ export default function PeaTopActions() {
           return (
             <motion.li
               key={action.id}
-              className="flex items-center justify-between p-3 rounded-3xl shadow-sm transition-all duration-300 cursor-pointer hover:bg-gray-100"
+              className="flex items-center justify-between p-3 rounded-3xl shadow-sm transition-all duration-300 cursor-pointer hover:bg-gray-700"
               whileHover={{ scale: 1.02 }}
               onClick={() =>
                 navigate(`/DetailPage/${action.id}`, {
@@ -183,12 +182,12 @@ export default function PeaTopActions() {
               }
             >
               <div>
-                <p className="text-primary font-medium">{action.name}</p>
+                <p className="text-gray-100 font-medium">{action.name}</p>
                 <p className="text-greenLight text-sm font-bold">{quantity} actions</p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="flex flex-col items-end">
-                  <p className="text-lg font-medium">{currentPrice}€</p>
+                  <p className="text-lg font-medium text-gray-100">{currentPrice}€</p>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
