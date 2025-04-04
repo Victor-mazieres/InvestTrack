@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Trash } from 'lucide-react'; // Import de l'icône de poubelle
+import { Trash } from 'lucide-react';
 
 const COLORS = ["#2e8e97", "#bdced3", "#d2dde1"];
 
@@ -18,9 +18,16 @@ export default function ImmobilierDashboard() {
     { name: "Taxes", value: 15 },
   ];
 
-  // Récupération des biens immobiliers
+  // Récupération du userId en le convertissant en nombre si possible
+  const rawUserId = localStorage.getItem('userId');
+  const userId = rawUserId ? Number(rawUserId) : null;
+
+  // Récupération des biens immobiliers, filtrés par userId si défini
   useEffect(() => {
-    fetch('http://localhost:5000/api/properties')
+    const url = userId 
+      ? `http://localhost:5000/api/properties?userId=${encodeURIComponent(userId)}`
+      : `http://localhost:5000/api/properties`;
+    fetch(url)
       .then((res) => {
         if (!res.ok) {
           throw new Error("HTTP error, status = " + res.status);
@@ -35,14 +42,17 @@ export default function ImmobilierDashboard() {
         }
       })
       .catch((err) => {
-        console.error('Erreur:', err);
+        console.error('Erreur lors de la récupération des propriétés:', err);
         setError(err.message);
       });
-  }, []);
+  }, [userId]);
 
-  // Récupération des locataires
+  // Récupération des locataires, filtrés par userId si défini
   useEffect(() => {
-    fetch('http://localhost:5000/api/tenants')
+    const url = userId 
+      ? `http://localhost:5000/api/tenants?userId=${encodeURIComponent(userId)}`
+      : `http://localhost:5000/api/tenants`;
+    fetch(url)
       .then((res) => {
         if (!res.ok) {
           throw new Error("HTTP error, status = " + res.status);
@@ -57,10 +67,10 @@ export default function ImmobilierDashboard() {
         }
       })
       .catch((err) => {
-        console.error('Erreur:', err);
-        // Vous pouvez gérer l'erreur spécifiquement pour les locataires si besoin
+        console.error('Erreur lors de la récupération des locataires:', err);
+        setError(err.message);
       });
-  }, []);
+  }, [userId]);
 
   // Fonction de suppression d'un bien immobilier
   const handleDeleteProperty = async (id) => {
@@ -71,11 +81,9 @@ export default function ImmobilierDashboard() {
       if (!response.ok) {
         throw new Error("Erreur lors de la suppression du bien");
       }
-      // Mise à jour de l'état en filtrant le bien supprimé
       setProperties(properties.filter(prop => (prop._id || prop.id) !== id));
     } catch (err) {
       console.error(err);
-      // Vous pouvez afficher une alerte ou mettre à jour l'état d'erreur ici
     }
   };
 
@@ -88,11 +96,9 @@ export default function ImmobilierDashboard() {
       if (!response.ok) {
         throw new Error("Erreur lors de la suppression du locataire");
       }
-      // Mise à jour de l'état en filtrant le locataire supprimé
       setTenants(tenants.filter(tenant => (tenant._id || tenant.id) !== id));
     } catch (err) {
       console.error(err);
-      // Vous pouvez afficher une alerte ou mettre à jour l'état d'erreur ici
     }
   };
 
@@ -153,7 +159,6 @@ export default function ImmobilierDashboard() {
                 <p className="text-gray-100 font-semibold">{prop.name}</p>
                 <p className="text-gray-400">{prop.city} - {prop.address}</p>
                 <p className="text-gray-400">Valeur : {prop.value}€</p>
-                {/* Petit bandeau en bas qui suit la forme de la card */}
                 <div className="absolute bottom-0 left-0 w-full h-1 bg-greenLight rounded-b-3xl"></div>
               </div>
             </Link>
@@ -165,42 +170,42 @@ export default function ImmobilierDashboard() {
 
       {/* Liste des locataires */}
       <div className="mt-6">
-  <div className="flex justify-between items-center mb-4">
-    <h2 className="text-lg font-semibold text-gray-300">Locataires</h2>
-    <Link to="/nouveau-locataire">
-      <button className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-700 transition">
-        Créer un locataire
-      </button>
-    </Link>
-  </div>
-  {tenants.length > 0 ? (
-    tenants.map((tenant) => (
-      <Link
-        key={tenant.id || tenant._id}
-        to={`/locataire/${tenant.id || tenant._id}`}
-      >
-        <div className="relative bg-gray-800 p-4 rounded-lg shadow-md mt-2 border border-gray-600 cursor-pointer">
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDeleteTenant(tenant.id || tenant._id);
-            }}
-            className="absolute top-2 right-2 bg-checkred text-white p-2 rounded-3xl shadow-xl hover:bg-red-700"
-            aria-label="Supprimer le locataire"
-          >
-            <Trash className="w-5 h-5" />
-          </button>
-          <p className="text-gray-100 font-semibold">{tenant.name}</p>
-          <p className="text-gray-400">{tenant.email}</p>
-          <p className="text-gray-400">{tenant.phone}</p>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-300">Locataires</h2>
+          <Link to="/nouveau-locataire">
+            <button className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-700 transition">
+              Créer un locataire
+            </button>
+          </Link>
         </div>
-      </Link>
-    ))
-  ) : (
-    <p className="text-gray-300">Aucun locataire enregistré.</p>
-  )}
-</div>
+        {tenants.length > 0 ? (
+          tenants.map((tenant) => (
+            <Link
+              key={tenant.id || tenant._id}
+              to={`/locataire/${tenant.id || tenant._id}`}
+            >
+              <div className="relative bg-gray-800 p-4 rounded-3xl shadow-xl mt-2 border border-gray-600 cursor-pointer">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDeleteTenant(tenant.id || tenant._id);
+                  }}
+                  className="absolute top-2 right-2 bg-checkred text-white p-2 rounded-3xl shadow-xl hover:bg-red-700"
+                  aria-label="Supprimer le locataire"
+                >
+                  <Trash className="w-5 h-5" />
+                </button>
+                <p className="text-gray-100 font-semibold">{tenant.name}</p>
+                <p className="text-gray-400">{tenant.email}</p>
+                <p className="text-gray-400">{tenant.phone}</p>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <p className="text-gray-300">Aucun locataire enregistré.</p>
+        )}
+      </div>
     </div>
   );
 }

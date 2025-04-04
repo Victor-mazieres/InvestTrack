@@ -74,12 +74,13 @@ const CreatePropertyStep2 = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Fusion des données de l'étape 1 et de l'étape 2, avec conversion des valeurs numériques
+    // Fusion des données de l'étape 1 et de l'étape 2, en conservant le userId
     const finalData = {
       ...previousData,
       ...details,
-      surface: Number(previousData.surface) || Number(details.surface) || 0,
-      value: Number(previousData.value) || Number(details.value) || 0,
+      // Conversion des valeurs numériques
+      surface: Number(previousData.surface) || 0,
+      value: Number(previousData.value) || 0,
       pieces: Number(details.pieces) || 0,
       toilettes: Number(details.toilettes) || 0,
       sallesDeBain: Number(details.sallesDeBain) || 0,
@@ -98,7 +99,7 @@ const CreatePropertyStep2 = () => {
         throw new Error('Erreur lors de l’enregistrement');
       }
       // Redirection vers le dashboard après enregistrement
-      navigate('/dashboard');
+      navigate('/immobilier');
     } catch (error) {
       console.error('Erreur : ', error);
       // Vous pouvez afficher un message d'erreur ici
@@ -175,7 +176,6 @@ const CreatePropertyStep2 = () => {
             dropdownSize="max-h-60"
           />
 
-          {/* Checkboxes pour les équipements */}
           <div>
             <p className="mb-2">Équipements :</p>
             <div className="grid grid-cols-2 gap-2">

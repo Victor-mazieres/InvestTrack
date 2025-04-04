@@ -2,6 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+// Exemple de variant pour l'animation (vous pouvez ajuster selon vos besoins)
+const sectionVariants = (delay = 0) => ({
+  initial: { opacity: 0, y: -10 },
+  animate: { opacity: 1, y: 0, transition: { delay, duration: 0.5 } },
+});
 
 const TenantDetails = () => {
   const { id } = useParams();
@@ -9,7 +16,7 @@ const TenantDetails = () => {
   const [tenant, setTenant] = useState(null);
   const [error, setError] = useState(null);
 
-  // Récupérer les informations du locataire via l'ID
+  // Récupérer les informations du locataire par son ID (sans token)
   useEffect(() => {
     fetch(`http://localhost:5000/api/tenants/${id}`)
       .then((res) => {
@@ -20,30 +27,13 @@ const TenantDetails = () => {
       })
       .then((data) => setTenant(data))
       .catch((err) => {
-        console.error(err);
         setError(err.message);
       });
   }, [id]);
 
-  // Fonction pour supprimer le locataire
-  const handleDelete = async () => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/tenants/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error("Erreur lors de la suppression du locataire");
-      }
-      navigate('/immobilier-dashboard'); // Retour vers le dashboard après suppression
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-    }
-  };
-
   if (error) {
     return (
-      <div className="p-6 bg-gray-900 min-h-screen pt-16">
+      <div className="p-6 bg-gray-900 min-h-screen">
         <p className="text-red-500">{error}</p>
       </div>
     );
@@ -51,38 +41,69 @@ const TenantDetails = () => {
 
   if (!tenant) {
     return (
-      <div className="p-6 bg-gray-900 min-h-screen pt-16">
+      <div className="p-6 bg-gray-900 min-h-screen">
         <p className="text-gray-300">Chargement...</p>
       </div>
     );
   }
 
+  // Construction de l'URL de l'image
+  const imageUrl = tenant.profilePicture 
+    ? tenant.profilePicture.startsWith('http')
+      ? tenant.profilePicture 
+      : `http://localhost:5000/${tenant.profilePicture}`
+    : null;
+
   return (
-    <div className="p-6 bg-gray-900 min-h-screen pt-16">
+    <div className="p-6 bg-gray-900 min-h-screen">
       <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-blue-900 transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-blue-900 transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-white">Fiche de {tenant.name}</h1>
+        <motion.h1
+          className="ml-4 text-2xl font-bold text-gray-100"
+          variants={sectionVariants(0)}
+          initial="initial"
+          animate="animate"
+          transition={{ duration: 0.5 }}
+        >
+          Retour
+        </motion.h1>
       </header>
       <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-100">{tenant.name}</h2>
-          <button
-            onClick={handleDelete}
-            className="bg-red-600 text-white p-2 rounded hover:bg-red-700"
-            aria-label="Supprimer le locataire"
-          >
-            <Trash className="w-5 h-5" />
-          </button>
+        <h2 className="text-white text-2xl font-bold mb-6">Fiche de {tenant.name} {tenant.firstName}</h2>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt="Photo de profil"
+            crossOrigin="anonymous"
+            className="w-24 h-24 rounded-full mx-auto mb-4"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-gray-700 flex items-center justify-center mx-auto mb-4">
+            <span className="text-gray-400">Pas d'image</span>
+          </div>
+        )}
+        <div className="space-y-2">
+          <p className="text-white font-semibold">
+            Email : <span className="text-greenLight">{tenant.email}</span>
+          </p>
+          <p className="text-white font-semibold">
+            Téléphone : <span className="text-greenLight">{tenant.phone}</span>
+          </p>
+          <p className="text-white font-semibold">
+            Date de Naissance : <span className="text-greenLight">{tenant.dateOfBirth}</span>
+          </p>
+          <p className="text-white font-semibold">
+            Profession : <span className="text-greenLight">{tenant.occupation}</span>
+          </p>
+          <p className="text-white font-semibold">
+            Biographie : <span className="text-greenLight">{tenant.bio}</span>
+          </p>
         </div>
-        <p className="text-white font-semibold mt-2">Email : <span className='text-greenLight'>{tenant.email}</span></p>
-        <p className="text-white font-semibold mt-2">Téléphone : <span className='text-greenLight'>{tenant.phone}</span></p>
-        <p className="text-white font-semibold mt-2">Adresse : <span className='text-greenLight'>{tenant.address}</span></p>
-        {/* Ajoutez ici d'autres informations détaillées si nécessaire */}
       </div>
     </div>
   );

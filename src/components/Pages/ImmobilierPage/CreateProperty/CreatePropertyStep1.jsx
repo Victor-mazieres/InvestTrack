@@ -1,10 +1,10 @@
-// CreatePropertyStep1.jsx
-import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+// src/pages/CreatePropertyStep1.jsx
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import FloatingInput from '../../PeaPage/Modules/Reutilisable/FloatingLabelInput'; // Ajustez le chemin
-import CustomDatePicker from '../../PeaPage/Modules/Actions/CustomDatePickerAddAction/CustomDatePicker'; // Ajustez le chemin
-import CustomSelect from '../../PeaPage/Modules/Reutilisable/CustomSelect'; // Ajustez le chemin
+import FloatingInput from '../../PeaPage/Modules/Reutilisable/FloatingLabelInput';
+import CustomDatePicker from '../../PeaPage/Modules/Actions/CustomDatePickerAddAction/CustomDatePicker';
+import CustomSelect from '../../PeaPage/Modules/Reutilisable/CustomSelect';
 
 // Options pour le type de bien
 const propertyTypeOptions = [
@@ -24,56 +24,98 @@ const propertyTypeOptions = [
   { value: 'Autre', label: 'Autre' }
 ];
 
-// Options pour le propriétaire
-const ownerOptions = [
-  { value: 'Propriétaire 1', label: 'Propriétaire 1' },
-  { value: 'Propriétaire 2', label: 'Propriétaire 2' },
-  { value: 'Propriétaire 3', label: 'Propriétaire 3' }
-];
+// Valeurs par défaut du formulaire de bien
+const defaultProperty = {
+  userId: localStorage.getItem('userId') || '',
+  name: '',
+  address: '',
+  postalCode: '',
+  city: '',
+  surface: '',
+  propertyType: '',
+  building: '',
+  lot: '',
+  floor: '',
+  door: '',
+  owner: '',
+  acquisitionDate: null,
+  value: ''
+};
 
 const CreatePropertyStep1 = () => {
-  const [property, setProperty] = useState({
-    name: '',
-    address: '',
-    postalCode: '',
-    city: '',
-    surface: '',
-    propertyType: '',
-    building: '',
-    lot: '',
-    floor: '',
-    door: '',
-    owner: '',
-    acquisitionDate: null, // Date sous forme d'objet Date
-    value: ''
+  const navigate = useNavigate();
+
+  // Initialiser l'état avec les données sauvegardées si elles existent
+  const [property, setProperty] = useState(() => {
+    const saved = localStorage.getItem("propertyFormData");
+    return saved ? JSON.parse(saved) : defaultProperty;
   });
 
-  const navigate = useNavigate();
+  // State pour les options du propriétaire récupérées depuis l'API
+  const [ownerOptions, setOwnerOptions] = useState([]);
+
+  useEffect(() => {
+    // Remplacer l'URL par celle de votre API qui retourne la liste des locataires
+    fetch('http://localhost:5000/api/tenants')
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Erreur lors de la récupération des locataires");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // Transformer les données en options pour le dropdown
+        const options = data.map((tenant) => ({
+          value: tenant.id.toString(),
+          label: `${tenant.firstName} ${tenant.name}`
+        }));
+        // Ajouter l'option "Créer" avec l'icône à la fin
+        options.push({
+          value: 'create',
+          label: (
+            <div className="flex items-center">
+              <Plus className="w-4 h-4 text-greenLight mr-1" />
+              Créer
+            </div>
+          )
+        });
+        setOwnerOptions(options);
+      })
+      .catch((error) => console.error(error));
+  }, []);
 
   const handleChange = (e) => {
     setProperty({
       ...property,
-      [e.target.name]: e.target.value,
+      [e.target.name]: e.target.value
     });
   };
 
   const handleDateChange = (date) => {
     setProperty({
       ...property,
-      acquisitionDate: date,
+      acquisitionDate: date
     });
   };
 
   const handleSelectChange = (name, value) => {
-    setProperty({
-      ...property,
-      [name]: value,
-    });
+    // Si l'option "Créer" est sélectionnée, on sauvegarde le formulaire et on navigue vers la création d'un locataire
+    if (value === 'create') {
+      localStorage.setItem("propertyFormData", JSON.stringify(property));
+      navigate('/nouveau-locataire', { state: { from: "nouveau-bien" } });
+    } else {
+      setProperty({
+        ...property,
+        [name]: value
+      });
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Au lieu d'enregistrer ici, on passe à la deuxième étape en transmettant les données
+    // Sauvegarder le formulaire dans le localStorage
+    localStorage.setItem("propertyFormData", JSON.stringify(property));
+    // Passage à l'étape suivante (ici, vous pouvez adapter la redirection)
     navigate('/nouveau-bien/etape-2', { state: { ...property } });
   };
 
@@ -92,7 +134,7 @@ const CreatePropertyStep1 = () => {
       <div className="max-w-xl bg-gray-800 shadow-xl rounded-3xl p-6">
         <h1 className="text-2xl font-bold mb-6 text-gray-100">
           Créer un Bien Immobilier - 
-          <span className='text-greenLight'> Étape 1</span>
+          <span className="text-greenLight"> Étape 1</span>
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,7 +152,6 @@ const CreatePropertyStep1 = () => {
             onChange={handleChange}
           />
 
-          {/* Code Postal et Ville côte à côte */}
           <div className="flex space-x-4">
             <FloatingInput
               label="Code Postal"
@@ -134,7 +175,6 @@ const CreatePropertyStep1 = () => {
             onChange={handleChange}
           />
 
-          {/* CustomSelect pour le Type de bien */}
           <CustomSelect
             name="propertyType"
             value={property.propertyType}
@@ -171,7 +211,6 @@ const CreatePropertyStep1 = () => {
             onChange={handleChange}
           />
 
-          {/* CustomSelect pour la sélection du propriétaire */}
           <CustomSelect
             name="owner"
             value={property.owner}
@@ -183,7 +222,6 @@ const CreatePropertyStep1 = () => {
             dropdownSize="max-h-60"
           />
 
-          {/* Date d'acquisition avec CustomDatePicker */}
           <div className="w-full">
             <CustomDatePicker
               selected={property.acquisitionDate}
