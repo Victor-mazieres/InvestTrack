@@ -1,17 +1,7 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
+// Dashboard.jsx
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -22,6 +12,7 @@ import DividendCalendarModal from "./Modules/DividendCalendarModal";
 import EmailVerificationModal from "../ConnexionPage/EmailVerificationModal";
 import { ActionsContext } from "../PeaPage/Modules/Reutilisable/ActionsContext";
 
+// Données simulées pour le graphique PEA
 const dataPEA = [
   { name: "Jan", value: 1200 },
   { name: "Fév", value: 1600 },
@@ -30,6 +21,7 @@ const dataPEA = [
   { name: "Mai", value: 1800 },
 ];
 
+// Données simulées pour la répartition immobilière
 const dataImmo = [
   { name: "Loyer", value: 65 },
   { name: "Charges", value: 20 },
@@ -57,7 +49,7 @@ function getDividendEvents(actions) {
       ? action.history.reduce((sum, a) => sum + a.quantity, 0)
       : action.quantity || 1;
 
-    // Extraction de l'historique
+    // Extraction de l'historique des dividendes
     if (Array.isArray(action.dividendsHistory)) {
       for (const div of action.dividendsHistory) {
         if (div.date && div.amount) {
@@ -89,22 +81,14 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const [modalOpen, setModalOpen] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
-
-  const { actions, fetchActions } = useContext(ActionsContext);
+  const { actions } = useContext(ActionsContext);
 
   useEffect(() => {
     // Vérification e-mail
     setShowEmailVerification(localStorage.getItem("emailVerified") !== "true");
   }, []);
 
-  useEffect(() => {
-    // Charger les actions si elles ne sont pas déjà présentes
-    if (!actions.length) {
-      fetchActions();
-    }
-  }, [actions, fetchActions]);
-
-  // Calcul des événements de dividendes uniquement quand 'actions' change
+  // Calcul des événements de dividendes lorsque 'actions' change
   const dividendEvents = useMemo(() => {
     if (!actions.length) return [];
     return getDividendEvents(actions);

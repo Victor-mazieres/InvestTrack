@@ -8,7 +8,7 @@ const CustomSelect = ({
   options,
   placeholder = "Catégorie",
   className = "",
-  dropdownClassName = "",
+  dropdownClassName = "", // Surcharge possible depuis l'extérieur
   dropdownSize = "max-h-60" // Hauteur max par défaut
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,12 +40,12 @@ const CustomSelect = ({
   const selectedLabel = options.find(option => option.value === value)?.label;
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative w-full">
       {/* Bouton affichant la sélection */}
       <button
         type="button"
         onClick={toggleOpen}
-        className={`w-full p-3 rounded-3xl flex justify-between items-center focus:outline-none ${className}`}
+        className={`w-full p-3 border border-gray-600 rounded-3xl flex justify-between items-center focus:outline-none ${className}`}
       >
         <span>{selectedLabel || placeholder}</span>
         <svg className="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -56,7 +56,7 @@ const CustomSelect = ({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className={`absolute mt-1 rounded-3xl shadow-lg z-10 overflow-y-auto transition-all ${dropdownClassName} ${dropdownSize}`}
+          className={`absolute mt-1 left-0 right-0 w-full border border-gray-600 rounded-3xl shadow-lg z-10 overflow-y-auto transition-all bg-gray-800 ${dropdownClassName} ${dropdownSize}`}
         >
           {options.map((option) => (
             <div

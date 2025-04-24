@@ -13,11 +13,12 @@ const RegisterPage = lazy(() => import("../Pages/ConnexionPage/RegisterPage/Regi
 const Dashboard = lazy(() => import("../Pages/Dashboard/Dashboard"));
 const SavedCalculations = lazy(() => import("../Pages/CalculatorCredit/SavedCalculations"));
 const CalculationDetails = lazy(() => import("../Pages/CalculatorCredit/CalculationDetails"));
-const CreatePropertyStep1 = lazy(() => import("../Pages/ImmobilierPage/CreateProperty/CreatePropertyStep1"))
-const CreatePropertyStep2 = lazy(() => import("../Pages/ImmobilierPage/CreateProperty/CreatePropertyStep2"))
-const PropertyDetail = lazy(() => import("../Pages/ImmobilierPage/PropertyDetail/PropertyDetail"))
-const CreateTenant = lazy(() => import("../Pages/ImmobilierPage/Tenant/CreateTenant/"))
-const TenantDetails = lazy(() => import("../Pages/ImmobilierPage/Tenant/TenantDetails"))
+const CreatePropertyStep1 = lazy(() => import("../Pages/ImmobilierPage/CreateProperty/CreatePropertyStep1"));
+const CreatePropertyStep2 = lazy(() => import("../Pages/ImmobilierPage/CreateProperty/CreatePropertyStep2"));
+const PropertyDetail = lazy(() => import("../Pages/ImmobilierPage/PropertyDetail/PropertyDetail"));
+const CreateTenant = lazy(() => import("../Pages/ImmobilierPage/Tenant/CreateTenant/"));
+const TenantDetails = lazy(() => import("../Pages/ImmobilierPage/Tenant/TenantDetails"));
+const FinancialInfo = lazy (() => import("../Pages/ImmobilierPage/PropertyDetail/FinancialInfo/FinancialInfo"));
 
 // Error Pages
 const NotFoundPage = lazy(() => import("../Pages/Errors/NotFoundPage"));
@@ -42,6 +43,7 @@ export const mainRoutes = [
   { path: "/nouveau-bien/etape-2", element: <CreatePropertyStep2 /> },
   { path: "/property/:id", element: <PropertyDetail />},
   { path: "/nouveau-locataire", element: <CreateTenant  />},
+  { path: "/informartion-financiere", element: <FinancialInfo  />},
   { path: "/locataire/:id", element: <TenantDetails />},
   { path: "/401", element: <UnauthorizedPage /> },
   { path: "/500", element: <InternalServerError /> },

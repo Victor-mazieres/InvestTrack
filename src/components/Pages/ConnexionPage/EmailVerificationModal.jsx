@@ -9,17 +9,15 @@ export default function EmailVerificationModal({ onVerified, onClose }) {
   // Envoie du code à l'adresse e-mail indiquée
   const handleSendCode = async () => {
     const token = localStorage.getItem("token");
-  
     try {
       const response = await fetch("http://localhost:5000/auth/send-verification-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // Cette ligne est obligatoire
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ email }),
       });
-  
       if (response.ok) {
         setSent(true);
         setError("");
@@ -31,23 +29,19 @@ export default function EmailVerificationModal({ onVerified, onClose }) {
       setError("Erreur réseau lors de l'envoi du code");
     }
   };
-  
-  
 
   // Vérifie le code saisi
   const handleVerifyCode = async () => {
-    const token = localStorage.getItem("token"); // Ajoute cette ligne
-  
+    const token = localStorage.getItem("token");
     try {
       const response = await fetch("http://localhost:5000/auth/verify-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // Ajoute cette ligne
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ email, code }),
       });
-  
       if (response.ok) {
         localStorage.setItem("emailVerified", "true");
         onVerified();
@@ -59,7 +53,6 @@ export default function EmailVerificationModal({ onVerified, onClose }) {
       setError("Erreur réseau lors de la vérification");
     }
   };
-  
 
   // Si l'utilisateur clique en dehors de la boîte, on ferme la pop-up
   const handleBackdropClick = (e) => {
@@ -70,16 +63,16 @@ export default function EmailVerificationModal({ onVerified, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50"
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-white rounded-2xl p-6 w-11/12 max-w-md"
+        className="bg-gray-800 rounded-3xl p-6 w-11/12 max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
         {!sent ? (
           <>
-            <h2 className="text-lg font-semibold text-center mb-4">
+            <h2 className="text-lg font-semibold text-center mb-4 text-gray-100">
               Entrez votre adresse e-mail pour vérifier votre compte
             </h2>
             <input
@@ -87,19 +80,21 @@ export default function EmailVerificationModal({ onVerified, onClose }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Votre adresse e-mail"
-              className="w-full p-2 border border-gray-300 rounded-md mb-4 text-center"
+              className="w-full p-2 border border-gray-600 rounded-2xl mb-4 text-center bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {error && <p className="text-red-500 text-center mb-2">{error}</p>}
+          <div className="flex justify-center">
             <button
               onClick={handleSendCode}
-              className="w-full bg-blue-500 text-white py-2 rounded-xl font-bold hover:bg-blue-600"
+              className="w-1/2 bg-greenLight text-white py-2 rounded-xl font-bold hover:bg-blue-700 transition shadow-2xl"
             >
               Envoyer le code
             </button>
+          </div>
           </>
         ) : (
           <>
-            <h2 className="text-lg font-semibold text-center mb-4">
+            <h2 className="text-lg font-semibold text-center mb-4 text-gray-100">
               Un code à 6 chiffres a été envoyé à {email}
             </h2>
             <input
@@ -107,12 +102,12 @@ export default function EmailVerificationModal({ onVerified, onClose }) {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Entrez le code"
-              className="w-full p-2 border border-gray-300 rounded-md mb-4 text-center"
+              className="w-full p-2 border border-gray-600 rounded-md mb-4 text-center bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {error && <p className="text-red-500 text-center mb-2">{error}</p>}
             <button
               onClick={handleVerifyCode}
-              className="w-full bg-blue-500 text-white py-2 rounded-xl font-bold hover:bg-blue-600"
+              className="w-full bg-blue-600 text-white py-2 rounded-xl font-bold hover:bg-blue-700 transition"
               disabled={code.length !== 6}
             >
               Vérifier

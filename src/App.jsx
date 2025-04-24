@@ -1,12 +1,6 @@
 // src/App.jsx
 import React, { lazy, Suspense, memo } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Skeleton from "react-loading-skeleton";
 import 'react-loading-skeleton/dist/skeleton.css';
@@ -22,19 +16,20 @@ import GeneralErrorBoundary from "./components/Pages/Errors/GeneralErrorBoundary
 // Import du hook personnalisé pour la navigation par swipe
 import useSwipeNavigation from "./components/hooks/useSwipeNavigation";
 
-// Lazy loaded pour les modales
+// Lazy loaded pour les modales et pages secondaires
 const DetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DetailPage"));
 const DividendeDetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DividendeDetailPage"));
 const HistoriqueOrderPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/HistoriqueOrderPage"));
-const MortgageTabs  = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
+const MortgageTabs = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
 const PeaBarsSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsSecteurs"));
 const PeaBarsValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsValeurs"));
 const PeaPieSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs"));
 const PeaPieValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs"));
 const CalculationDetails = lazy(() => import("./components/Pages/CalculatorCredit/CalculationDetails"));
-const DividendHistoryPage  = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/DividendHistoryPage"));
+const DividendHistoryPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/DividendHistoryPage"));
+const FinancialInfo = lazy (() => import("./components/Pages/ImmobilierPage/PropertyDetail/FinancialInfo/FinancialInfo"))
 
-// Import de la configuration des routes principales
+// Import de la configuration des routes principales (ex. routes liées au menu de navigation)
 import { mainRoutes } from "./components/Navbar/routes";
 
 // Composant LoadingSkeleton pour le fallback
@@ -43,13 +38,13 @@ function LoadingSkeleton() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <Skeleton height={40} width={300} />
       <div className="w-full mt-4">
-         <Skeleton count={5} />
+        <Skeleton count={5} />
       </div>
     </div>
   );
 }
 
-// Centralisation des propriétés d'animation
+// Propriétés d'animation centralisées
 const animationProps = {
   initial: { x: "100%", opacity: 0 },
   animate: { x: 0, opacity: 1 },
@@ -61,8 +56,9 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Gestion de la location pour les modales
+  // Pour la gestion de modales via location.state
   const background = location.state?.background;
+  // Masquer la navbar sur les pages connexion/inscription
   const hideNav = location.pathname === "/connexion" || location.pathname === "/inscription";
 
   return (
@@ -72,7 +68,7 @@ function AppContent() {
           <MainContent location={background || location} />
         </Suspense>
       </GeneralErrorBoundary>
-
+      
       {background && (
         <AnimatePresence>
           <GeneralErrorBoundary>
@@ -158,6 +154,14 @@ function AppContent() {
                     </ModalWrapper>
                   }
                 />
+                <Route
+                  path="/informartion-financiere"
+                  element={
+                    <ModalWrapper onClose={() => navigate(-1)}>
+                      <FinancialInfo />
+                    </ModalWrapper>
+                  }
+                />
               </Routes>
             </Suspense>
           </GeneralErrorBoundary>
@@ -175,7 +179,7 @@ function AppContent() {
 }
 
 function MainContent({ location }) {
-  // Pages pour la navigation par swipe
+  // Définition des pages pour la navigation par swipe
   const pages = ["/pea", "/immobilier", "/MoreActions"];
   const swipeHandlers = useSwipeNavigation(pages, location.pathname);
 

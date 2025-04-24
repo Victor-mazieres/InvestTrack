@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight, Check, X } from "lucide-react";
+import { Check, ArrowLeft, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function RegisterPage() {
@@ -113,19 +113,21 @@ export default function RegisterPage() {
     }
   };
 
+  // Variantes d'animation pour les étapes
   const stepVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -20 },
   };
 
-  const displayLength = step === 2 ? pin.length : step === 3 ? confirmPin.length : 0;
+  // Pour l'affichage des indicateurs PIN, nous utilisons toujours la longueur du PIN
+  const displayLength = pin.length;
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-gray-900 to-gray-800 p-6 flex items-center justify-center overflow-hidden">
-      <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full relative flex flex-col items-center">
-        <AnimatePresence exitBeforeEnter>
+      <div className="bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-md w-full relative flex flex-col items-center">
+        <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div
               key="step1"
@@ -143,7 +145,7 @@ export default function RegisterPage() {
                 Entrez votre nom d'utilisateur pour créer votre compte.
               </p>
               <div className="mb-6">
-                <label className="block text-gray-300 text-sm font-medium mb-1 text-center">
+                <label className="block text-gray-300 text-lg font-medium mb-3 text-center">
                   Nom d'utilisateur
                 </label>
                 <input
@@ -151,7 +153,7 @@ export default function RegisterPage() {
                   value={username}
                   onChange={handleUsernameChange}
                   placeholder="Votre nom d'utilisateur"
-                  className="w-full p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100"
+                  className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-800 text-gray-100"
                   maxLength={20}
                   required
                 />
@@ -163,7 +165,7 @@ export default function RegisterPage() {
                 Suivant
               </button>
               {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-              <p className="mt-4 text-center text-white">
+              <p className="mt-4 text-center text-gray-100">
                 Vous avez déjà un compte ?{" "}
                 <Link to="/connexion" className="text-greenLight hover:underline">
                   Connectez-vous
@@ -183,7 +185,7 @@ export default function RegisterPage() {
               className="w-full text-center"
             >
               <h1 className="text-2xl font-bold text-gray-100 mb-2">
-                Créez votre code PIN
+                Créez votre code <span className="text-greenLight">PIN</span>
               </h1>
               <p className="text-gray-400 mb-6">
                 Choisissez un code PIN à 6 chiffres.
@@ -193,34 +195,40 @@ export default function RegisterPage() {
                   <div
                     key={index}
                     className={`w-6 h-6 mx-2 rounded-full border border-gray-300 ${
-                      index < displayLength ? "bg-gray-900" : "bg-transparent"
+                      index < displayLength ? "bg-gray-100" : "bg-transparent shadow-xl"
                     }`}
                   />
                 ))}
               </div>
-              <div className="grid grid-cols-3 gap-10 text-2xl font-semibold mb-8">
+              <div className="grid grid-cols-3 gap-8 text-2xl font-semibold mb-8">
                 {digits.map((num) => (
-                  <button
+                  <motion.button
                     key={num}
                     onClick={() => handleDigitClick(num.toString())}
-                    className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-16 h-16 rounded-full bg-gray-700 shadow-xl flex items-center justify-center hover:bg-gray-600 transition text-gray-100"
                   >
                     {num}
-                  </button>
+                  </motion.button>
                 ))}
                 <div />
-                <button
+                <motion.button
                   onClick={() => handleDigitClick("0")}
-                  className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-16 h-16 rounded-full bg-gray-700 shadow-xl flex items-center justify-center hover:bg-gray-600 transition text-gray-100"
                 >
                   0
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={handleBackspace}
-                  className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-16 h-16 rounded-full bg-gray-700 shadow-xl flex items-center justify-center hover:bg-gray-600 transition text-gray-100"
                 >
                   <ArrowLeft size={24} />
-                </button>
+                </motion.button>
               </div>
               {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
             </motion.div>
@@ -247,34 +255,40 @@ export default function RegisterPage() {
                   <div
                     key={index}
                     className={`w-6 h-6 mx-2 rounded-full border border-gray-300 ${
-                      index < displayLength ? "bg-gray-900" : "bg-transparent"
+                      index < (confirmPin.length) ? "bg-gray-100" : "bg-transparent"
                     }`}
                   />
                 ))}
               </div>
-              <div className="grid grid-cols-3 gap-10 text-2xl font-semibold mb-8">
+              <div className="grid grid-cols-3 gap-8 text-2xl font-semibold mb-8">
                 {digits.map((num) => (
-                  <button
+                  <motion.button
                     key={num}
                     onClick={() => handleDigitClick(num.toString())}
-                    className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-16 h-16 rounded-full bg-gray-700 shadow-xl flex items-center justify-center hover:bg-gray-600 transition text-gray-100"
                   >
                     {num}
-                  </button>
+                  </motion.button>
                 ))}
                 <div />
-                <button
+                <motion.button
                   onClick={() => handleDigitClick("0")}
-                  className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-16 h-16 rounded-full bg-gray-700 shadow-xl flex items-center justify-center hover:bg-gray-600 transition text-gray-100"
                 >
                   0
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={handleBackspace}
-                  className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-16 h-16 rounded-full bg-gray-700 shadow-xl flex items-center justify-center hover:bg-gray-600 transition text-gray-100"
                 >
                   <ArrowLeft size={24} />
-                </button>
+                </motion.button>
               </div>
               {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
             </motion.div>
@@ -305,18 +319,6 @@ export default function RegisterPage() {
         {error && (
           <p className="text-red-500 mt-4 text-center">{error}</p>
         )}
-        <div className="flex items-center justify-center mt-4">
-          <input
-            type="checkbox"
-            id="remember"
-            checked={remember}
-            onChange={() => setRemember(!remember)}
-            className="h-5 w-5 rounded border-gray-600 accent-greenLight mr-2"
-          />
-          <label htmlFor="remember" className="text-sm text-gray-300">
-            Se souvenir de moi
-          </label>
-        </div>
       </div>
     </div>
   );

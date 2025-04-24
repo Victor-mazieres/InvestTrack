@@ -11,6 +11,7 @@ export default function DividendCalendar({ dividends }) {
       padding: 1rem;
       color: #d1d5db;
       margin: 0 auto;
+      max-width: 100%;
     }
     .react-calendar__navigation {
       display: flex;

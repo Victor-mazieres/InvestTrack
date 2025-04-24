@@ -1,4 +1,3 @@
-// src/components/Pages/Dashboard/Modules/DividendCalendarModal.jsx
 import React from "react";
 import DividendCalendar from "./DividendCalendar";
 
@@ -16,18 +15,17 @@ export default function DividendCalendarModal({ dividends, onClose }) {
           }
         `}
       </style>
-      <div className="w-full h-3/4 bg-white rounded-t-3xl overflow-hidden shadow-2xl animate-slide-up">
+      <div className="w-full h-3/4 bg-gray-800 rounded-t-3xl overflow-hidden shadow-2xl animate-slide-up">
         {/* Bouton de fermeture */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 transition z-10"
+          className="absolute top-4 right-4 text-gray-300 hover:text-gray-100 transition z-10"
         >
           <span className="sr-only">Fermer</span>
           &#x2715;
         </button>
         <div className="p-6 h-full overflow-y-auto">
-          {/* Ajout d'une marge supérieure pour baisser le texte */}
-          <h2 className="mt-6 text-2xl font-bold text-primary text-center mb-4">
+          <h2 className="mt-6 text-2xl font-bold text-gray-100 text-center mb-4">
             Calendrier des Dividendes
           </h2>
           <DividendCalendar dividends={dividends} />

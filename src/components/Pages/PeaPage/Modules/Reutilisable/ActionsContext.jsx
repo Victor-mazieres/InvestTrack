@@ -1,3 +1,4 @@
+// ActionsContext.jsx
 import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +18,7 @@ export function ActionsProvider({ children }) {
   const navigate = useNavigate();
   const API_URL = "http://localhost:5000";
 
+  // Fonction pour récupérer les actions depuis l'API
   const fetchActions = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -35,6 +37,7 @@ export function ActionsProvider({ children }) {
     }
   }, [navigate]);
 
+  // Appeler fetchActions une seule fois lors du montage du provider
   const hasFetchedRef = useRef(false);
   useEffect(() => {
     if (!hasFetchedRef.current) {
@@ -43,6 +46,7 @@ export function ActionsProvider({ children }) {
     }
   }, [fetchActions]);
 
+  // Fonctions pour ajouter, mettre à jour et supprimer des actions
   const addAction = async (newActionData) => {
     try {
       const token = localStorage.getItem("token");

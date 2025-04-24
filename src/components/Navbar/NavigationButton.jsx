@@ -77,7 +77,7 @@ export default function FloatingMenu() {
                 y: isOpen ? bubble.y : 0,
               }}
               transition={{ type: "spring", stiffness: 150, damping: 15 }}
-              className="absolute w-16 h-16 bg-primary shadow-lg rounded-full flex items-center justify-center text-white hover:scale-110 transition"
+              className="absolute w-16 h-16 bg-white text-primarywhite shadow-2xl rounded-full flex items-center justify-center  hover:scale-110 transition"
             >
               {bubble.icon}
             </motion.button>
@@ -87,7 +87,7 @@ export default function FloatingMenu() {
           onClick={toggleMenu}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`w-16 h-16 bg-primary text-white shadow-xl rounded-full flex items-center justify-center relative z-50 transition-opacity duration-300 ${
+          className={`w-16 h-16 bg-white text-primary shadow-2xl rounded-full flex items-center justify-center relative z-50 transition-opacity duration-300 ${
             isOpen ? "opacity-100" : isHovered ? "opacity-100" : "opacity-50"
           }`}
         >

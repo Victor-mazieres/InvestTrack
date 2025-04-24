@@ -20,7 +20,7 @@ const CreateTenant = () => {
     firstName: '',
     email: '',
     phone: '',
-    dateOfBirth: '', // Format "JJ/MM/AAAA"
+    dateOfBirth: '', // Format attendu : "JJ/MM/AAAA" ou autre format convertible par Date.parse
     occupation: '',
     bio: ''
   });
@@ -32,9 +32,11 @@ const CreateTenant = () => {
   const fileInputRef = useRef(null);
 
   const handleChange = (e) => {
-    setTenant({ ...tenant, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setTenant({ ...tenant, [name]: value });
   };
 
+  // Assurez-vous que DateInput déclenche un event avec e.target.value
   const handleDateChange = (e) => {
     setTenant({ ...tenant, dateOfBirth: e.target.value });
   };
@@ -62,6 +64,7 @@ const CreateTenant = () => {
     }
   };
 
+  // Validation des champs obligatoires
   const validateForm = () => {
     const errors = {};
     if (!tenant.name.trim()) errors.name = "Le nom est requis.";
@@ -75,55 +78,65 @@ const CreateTenant = () => {
     if (!tenant.phone.trim()) errors.phone = "Le téléphone est requis.";
     if (!tenant.dateOfBirth.trim()) errors.dateOfBirth = "La date de naissance est requise.";
     if (!tenant.userId.trim()) errors.userId = "Identifiant utilisateur manquant.";
-    return errors;
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return false;
+    }
+    setValidationErrors({});
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Début de la soumission du formulaire", tenant);
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
-      console.log("Validation échouée:", errors);
+    if (!validateForm()) {
+      console.log("Validation échouée:", validationErrors);
       return;
     }
-    setValidationErrors({});
+
+    // Créer un FormData pour supporter l'upload d'image
+    const formData = new FormData();
+    // Conversion de dateOfBirth en format ISO si possible
+    let formattedDateOfBirth = tenant.dateOfBirth;
+    if (Date.parse(tenant.dateOfBirth)) {
+      formattedDateOfBirth = new Date(tenant.dateOfBirth).toISOString();
+    }
+    // Ajout des champs dans le formData
+    Object.keys(tenant).forEach((key) => {
+      // On ajoute la date convertie pour dateOfBirth
+      formData.append(key, key === 'dateOfBirth' ? formattedDateOfBirth : tenant[key]);
+    });
+    if (profilePicture) {
+      formData.append('profilePicture', profilePicture);
+    }
+
+    console.log("Envoi de la requête avec les données:", tenant);
+
     try {
-      const formData = new FormData();
-      Object.keys(tenant).forEach(key => {
-        formData.append(key, tenant[key]);
-      });
-      if (profilePicture) {
-        formData.append('profilePicture', profilePicture);
-      }
-      console.log("Envoi de la requête avec les données:", tenant);
       const response = await fetch('http://localhost:5000/api/tenants', {
         method: 'POST',
-        body: formData,
+        body: formData
       });
 
       if (!response.ok) {
         throw new Error("Erreur lors de la création du locataire");
       }
       console.log("Locataire créé avec succès");
-      // Affichage de la notification pop-up
       setShowPopup(true);
       setTimeout(() => {
         setShowPopup(false);
         // Vérifier si l'on vient du flux de création d'un bien
         if (location.state && location.state.from === "nouveau-bien") {
-          // Récupérer les données du bien sauvegardées dans le localStorage
           const propertyData = localStorage.getItem("propertyFormData");
-          // Redirection vers /nouveau-bien en transmettant les données du formulaire du bien
           navigate('/nouveau-bien', { state: propertyData ? JSON.parse(propertyData) : {} });
         } else {
-          // Redirection vers le Dashboard Immobilier
-          navigate('/immobilier');
+          navigate('/locataires');
         }
       }, 3000);
     } catch (err) {
       console.error(err);
       setError(err.message);
+      alert("Une erreur est survenue lors de la création du locataire.");
     }
   };
 

@@ -1,9 +1,7 @@
-// src/pages/CreatePropertyStep2.jsx
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CustomSelect from '../../PeaPage/Modules/Reutilisable/CustomSelect';
-import FloatingInput from '../../PeaPage/Modules/Reutilisable/FloatingLabelInput';
 
 const CreatePropertyStep2 = () => {
   const navigate = useNavigate();
@@ -26,7 +24,7 @@ const CreatePropertyStep2 = () => {
       piscine: false,
       terrasse: false,
       balcon: false,
-      jadrin: false,
+      jardin: false, // Correction: jadrin -> jardin
       veranda: false,
       abriJardin: false,
     },
@@ -34,11 +32,10 @@ const CreatePropertyStep2 = () => {
 
   // Options de nombre pour pièces, toilettes, salles de bain
   const numberOptions = (min, max) => {
-    const opts = [];
-    for (let i = min; i <= max; i++) {
-      opts.push({ value: i.toString(), label: i.toString() });
-    }
-    return opts;
+    return Array.from({ length: max - min + 1 }, (_, i) => ({
+      value: (min + i).toString(),
+      label: (min + i).toString()
+    }));
   };
 
   const chauffageOptions = [
@@ -61,48 +58,82 @@ const CreatePropertyStep2 = () => {
   ];
 
   const handleSelectChange = (name, value) => {
-    setDetails((prev) => ({ ...prev, [name]: value }));
+    setDetails(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAmenityChange = (e) => {
     const { name, checked } = e.target;
-    setDetails((prev) => ({
+    setDetails(prev => ({
       ...prev,
-      amenities: { ...prev.amenities, [name]: checked },
+      amenities: { ...prev.amenities, [name]: checked }
     }));
+  };
+
+  const validateForm = () => {
+    const requiredFields = {
+      pieces: 'Nombre de pièces',
+      toilettes: 'Nombre de toilettes',
+      sallesDeBain: 'Nombre de salles de bain',
+      chauffage: 'Type de chauffage',
+      eauChaude: 'Système eau chaude'
+    };
+
+    for (const [field, name] of Object.entries(requiredFields)) {
+      if (!details[field]) {
+        alert(`Le champ "${name}" est obligatoire`);
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Fusion des données de l'étape 1 et de l'étape 2, en conservant le userId
-    const finalData = {
+
+    if (!validateForm()) return;
+
+    // Préparation des données finales
+    const propertyData = {
       ...previousData,
       ...details,
       // Conversion des valeurs numériques
-      surface: Number(previousData.surface) || 0,
-      value: Number(previousData.value) || 0,
-      pieces: Number(details.pieces) || 0,
-      toilettes: Number(details.toilettes) || 0,
-      sallesDeBain: Number(details.sallesDeBain) || 0,
-      acquisitionDate: previousData.acquisitionDate ? new Date(previousData.acquisitionDate) : null,
+      surface: previousData.surface ? Number(previousData.surface) : null,
+      value: previousData.value ? Number(previousData.value) : null,
+      pieces: Number(details.pieces),
+      toilettes: Number(details.toilettes),
+      sallesDeBain: Number(details.sallesDeBain),
+      acquisitionDate: previousData.acquisitionDate 
+        ? new Date(previousData.acquisitionDate).toISOString() 
+        : null,
+      // Vérification du userId
+      userId: previousData.userId || localStorage.getItem('userId')
     };
 
-    console.log('Données finales du bien :', finalData);
+    console.log('Données envoyées au serveur:', propertyData);
 
     try {
       const response = await fetch('http://localhost:5000/api/properties', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finalData)
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Si vous utilisez JWT
+        },
+        body: JSON.stringify(propertyData)
       });
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Erreur lors de l’enregistrement');
+        throw new Error(data.message || "Erreur lors de la création du bien");
       }
-      // Redirection vers le dashboard après enregistrement
-      navigate('/immobilier');
+
+      navigate('/immobilier', { 
+        state: { successMessage: 'Bien créé avec succès!' } 
+      });
+
     } catch (error) {
-      console.error('Erreur : ', error);
-      // Vous pouvez afficher un message d'erreur ici
+      console.error('Erreur:', error);
+      alert(`Erreur lors de l'enregistrement: ${error.message}`);
     }
   };
 
@@ -126,10 +157,8 @@ const CreatePropertyStep2 = () => {
             value={details.pieces}
             onChange={(val) => handleSelectChange('pieces', val)}
             options={numberOptions(1, 10)}
-            placeholder="Nombre de pièces"
-            className="bg-gray-800 text-gray-100 border border-gray-500"
-            dropdownClassName="bg-gray-800 text-gray-100 w-full border border-gray-500"
-            dropdownSize="max-h-60"
+            placeholder="Nombre de pièces*"
+            required
           />
 
           <CustomSelect
@@ -137,10 +166,8 @@ const CreatePropertyStep2 = () => {
             value={details.toilettes}
             onChange={(val) => handleSelectChange('toilettes', val)}
             options={numberOptions(1, 5)}
-            placeholder="Nombre de toilettes"
-            className="bg-gray-800 text-gray-100 border border-gray-500"
-            dropdownClassName="bg-gray-800 text-gray-100 w-full border border-gray-500"
-            dropdownSize="max-h-60"
+            placeholder="Nombre de toilettes*"
+            required
           />
 
           <CustomSelect
@@ -148,10 +175,8 @@ const CreatePropertyStep2 = () => {
             value={details.sallesDeBain}
             onChange={(val) => handleSelectChange('sallesDeBain', val)}
             options={numberOptions(1, 5)}
-            placeholder="Nombre de salles de bain"
-            className="bg-gray-800 text-gray-100 border border-gray-500"
-            dropdownClassName="bg-gray-800 text-gray-100 w-full border border-gray-500"
-            dropdownSize="max-h-60"
+            placeholder="Nombre de salles de bain*"
+            required
           />
 
           <CustomSelect
@@ -159,10 +184,8 @@ const CreatePropertyStep2 = () => {
             value={details.chauffage}
             onChange={(val) => handleSelectChange('chauffage', val)}
             options={chauffageOptions}
-            placeholder="Chauffage"
-            className="bg-gray-800 text-gray-100 border border-gray-500"
-            dropdownClassName="bg-gray-800 text-gray-100 w-full border border-gray-500"
-            dropdownSize="max-h-60"
+            placeholder="Chauffage*"
+            required
           />
 
           <CustomSelect
@@ -170,10 +193,8 @@ const CreatePropertyStep2 = () => {
             value={details.eauChaude}
             onChange={(val) => handleSelectChange('eauChaude', val)}
             options={eauChaudeOptions}
-            placeholder="Eau chaude"
-            className="bg-gray-800 text-gray-100 border border-gray-500"
-            dropdownClassName="bg-gray-800 text-gray-100 w-full border border-gray-500"
-            dropdownSize="max-h-60"
+            placeholder="Eau chaude*"
+            required
           />
 
           <div>
@@ -189,7 +210,7 @@ const CreatePropertyStep2 = () => {
                 { name: 'piscine', label: 'Piscine' },
                 { name: 'terrasse', label: 'Terrasse' },
                 { name: 'balcon', label: 'Balcon' },
-                { name: 'jadrin', label: 'Jadrin' },
+                { name: 'jardin', label: 'Jardin' }, // Correction ici
                 { name: 'veranda', label: 'Véranda' },
                 { name: 'abriJardin', label: 'Abri jardin' },
               ].map((amenity) => (
@@ -208,7 +229,10 @@ const CreatePropertyStep2 = () => {
           </div>
 
           <div className="flex justify-end">
-            <button type="submit" className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-700 transition">
+            <button 
+              type="submit" 
+              className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-700 transition"
+            >
               Enregistrer
             </button>
           </div>

@@ -84,11 +84,22 @@ const CreatePropertyStep1 = () => {
       .catch((error) => console.error(error));
   }, []);
 
+  // Modification de handleChange pour nettoyer le champ postalCode
   const handleChange = (e) => {
-    setProperty({
-      ...property,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name === "postalCode") {
+      // Conserver uniquement les chiffres
+      const digits = value.replace(/\D/g, "");
+      setProperty({
+        ...property,
+        [name]: digits
+      });
+    } else {
+      setProperty({
+        ...property,
+        [name]: value
+      });
+    }
   };
 
   const handleDateChange = (date) => {
@@ -111,8 +122,59 @@ const CreatePropertyStep1 = () => {
     }
   };
 
+  // Fonction de validation du formulaire
+  const validateForm = () => {
+    if (!property.name.trim()) {
+      alert("Le champ 'Nom / Référence' est obligatoire.");
+      return false;
+    }
+    if (!property.address.trim()) {
+      alert("Le champ 'Adresse' est obligatoire.");
+      return false;
+    }
+    if (!property.postalCode.trim()) {
+      alert("Le champ 'Code Postal' est obligatoire.");
+      return false;
+    }
+    if (!/^\d+$/.test(property.postalCode.trim())) {
+      alert("Le champ 'Code Postal' doit contenir uniquement des chiffres.");
+      return false;
+    }
+    if (!property.city.trim()) {
+      alert("Le champ 'Ville' est obligatoire.");
+      return false;
+    }
+    if (!property.surface.toString().trim()) {
+      alert("Le champ 'Surface' est obligatoire.");
+      return false;
+    }
+    if (!property.propertyType.trim()) {
+      alert("Le champ 'Type de bien' est obligatoire.");
+      return false;
+    }
+    if (!property.owner.trim()) {
+      alert("Le champ 'Propriétaire' est obligatoire.");
+      return false;
+    }
+    if (!property.acquisitionDate) {
+      alert("Le champ 'Date d'acquisition' est obligatoire.");
+      return false;
+    }
+    if (!property.value.toString().trim()) {
+      alert("Le champ 'Valeur d'achat' est obligatoire.");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Vérifier que tous les champs obligatoires sont remplis et valides
+    if (!validateForm()) {
+      return;
+    }
+
     // Sauvegarder le formulaire dans le localStorage
     localStorage.setItem("propertyFormData", JSON.stringify(property));
     // Passage à l'étape suivante (ici, vous pouvez adapter la redirection)
@@ -133,8 +195,7 @@ const CreatePropertyStep1 = () => {
 
       <div className="max-w-xl bg-gray-800 shadow-xl rounded-3xl p-6">
         <h1 className="text-2xl font-bold mb-6 text-gray-100">
-          Créer un Bien Immobilier - 
-          <span className="text-greenLight"> Étape 1</span>
+          Créer un Bien Immobilier - <span className="text-greenLight">Étape 1</span>
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -158,6 +219,8 @@ const CreatePropertyStep1 = () => {
               name="postalCode"
               value={property.postalCode}
               onChange={handleChange}
+              inputMode="numeric"
+              pattern="[0-9]+"
             />
             <FloatingInput
               label="Ville"

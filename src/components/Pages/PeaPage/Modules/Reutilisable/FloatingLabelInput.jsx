@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function FloatingInput({ label, name, type = "text", value, onChange }) {
+export default function FloatingInput({ label, name, type = "text", value, onChange, ...rest }) {
   const [isFocused, setIsFocused] = useState(false);
   const showFloating = isFocused || value;
 
@@ -15,6 +15,7 @@ export default function FloatingInput({ label, name, type = "text", value, onCha
         onBlur={() => setIsFocused(false)}
         onChange={onChange}
         className="w-full px-4 pt-6 pb-2 border border-gray-600 bg-gray-800 rounded-3xl focus:outline-none focus:ring-2 focus:ring-gray-600 transition text-gray-100"
+        {...rest}  // Transmission de toutes les props additionnels
       />
       <label
         htmlFor={name}

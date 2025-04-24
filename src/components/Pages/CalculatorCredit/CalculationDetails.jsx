@@ -13,9 +13,20 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler, // Importation du plugin Filler
 } from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+// Enregistrement du plugin Filler (nécessaire pour l'option fill)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const CalculationDetails = () => {
   const { id } = useParams();
@@ -23,9 +34,9 @@ const CalculationDetails = () => {
   const [simulation, setSimulation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showChart, setShowChart] = useState(false);
-  const [growthScenario, setGrowthScenario] = useState(0.02); // Taux de croissance (2 % par défaut)
+  const [growthScenario, setGrowthScenario] = useState(0.02); // 2% par défaut
 
-  // Récupération des données
+  // Récupération des données depuis l'API
   const fetchSimulation = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -61,7 +72,7 @@ const CalculationDetails = () => {
     notaryFees,
   } = results;
 
-  // Extraction des paramètres de prêt
+  // Extraction des paramètres de prêt issus de la simulation
   const {
     propertyPrice,
     personalContribution,
@@ -72,16 +83,32 @@ const CalculationDetails = () => {
     loanDuration,
     interestRate,
     insuranceRate,
+    renovationCosts,
+    renovationPaidByPocket,
+    monthlyRent,
+    monthlyCharges,
+    syndicPeriod,
+    ownerInsurancePeriod,
   } = simulation || {};
 
-  // Calculs complémentaires
-  const monthlyPropertyTax = simulation?.propertyTax ? simulation.propertyTax / 12 : 0;
+  // Calcul complémentaires
+  const monthlyPropertyTax = propertyTax ? propertyTax / 12 : 0;
   const monthlyOwnerInsurance = ownerInsuranceAmount ? ownerInsuranceAmount / 12 : 0;
 
-  // Projection de la rentabilité
+  // Calcul du montant emprunté (en tenant compte des travaux si non payés de poche)
+  const netLoanAmount = useMemo(() => {
+    const numPropertyPrice = propertyPrice ? Number(propertyPrice) : 0;
+    const numPersonalContribution = personalContribution ? Number(personalContribution) : 0;
+    const numRenovationCosts = renovationCosts ? Number(renovationCosts) : 0;
+    const extraCosts = renovationPaidByPocket ? 0 : numRenovationCosts;
+    return numPropertyPrice + extraCosts - numPersonalContribution;
+  }, [propertyPrice, personalContribution, renovationCosts, renovationPaidByPocket]);
+
+  // Périodes de projection pour 5, 10, 15 et 20 ans
   const projectionYears = [5, 10, 15, 20];
 
-  // Calcul du cash flow cumulé (croissance composée) : CF cumulé = CF₀ * ((1+growth)^N - 1)/growth, CF₀ = monthlyCashFlow * 12
+  // Calcul du cash flow cumulé pour chaque intervalle
+  // CF cumulé = monthlyCashFlow * 12 * (((1 + growth)^n - 1) / growth)
   const cashFlowNumbers = useMemo(() => {
     if (!Number.isFinite(monthlyCashFlow)) return [];
     return projectionYears.map(
@@ -90,135 +117,126 @@ const CalculationDetails = () => {
     );
   }, [monthlyCashFlow, projectionYears, growthScenario]);
 
-  // Calcul du crédit emprunté (principal) : montant emprunté = prix du bien - apport personnel
-  const principal = useMemo(() => {
-    return propertyPrice && personalContribution
-      ? Number(propertyPrice) - Number(personalContribution)
-      : 0;
-  }, [propertyPrice, personalContribution]);
-
-  // Taux mensuel d'intérêt (décimal)
+  // Taux mensuel d'intérêt
   const monthlyInterestRate = useMemo(() => {
     return interestRate ? Number(interestRate) / 100 / 12 : 0;
   }, [interestRate]);
 
-  // Nombre total de mois
-  const totalMonths = useMemo(() => {
-    return loanDuration ? Number(loanDuration) * 12 : 0;
-  }, [loanDuration]);
+  const totalMonths = useMemo(() => (loanDuration ? Number(loanDuration) * 12 : 0), [loanDuration]);
 
-  // Calcul du crédit restant après n mois : Solde = P * ((1+i)^N - (1+i)^(n)) / ((1+i)^N - 1)
+  // Calcul du crédit restant pour chaque intervalle
   const creditRemainingNumbers = useMemo(() => {
-    if (!principal || !monthlyInterestRate || !totalMonths) return [];
+    if (!netLoanAmount || !monthlyInterestRate || !totalMonths) return [];
     return projectionYears.map((year) => {
       const n = year * 12;
-      return principal * ((Math.pow(1 + monthlyInterestRate, totalMonths) - Math.pow(1 + monthlyInterestRate, n)) /
-        (Math.pow(1 + monthlyInterestRate, totalMonths) - 1));
+      return netLoanAmount * (
+        (Math.pow(1 + monthlyInterestRate, totalMonths) - Math.pow(1 + monthlyInterestRate, n)) /
+        (Math.pow(1 + monthlyInterestRate, totalMonths) - 1)
+      );
     });
-  }, [principal, monthlyInterestRate, totalMonths, projectionYears]);
+  }, [netLoanAmount, monthlyInterestRate, totalMonths, projectionYears]);
 
-  // Pour le graphique : définir les bornes de l'axe Y
-  const yMin = cashFlowNumbers.length > 0 ? Math.min(...cashFlowNumbers) : 0;
-  const yMax = cashFlowNumbers.length > 0 ? Math.max(...cashFlowNumbers) : 0;
-  const stepSize = cashFlowNumbers.length > 0 ? (yMax - yMin) / 3 : 0;
+  // Calcul dynamique de la limite supérieure des ordonnées basée sur le cash flow cumulé
+  const maxCF = cashFlowNumbers.length > 0 ? Math.max(...cashFlowNumbers) : 1;
+  const dynamicYMax = Math.ceil(maxCF * 1.1);
 
-  // Données du graphique
-  const chartData = useMemo(() => {
-    return {
-      labels: projectionYears.map((year) => `${year} ans`),
-      datasets: [
-        {
-          label: "", // On supprime le label de la légende
-          data: cashFlowNumbers,
-          borderColor: "rgba(16, 185, 129, 1)",
-          backgroundColor: "rgba(16, 185, 129, 0.2)",
-          pointBackgroundColor: "rgba(16, 185, 129, 1)",
-          tension: 0.3,
-        },
-      ],
-    };
-  }, [cashFlowNumbers, projectionYears]);
+  // Création d'un tableau de ticks personnalisés pour l'axe des ordonnées
+  const customTicks = useMemo(
+    () =>
+      cashFlowNumbers.map((v) => ({
+        value: v,
+        label: v >= 1000 ? (v / 1000).toFixed(1) + "K €" : v.toFixed(2) + " €",
+      })),
+    [cashFlowNumbers]
+  );
 
-  const chartOptions = useMemo(() => {
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        title: {
-          display: true,
-          text: "Projection du Cash Flow cumulé",
-          font: { size: 16 },
-          color: "#fff",
-        },
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              let label = "";
-              if (context.parsed.y !== null) {
-                label += context.parsed.y.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + " €";
-              }
-              return label;
-            },
+  // Configuration du graphique : on affiche les 4 points correspondant aux valeurs calculées
+  const chartData = useMemo(() => ({
+    labels: projectionYears.map((year) => `${year} ans`),
+    datasets: [
+      {
+        label: "", // Pas de label pour éviter le rectangle de légende
+        data: cashFlowNumbers,
+        borderColor: "rgba(16, 185, 129, 1)",
+        backgroundColor: "rgba(16, 185, 129, 0.2)",
+        pointBackgroundColor: "rgba(16, 185, 129, 1)",
+        tension: 0.4,
+        borderWidth: 2,
+        fill: true,
+      },
+    ],
+  }), [cashFlowNumbers, projectionYears]);
+
+  const chartOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 10, bottom: 10, left: 10, right: 10 } },
+    plugins: {
+      legend: { display: false },
+      title: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            let value = context.parsed.y;
+            if (value >= 1000) {
+              return (value / 1000).toFixed(1) + "K €";
+            }
+            return value.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + " €";
           },
         },
       },
-      scales: {
-        x: {
-          ticks: { color: "#fff", font: { size: 12 } },
-          grid: { display: false },
-        },
-        y: {
-          min: yMin,
-          max: yMax,
-          ticks: {
-            stepSize: stepSize,
-            callback: (value) =>
-              value.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + " €",
-            color: "#fff",
-            font: { size: 12 },
-          },
-          grid: { display: false },
-        },
+    },
+    scales: {
+      x: {
+        ticks: { color: "#fff", font: { size: 10 } },
+        grid: { display: false },
       },
-    };
-  }, [yMin, yMax, stepSize]);
+      y: {
+        min: 0,
+        max: dynamicYMax,
+        // Utilisation de afterBuildTicks pour forcer les ticks personnalisés
+        afterBuildTicks: (scale) => {
+          scale.ticks = customTicks;
+        },
+        ticks: {
+          // On retourne ici les labels définis dans nos objets customTicks
+          callback: (tick, index, ticks) => {
+            return customTicks[index] ? customTicks[index].label : "";
+          },
+        },
+        grid: { color: "rgba(255, 255, 255, 0.1)" },
+      },
+    },
+  }), [dynamicYMax, customTicks]);
+
+  // Pour éviter le problème "Canvas is already in use", on passe une clé au composant Chart qui dépend de chartData
+  const chartKey = useMemo(() => JSON.stringify(chartData), [chartData]);
 
   const downloadPDF = useCallback(() => {
     if (!simulation) return;
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "pt",
-      format: "A4",
-    });
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "A4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text(
-      "Dossier de Demande de Prêt Immobilier",
-      doc.internal.pageSize.getWidth() / 2,
-      50,
-      { align: "center" }
-    );
+    doc.text("Dossier de Demande de Prêt Immobilier", doc.internal.pageSize.getWidth() / 2, 50, { align: "center" });
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
-    doc.text(
-      `Simulation ID : ${simulation.id}`,
-      doc.internal.pageSize.getWidth() / 2,
-      70,
-      { align: "center" }
-    );
+    doc.text(`Simulation ID : ${simulation.id}`, doc.internal.pageSize.getWidth() / 2, 70, { align: "center" });
     const rows = [
       ["Prix du bien", `${propertyPrice} €`],
+      renovationCosts !== undefined
+        ? ["Travaux", `${renovationCosts} € ${renovationPaidByPocket ? "(payés de ma poche)" : ""}`]
+        : null,
       ["Apport personnel", `${personalContribution} €`],
       ["Frais de dossier", `${loanFees} €`],
       ["Taxe foncière annuelle", `${propertyTax} €`],
-      ["Syndic (mensuel)", `${syndicFees} €`],
-      ["Assurance PNO (annuelle)", `${ownerInsuranceAmount} €`],
+      ["Syndic (" + (syndicPeriod || "mensuel") + ")", `${syndicFees} €`],
+      ["Assurance PNO (" + (ownerInsurancePeriod || "annuel") + ")", `${ownerInsuranceAmount} €`],
       ["Durée du prêt", `${loanDuration} ans`],
-      ["Taux d'intérêt annuel", `${interestRate} %`],
+      [`Taux d'intérêt annuel`, `${interestRate} %`],
       ["Assurance emprunteur", `${insuranceRate} %`],
-    ];
+    ].filter(Boolean);
+
     autoTable(doc, {
       startY: 90,
       head: [["Libellé", "Valeur"]],
@@ -231,15 +249,13 @@ const CalculationDetails = () => {
     const finalY = doc.lastAutoTable.finalY + 30;
     doc.setFont("helvetica", "italic");
     doc.setFontSize(10);
-    doc.text(
-      "Document généré automatiquement à partir de votre calculateur.\nPour toute question ou modification, contactez-nous.",
-      40,
-      finalY
-    );
+    doc.text("Document généré automatiquement à partir de votre calculateur.\nPour toute question ou modification, contactez-nous.", 40, finalY);
     doc.save(`demande_pret_${simulation.id || "details"}.pdf`);
   }, [
     simulation,
     propertyPrice,
+    renovationCosts,
+    renovationPaidByPocket,
     personalContribution,
     loanFees,
     propertyTax,
@@ -248,6 +264,8 @@ const CalculationDetails = () => {
     loanDuration,
     interestRate,
     insuranceRate,
+    syndicPeriod,
+    ownerInsurancePeriod,
   ]);
 
   if (loading)
@@ -281,8 +299,9 @@ const CalculationDetails = () => {
         <h1 className="ml-4 text-2xl font-bold text-white">Détails de la Simulation</h1>
       </header>
 
-      {/* Section Paramètres du Prêt */}
+      {/* Paramètres du Prêt + Résultats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Paramètres du Prêt */}
         <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
           <h2 className="text-xl font-semibold border-b pb-2 mb-4 text-white">Paramètres du Prêt</h2>
           <div className="space-y-3">
@@ -290,6 +309,17 @@ const CalculationDetails = () => {
               <span className="font-medium">Prix du bien</span>
               <span className="font-medium text-greenLight">{propertyPrice} €</span>
             </div>
+            {renovationCosts !== undefined && (
+              <div className="flex justify-between">
+                <span className="font-medium">Travaux</span>
+                <span className="font-medium text-greenLight">
+                  {renovationCosts} €{" "}
+                  {renovationPaidByPocket && (
+                    <span className="text-xs">(payés de ma poche)</span>
+                  )}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="font-medium">Apport personnel</span>
               <span className="font-medium text-greenLight">{personalContribution} €</span>
@@ -299,15 +329,15 @@ const CalculationDetails = () => {
               <span className="font-medium text-greenLight">{loanFees} €</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-medium">Taxe foncière</span>
+              <span className="font-medium">Taxe foncière annuelle</span>
               <span className="font-medium text-greenLight">{propertyTax} €</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-medium">Syndic (mensuel)</span>
+              <span className="font-medium">Syndic ({syndicPeriod || "mensuel"})</span>
               <span className="font-medium text-greenLight">{syndicFees} €</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-medium">Assurance PNO</span>
+              <span className="font-medium">Assurance PNO ({ownerInsurancePeriod || "annuel"})</span>
               <span className="font-medium text-greenLight">{ownerInsuranceAmount} €</span>
             </div>
             <div className="flex justify-between">
@@ -315,7 +345,7 @@ const CalculationDetails = () => {
               <span className="font-medium text-greenLight">{loanDuration} ans</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-medium">Taux d'intérêt</span>
+              <span className="font-medium">Taux d'intérêt annuel</span>
               <span className="font-medium text-greenLight">{interestRate} %</span>
             </div>
             <div className="flex justify-between">
@@ -338,19 +368,24 @@ const CalculationDetails = () => {
               </p>
               <ul className="mt-2 text-sm text-gray-400 space-y-1">
                 <li>
-                  <span className="font-medium">Montant de l'emprunt :</span> {Math.round(propertyPrice).toLocaleString("fr-FR")} €
+                  <strong>Montant de l'emprunt :</strong>{" "}
+                  {Number.isFinite(netLoanAmount)
+                    ? `${Math.round(netLoanAmount).toLocaleString("fr-FR")} €`
+                    : "—"}
                 </li>
                 <li>
                   <span className="font-medium">Coût des intérêts :</span>{" "}
                   {Number.isFinite(totalInterest)
                     ? `${Math.round(totalInterest).toLocaleString("fr-FR")} €`
-                    : "—"} <span className="text-xs">(sur {loanDuration} ans)</span>
+                    : "—"}{" "}
+                  <span className="text-xs">(sur {loanDuration} ans)</span>
                 </li>
                 <li>
                   <span className="font-medium">Coût de l'assurance :</span>{" "}
                   {Number.isFinite(totalInsuranceCost)
                     ? `${Math.round(totalInsuranceCost).toLocaleString("fr-FR")} €`
-                    : "—"} <span className="text-xs">(simplifié)</span>
+                    : "—"}{" "}
+                  <span className="text-xs">(simplifié)</span>
                 </li>
                 <li>
                   <span className="font-medium">Taxe foncière (mensuelle) :</span>{" "}
@@ -361,12 +396,13 @@ const CalculationDetails = () => {
                   {Math.round(syndicFees).toLocaleString("fr-FR")} €
                 </li>
                 <li>
-                  <span className="font-medium">Assurance non occupant (mensuelle) :</span>{" "}
+                  <span className="font-medium">Assurance PNO (mensuelle) :</span>{" "}
                   {Math.round(monthlyOwnerInsurance).toLocaleString("fr-FR")} €
                 </li>
                 <li>
                   <span className="font-medium">Frais de notaire :</span>{" "}
-                  {Math.round(notaryFees).toLocaleString("fr-FR")} € <span className="text-xs">(8 %)</span>
+                  {Math.round(notaryFees).toLocaleString("fr-FR")} €{" "}
+                  <span className="text-xs">(8 %)</span>
                 </li>
               </ul>
             </div>
@@ -374,16 +410,18 @@ const CalculationDetails = () => {
               <h3 className="text-lg font-semibold text-gray-200">Calcul de rentabilité</h3>
               <div className="mt-1 text-sm text-gray-200">
                 <p>
-                  <span className="font-medium">Rendement brut (%) :</span>{" "}
+                  <strong>Rendement brut (%) :</strong>{" "}
                   {Number.isFinite(grossYield)
                     ? `${grossYield.toFixed(2)} %`
                     : "—"}
                 </p>
-                <p className="text-xs text-gray-400">(Loyer annuel / Coût d'achat) x 100</p>
+                <p className="text-xs text-gray-400">
+                  (Loyer annuel / Coût d'achat) x 100
+                </p>
               </div>
               <div className="mt-2 text-sm text-gray-200">
                 <p>
-                  <span className="font-medium">Rendement net (%) :</span>{" "}
+                  <strong>Rendement net (%) :</strong>{" "}
                   {Number.isFinite(netYield)
                     ? `${netYield.toFixed(2)} %`
                     : "—"}
@@ -394,71 +432,102 @@ const CalculationDetails = () => {
               </div>
               <div className="mt-2 text-sm text-gray-200">
                 <p>
-                  <span className="font-medium">Cash-flow mensuel :</span>{" "}
+                  <strong>Cash-flow mensuel :</strong>{" "}
                   {Number.isFinite(monthlyCashFlow)
                     ? `${Math.round(monthlyCashFlow).toLocaleString("fr-FR")} € / mois`
                     : "—"}
                 </p>
-                <p className="text-xs text-gray-400">Loyer - (Mensualité + Charges)</p>
+                <p className="text-xs text-gray-400">
+                  Loyer - (Mensualité + Charges)
+                </p>
               </div>
             </div>
           </div>
         </section>
       </div>
 
+      {/* Section Paramètres de Location */}
+      {(monthlyRent !== undefined || monthlyCharges !== undefined) && (
+        <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 mt-6">
+          <h2 className="text-xl font-semibold border-b pb-2 mb-4 text-white">
+            Paramètres de Location
+          </h2>
+          <div className="space-y-3">
+            {monthlyRent !== undefined && (
+              <div className="flex justify-between">
+                <span className="font-medium">Loyer mensuel (hors charges)</span>
+                <span className="font-medium text-greenLight">{monthlyRent} €</span>
+              </div>
+            )}
+            {monthlyCharges !== undefined && (
+              <div className="flex justify-between">
+                <span className="font-medium">Charges locatives</span>
+                <span className="font-medium text-greenLight">{monthlyCharges} €</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Section Projection de la Rentabilité */}
       <section className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl p-6 border border-gray-600 mt-8 relative">
+        {/* Bouton cliquable pour afficher/masquer le graphique */}
         <div className="absolute top-2 right-2">
           <button
             onClick={() => setShowChart(!showChart)}
             className="bg-greenLight rounded-full p-2"
-            aria-label="Afficher/Masquer les statistiques"
+            aria-label="Afficher/Masquer le graphique"
           >
             <BarChart2 className="w-6 h-6 text-white" />
           </button>
         </div>
-        <h2 className="text-xl font-semibold text-gray-100 mb-4 border-b pb-2">Projection de la Rentabilité</h2>
+
+        <h2 className="text-xl font-semibold text-gray-100 mb-4 border-b pb-2">
+          Projection de la Rentabilité
+        </h2>
         <p className="text-xs text-gray-400 mb-4">
-          La projection du cash flow cumulé est calculée en supposant une croissance annuelle de 2 %. <br />
+          La projection du cash flow cumulé est calculée avec une croissance annuelle de{" "}
+          {(growthScenario * 100).toFixed(2)} %.
         </p>
+
+        {/* Cartes de projection pour 5, 10, 15, 20 ans */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {projectionYears.map((year, index) => (
-            <div key={year} className="bg-gray-700 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-2 text-white">Sur {year} ans</h3>
-              <p>
-                <span className="font-medium">Cash Flow cumulé :</span>{" "}
-                <span className="font-medium text-greenLight">
-                  {Number.isFinite(monthlyCashFlow)
-                    ? (
-                        (monthlyCashFlow * 12 * ((1 + growthRate) ** year - 1)) / growthRate
-                      ).toLocaleString("fr-FR", { maximumFractionDigits: 2 })
-                    : "—"}{" "}
-                  €
-                </span>
-              </p>
-              <p className="text-xs text-gray-400">
-                <span className="font-medium">Crédit restant :</span>{" "}
-                <span className="font-medium text-greenLight">
-                  {Number.isFinite(propertyPrice) &&
-                  Number.isFinite(personalContribution) &&
-                  totalMonths > 0 &&
-                  monthlyInterestRate > 0
-                    ? (
-                        (Number(propertyPrice) - Number(personalContribution)) *
-                        ((Math.pow(1 + monthlyInterestRate, totalMonths) - Math.pow(1 + monthlyInterestRate, year * 12)) /
-                          (Math.pow(1 + monthlyInterestRate, totalMonths) - 1))
-                      ).toLocaleString("fr-FR", { maximumFractionDigits: 2 })
-                    : "—"}{" "}
-                  €
-                </span>
-              </p>
-            </div>
-          ))}
+          {projectionYears.map((year, index) => {
+            const cashFlowValue = cashFlowNumbers[index];
+            const remainingCredit = creditRemainingNumbers[index];
+            return (
+              <div key={year} className="bg-gray-700 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2 text-white">Sur {year} ans</h3>
+                <p>
+                  <span className="font-medium">Cash Flow cumulé :</span>{" "}
+                  {Number.isFinite(cashFlowValue) ? (
+                    <span className="font-medium text-greenLight">
+                      {cashFlowValue.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} €
+                    </span>
+                  ) : (
+                    <span className="text-sm text-red-300">Données indisponibles</span>
+                  )}
+                </p>
+                <p className="mt-1">
+                  <span className="font-medium">Crédit restant :</span>{" "}
+                  {Number.isFinite(remainingCredit) ? (
+                    <span className="font-medium text-greenLight">
+                      {remainingCredit.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} €
+                    </span>
+                  ) : (
+                    <span className="text-sm text-red-300">Données indisponibles</span>
+                  )}
+                </p>
+              </div>
+            );
+          })}
         </div>
+
+        {/* Graphique affiché en bas de la section, avec l'axe X commençant à "0 ans" */}
         {showChart && (
           <div className="mt-4 h-64">
             <Suspense fallback={<p className="text-center text-gray-400">Chargement du graphique…</p>}>
-              <Line data={chartData} options={chartOptions} />
+              <Line key={chartKey} data={chartData} options={chartOptions} />
             </Suspense>
           </div>
         )}
@@ -477,69 +546,6 @@ const CalculationDetails = () => {
       </div>
     </div>
   );
-};
-
-const growthRate = 0.02;
-
-const chartData = {
-  labels: [5, 10, 15, 20].map((year) => `${year} ans`),
-  datasets: [
-    {
-      label: "", // Supprime le label
-      data: [5, 10, 15, 20].map((year) =>
-        1000 * 12 * (((1 + growthRate) ** year - 1) / growthRate)
-      ),
-      borderColor: "rgba(16, 185, 129, 1)",
-      backgroundColor: "rgba(16, 185, 129, 0.2)",
-      pointBackgroundColor: "rgba(16, 185, 129, 1)",
-      tension: 0.3,
-    },
-  ],
-};
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false, // Supprime la légende
-    },
-    title: {
-      display: true,
-      text: "Projection du Cash Flow cumulé",
-      font: { size: 16 },
-      color: "#fff",
-    },
-    tooltip: {
-      callbacks: {
-        label: (context) => {
-          let label = "";
-          if (context.parsed.y !== null) {
-            label += context.parsed.y.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + " €";
-          }
-          return label;
-        },
-      },
-    },
-  },
-  scales: {
-    x: {
-      ticks: { color: "#fff", font: { size: 12 } },
-      grid: { display: false },
-    },
-    y: {
-      min: 0,
-      max: 10000, // Ajustez en fonction de vos données réelles
-      ticks: {
-        stepSize: 10000 / 3,
-        callback: (value) =>
-          value.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + " €",
-        color: "#fff",
-        font: { size: 12 },
-      },
-      grid: { display: false },
-    },
-  },
 };
 
 export default CalculationDetails;
