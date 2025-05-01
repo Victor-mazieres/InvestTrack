@@ -43,7 +43,7 @@ export const mainRoutes = [
   { path: "/nouveau-bien/etape-2", element: <CreatePropertyStep2 /> },
   { path: "/property/:id", element: <PropertyDetail />},
   { path: "/nouveau-locataire", element: <CreateTenant  />},
-  { path: "/informartion-financiere", element: <FinancialInfo  />},
+  { path: "/properties/:id/financial", element: <FinancialInfo /> },
   { path: "/locataire/:id", element: <TenantDetails />},
   { path: "/401", element: <UnauthorizedPage /> },
   { path: "/500", element: <InternalServerError /> },

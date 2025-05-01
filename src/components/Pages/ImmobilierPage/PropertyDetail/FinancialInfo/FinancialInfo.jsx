@@ -1,5 +1,6 @@
+// src/components/Pages/ImmobilierPage/PropertyDetail/FinancialInfo.jsx
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Save, Info, X } from 'lucide-react';
 
@@ -7,22 +8,24 @@ import { ArrowLeft, Save, Info, X } from 'lucide-react';
 function formatFrenchNumber(v) {
   if (typeof v !== 'number' || isNaN(v)) return '';
   return v.toLocaleString('fr-FR', {
-    minimumFractionDigits: 0, // n'affiche pas ",00" si pas de décimales
-    maximumFractionDigits: 2, // jusqu'à 2 décimales si nécessaire
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   });
 }
 
-// Parse une chaîne en nombre (supporte espace et virgule)
+// Parse une chaîne en nombre (supporte espace, virgule, et tolère undefined/null)
 function parseNumber(str) {
-  const cleaned = str.replace(/\s/g, '').replace(',', '.');
+  if (str == null) return 0;
+  const cleaned = String(str).replace(/\s/g, '').replace(',', '.');
   const n = parseFloat(cleaned);
   return isNaN(n) ? 0 : n;
 }
 
 export default function FinancialInfo() {
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  // États de saisie
+  // États de saisie pour les coûts d'achat et de crédit
   const [prixAgence, setPrixAgence]                 = useState('40000.00');
   const [fraisAgence, setFraisAgence]               = useState('5000.00');
   const [netVendeur, setNetVendeur]                 = useState('35000.00');
@@ -32,6 +35,7 @@ export default function FinancialInfo() {
   const [tauxPret, setTauxPret]                     = useState('3.50');
   const [dureePret, setDureePret]                   = useState('20.00');
 
+  // États de saisie pour les charges et taxes
   const [taxeFonciere, setTaxeFonciere]             = useState('500.00');
   const [taxeFoncierePeriod, setTaxeFoncierePeriod] = useState('annual');
   const [chargesCopro, setChargesCopro]             = useState('420.00');
@@ -43,23 +47,25 @@ export default function FinancialInfo() {
   const [autreSortie, setAutreSortie]               = useState('0.00');
   const [elecGaz, setElecGaz]                       = useState('0.00');
 
+  // États de saisie pour les loyers
   const [loyerHC, setLoyerHC]       = useState('314.00');
   const [chargesLoc, setChargesLoc] = useState('35.00');
 
-  const [tmi, setTmi]              = useState('0.00');
-  const [cotSocPct, setCotSocPct]  = useState('17.20');
+  // États de saisie pour la fiscalité
+  const [tmi, setTmi]             = useState('0.00');
+  const [cotSocPct, setCotSocPct] = useState('17.20');
 
-  // Modal de calcul de TMI
+  // Modal TMI
   const [showTmiModal, setShowTmiModal] = useState(false);
   const [annualIncome, setAnnualIncome] = useState('');
 
-  // Gère la saisie décimale et force 2 décimales dans le state
+  // Helper : gère la saisie décimale et force 2 décimales
   const handleChange = setter => e => {
     const n = parseNumber(e.target.value);
     setter(n.toFixed(2));
   };
 
-  // Conversion périodicité (annual ↔ monthly)
+  // Conversion annual ↔ monthly
   function convert(str, from, to) {
     const n = parseNumber(str);
     let res = n;
@@ -68,7 +74,7 @@ export default function FinancialInfo() {
     return res.toFixed(2);
   }
 
-  // Calcule le taux marginal (TMI) selon les tranches
+  // Calcul du taux marginal d'imposition
   function getTmiRate(income) {
     const brackets = [
       { up: 11497,    rate: 0 },
@@ -83,19 +89,12 @@ export default function FinancialInfo() {
     return 0;
   }
 
-  // Stub de sauvegarde
-  const handleSave = () => {
-    console.log('Données à sauvegarder :', results);
-    alert('Données sauvegardées (stub)');
-  };
-
-  // Calculs financiers
+  // Calculs financiers principaux
   const results = useMemo(() => {
+    // Parsing
     const NV  = parseNumber(netVendeur);
-    const DM  = parseNumber(decoteMeuble);
     const FA  = parseNumber(fraisAgence);
     const TR  = parseNumber(travaux);
-    const FNP = parseNumber(fraisNotairePct) / 100;
     const r   = parseNumber(tauxPret) / 100 / 12;
     const N   = parseNumber(dureePret) * 12;
 
@@ -107,20 +106,19 @@ export default function FinancialInfo() {
     const AS  = parseNumber(autreSortie);
     const EG  = parseNumber(elecGaz);
 
-    const LH = parseNumber(loyerHC);
-    const CL = parseNumber(chargesLoc);
+    const LH  = parseNumber(loyerHC);
+    const CL  = parseNumber(chargesLoc);
 
     const TMI = parseNumber(tmi) / 100;
     const COT = parseNumber(cotSocPct) / 100;
 
-    // Bloc 1: crédit
-    const netApresDecote = NV - DM;
-    const emprunt        = Math.max(0, NV + FA + TR);
-    const mensualite     = emprunt > 0 && r > 0
+    // 1. Emprunt et mensualité
+    const emprunt    = Math.max(0, NV + FA + TR);
+    const mensualite = emprunt > 0 && r > 0
       ? emprunt * (r / (1 - Math.pow(1 + r, -N)))
       : 0;
 
-    // Bloc 2: sorties mensuelles
+    // 2. Sorties mensuelles
     const mTF  = taxeFoncierePeriod === 'annual' ? TF / 12 : TF;
     const mCP  = chargesCoproPeriod   === 'annual' ? CP / 12 : CP;
     const mPNO = assurancePNOPeriod   === 'annual' ? PNO / 12 : PNO;
@@ -129,51 +127,46 @@ export default function FinancialInfo() {
     const mAS  = AS / 12;
     const totalSorties = mensualite + mTF + mCP + mPNO + mAE - CR + mEG + mAS;
 
-    // Bloc 3: entrées
+    // 3. Entrées
     const entreeHC = LH;
-    const entreeCC = LH + CL;
+    const totalCC  = LH + CL;
 
-    // Bloc 4: impôts
-    const revenuAnnuel = LH * 12;
-    const baseMicro    = revenuAnnuel * 0.5;
+    // 4. Impôts
+    const baseMicro    = LH * 12 * 0.5;
     const cotSocCalc   = baseMicro * COT;
     const impotsCalc   = baseMicro * TMI;
     const impotAnnuel  = impotsCalc + cotSocCalc;
     const impotMensuel = impotAnnuel / 12;
 
-    // Bloc 5: cash flow
-    const cfMensuel        = entreeHC - totalSorties;
-    const cfAnnuel         = cfMensuel * 12;
-    const cfTotal          = cfMensuel * N;
-    const interets         = mensualite * N - emprunt;
-    const cfNetNetMensuel  = cfMensuel - impotMensuel;
-    const cfNetNetAnnuel   = cfAnnuel  - impotAnnuel;
-    const cfNetNetTotal    = cfTotal   - impotMensuel * N;
+    // 5. Cash flow
+    const cfMensuel       = entreeHC - totalSorties;
+    const cfAnnuel        = cfMensuel * 12;
+    const cfTotal         = cfMensuel * N;
+    const interets        = mensualite * N - emprunt;
+    const cfNetNetMensuel = cfMensuel - impotMensuel;
+    const cfNetNetAnnuel  = cfAnnuel - impotAnnuel;
+    const cfNetNetTotal   = cfTotal - impotMensuel * N;
 
+    // Formatage
     const to2 = x => parseFloat(x).toFixed(2);
     return {
-      netApresDecote:   to2(netApresDecote),
-      emprunt:          to2(emprunt),
-      mensualite:       to2(mensualite),
-      totalSorties:     to2(totalSorties),
-      entreeHC:         to2(entreeHC),
-      entreeCC:         to2(entreeCC),
-      revenuAnnuel:     to2(revenuAnnuel),
-      baseMicro:        to2(baseMicro),
-      cotSoc:           to2(cotSocCalc),
-      impots:           to2(impotsCalc),
-      impotMensuel:     to2(impotMensuel),
-      impotAnnuel:      to2(impotAnnuel),
-      cfMensuel:        to2(cfMensuel),
-      cfAnnuel:         to2(cfAnnuel),
-      cfTotal:          to2(cfTotal),
-      interets:         to2(interets),
-      cfNetNetMensuel:  to2(cfNetNetMensuel),
-      cfNetNetAnnuel:   to2(cfNetNetAnnuel),
-      cfNetNetTotal:    to2(cfNetNetTotal),
+      emprunt:           to2(emprunt),
+      mensualite:        to2(mensualite),
+      totalSorties:      to2(totalSorties),
+      entreeHC:          to2(entreeHC),
+      totalCC:           to2(totalCC),
+      impotMensuel:      to2(impotMensuel),
+      impotAnnuel:       to2(impotAnnuel),
+      cfMensuel:         to2(cfMensuel),
+      cfAnnuel:          to2(cfAnnuel),
+      cfTotal:           to2(cfTotal),
+      cfNetNetMensuel:   to2(cfNetNetMensuel),
+      cfNetNetAnnuel:    to2(cfNetNetAnnuel),
+      cfNetNetTotal:     to2(cfNetNetTotal),
+      interets:          to2(interets),
     };
   }, [
-    netVendeur, decoteMeuble, fraisAgence, travaux, fraisNotairePct,
+    prixAgence, fraisAgence, netVendeur, decoteMeuble, fraisNotairePct, travaux,
     tauxPret, dureePret,
     taxeFonciere, taxeFoncierePeriod,
     chargesCopro, chargesCoproPeriod,
@@ -182,6 +175,40 @@ export default function FinancialInfo() {
     loyerHC, chargesLoc,
     tmi, cotSocPct,
   ]);
+
+  // Envoi des données au serveur et retour à la page détail
+  const handleSave = () => {
+    // Fusionne les inputs manquants avec les résultats calculés
+    const payload = {
+      taxeFonciere,
+      taxeFoncierePeriod,
+      chargesCopro,
+      chargesCoproPeriod,
+      assurancePNO,
+      assurancePNOPeriod,
+      chargeRecup,
+      loyerHC,
+      chargesLoc,
+      ...results
+    };
+
+    fetch(`http://localhost:5000/api/properties/${id}/financial`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(res => {
+        if (!res.ok) return Promise.reject(res);
+        return res.json();
+      })
+      .then(() => {
+        navigate(-1);
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Erreur lors de la sauvegarde');
+      });
+  };
 
   const sectionClass = 'bg-gray-800 rounded-3xl shadow-md border border-gray-600 p-6 mb-6';
   const inputClass   = 'w-full bg-gray-700 text-gray-100 border border-gray-600 rounded-3xl px-4 py-2';
@@ -193,7 +220,7 @@ export default function FinancialInfo() {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      {/* Header */}
+      {/* En-tête */}
       <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 space-y-4 md:space-y-0">
         <div className="flex items-center space-x-4">
           <button
@@ -214,50 +241,51 @@ export default function FinancialInfo() {
 
       {/* Bloc 1 – Mensualités de crédit */}
       <section className={sectionClass}>
-  <h2 className="text-xl font-bold text-white mb-6">Mensualités de crédit</h2>
+        <h2 className="text-xl font-bold text-white mb-6">Mensualités de crédit</h2>
+        <div className="grid grid-cols-2 gap-6">
+          {[
+            ['Prix agence (€)', prixAgence, setPrixAgence],
+            ['Frais agence (€)', fraisAgence, setFraisAgence],
+            ['Prix net vendeur (€)', netVendeur, setNetVendeur],
+            ['Décote meuble (€)', decoteMeuble, setDecoteMeuble],
+            ['Frais notaire (%)', fraisNotairePct, setFraisNotairePct],
+            ['Travaux (€)', travaux, setTravaux],
+            ['Taux prêt (%)', tauxPret, setTauxPret],
+            ['Durée prêt (ans)', dureePret, setDureePret],
+          ].map(([label, val, setter], i) => (
+            <div key={i}>
+              <label className="block text-sm text-gray-400 mb-2">{label}</label>
+              <input
+                className={inputClass}
+                value={formatFrenchNumber(parseNumber(val))}
+                onChange={handleChange(setter)}
+              />
+            </div>
+          ))}
+        </div>
 
-  <div className="grid grid-cols-2 gap-6">
-    {[
-      ['Prix agence (€)', prixAgence, setPrixAgence],
-      ['Frais agence (€)', fraisAgence, setFraisAgence],
-      ['Prix net vendeur (€)', netVendeur, setNetVendeur],
-      ['Décote meuble (€)', decoteMeuble, setDecoteMeuble],
-      ['Frais notaire (%)', fraisNotairePct, setFraisNotairePct],
-      ['Travaux (€)', travaux, setTravaux],
-      ['Taux prêt (%)', tauxPret, setTauxPret],
-      ['Durée prêt (ans)', dureePret, setDureePret],
-    ].map(([label, val, setter], i) => (
-      <div key={i}>
-        <label className="block text-sm text-gray-400 mb-2">{label}</label>
-        <input
-          className={inputClass}
-          value={formatFrenchNumber(parseNumber(val))}
-          onChange={handleChange(setter)}
-        />
-      </div>
-    ))}
-  </div>
-
-      {/* ── Récap des calculs ── */}
-      <div className="border-t border-gray-600 mt-6 pt-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <span>Montant emprunté</span>
-        <span className="font-semibold text-xl text-greenLight">
-          {formatFrenchNumber(parseNumber(results.emprunt))}€
-        </span>
-      </div>
-      <div className="flex justify-between items-center">
-        <span>Mensualité</span>
-        <span className="font-semibold text-xl text-greenLight">
-          {formatFrenchNumber(parseNumber(results.mensualite))}€
-        </span>
-      </div>
-    </div>
-</section>
+        {/* Récapitulatif crédit */}
+        <div className="border-t border-gray-600 mt-6 pt-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <span>Montant emprunté</span>
+            <span className="font-semibold text-xl text-greenLight">
+              {formatFrenchNumber(parseNumber(results.emprunt))}€
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Mensualité</span>
+            <span className="font-semibold text-xl text-greenLight">
+              {formatFrenchNumber(parseNumber(results.mensualite))}€
+            </span>
+          </div>
+        </div>
+      </section>
 
       {/* Bloc 2 – Sorties mensuelles */}
       <section className={sectionClass}>
         <h2 className="text-xl font-bold text-white mb-6">Sorties mensuelles</h2>
+
+        {/* Taxe foncière */}
         <div className="mb-6">
           <label className="block text-sm text-gray-400 mb-2">Taxe foncière</label>
           <div className="flex flex-wrap items-center space-x-4 mb-4">
@@ -281,10 +309,12 @@ export default function FinancialInfo() {
             onChange={handleChange(setTaxeFonciere)}
           />
         </div>
+
+        {/* Charges copropriété et Assurance PNO */}
         {[
           ['Charges copropriété', chargesCopro, setChargesCopro, chargesCoproPeriod, setChargesCoproPeriod],
           ['Assurance PNO',      assurancePNO, setAssurancePNO, assurancePNOPeriod, setAssurancePNOPeriod],
-        ].map(([label,val,setter,period,setPeriod],i) => (
+        ].map(([label, val, setter, period, setPeriod], i) => (
           <div key={i} className="mb-6">
             <label className="block text-sm text-gray-400 mb-2">{label}</label>
             <div className="flex flex-wrap items-center space-x-4 mb-4">
@@ -294,7 +324,7 @@ export default function FinancialInfo() {
                     type="radio"
                     checked={period === p}
                     onChange={() => {
-                      setter(convert(val,period,p));
+                      setter(convert(val, period, p));
                       setPeriod(p);
                     }}
                   />
@@ -309,13 +339,15 @@ export default function FinancialInfo() {
             />
           </div>
         ))}
+
+        {/* Autres sorties */}
         <div className="space-y-4 mb-4">
           {[
             ['Assur. emprunteur', assurEmprunteur, setAssurEmprunteur],
             ['Charge récupérable', chargeRecup, setChargeRecup],
             ['Élec / Gaz', elecGaz, setElecGaz],
             ['Autre sortie', autreSortie, setAutreSortie],
-          ].map(([label,val,setter],i) => (
+          ].map(([label, val, setter], i) => (
             <div key={i} className="flex justify-between items-center">
               <span className="text-gray-200">{label}</span>
               <input
@@ -326,6 +358,8 @@ export default function FinancialInfo() {
             </div>
           ))}
         </div>
+
+        {/* Récapitulatif sorties */}
         <div className="border-t border-gray-600 mt-6 pt-4 flex justify-between">
           <span className="font-semibold text-white">Total sorties</span>
           <span className="font-semibold text-xl text-greenLight">
@@ -341,7 +375,7 @@ export default function FinancialInfo() {
           {[
             ['Loyer HC', loyerHC, setLoyerHC],
             ['Charges locataire', chargesLoc, setChargesLoc],
-          ].map(([label,val,setter],i) => (
+          ].map(([label, val, setter], i) => (
             <div key={i} className="flex justify-between items-center">
               <span className="text-gray-200">{label}</span>
               <input
@@ -362,7 +396,7 @@ export default function FinancialInfo() {
           <div className="flex justify-between">
             <span className="text-white">Total CC</span>
             <span className="font-semibold text-xl">
-              {formatFrenchNumber(parseNumber(results.entreeCC))}€
+              {formatFrenchNumber(parseNumber(results.totalCC))}€
             </span>
           </div>
         </div>
@@ -375,19 +409,19 @@ export default function FinancialInfo() {
           <div className="flex justify-between items-center">
             <span>Revenu annuel HC</span>
             <span className="font-medium">
-              {formatFrenchNumber(parseNumber(results.revenuAnnuel))}€
+              {formatFrenchNumber(parseNumber(results.entreeHC) * 12)}€
             </span>
           </div>
           <div className="flex justify-between items-center">
             <span>Après 50% (base Micro-BIC)</span>
             <span className="font-medium">
-              {formatFrenchNumber(parseNumber(results.baseMicro))}€
+              {formatFrenchNumber(parseNumber(results.entreeHC) * 12 * 0.5)}€
             </span>
           </div>
           <div className="flex justify-between items-center">
             <span>Cotisations sociales</span>
             <span className="font-medium">
-              {formatFrenchNumber(parseNumber(results.cotSoc))}€
+              {formatFrenchNumber(parseNumber(results.entreeHC) * 12 * 0.5 * parseNumber(cotSocPct) / 100)}€
             </span>
           </div>
           <div className="flex justify-between items-center">
@@ -395,7 +429,7 @@ export default function FinancialInfo() {
             <div className="flex items-center space-x-2">
               <input
                 className="w-16 flex-shrink-0 px-4 py-2 bg-gray-700 text-gray-100 border border-gray-600 rounded-3xl text-right"
-                value={formatFrenchNumber(parseNumber(tmi))}
+                value={formatFrenchNumber(parseNumber(tmi))} 
                 onChange={handleChange(setTmi)}
               />
               <button
@@ -405,12 +439,6 @@ export default function FinancialInfo() {
                 <Info className="w-5 h-5 text-gray-200 hover:text-white" />
               </button>
             </div>
-          </div>
-          <div className="flex justify-between items-center">
-            <span>Impôts (TMI)</span>
-            <span className="font-medium">
-              {formatFrenchNumber(parseNumber(results.impots))}€
-            </span>
           </div>
           <div className="flex justify-between items-center">
             <span>Impôt mensuel</span>
@@ -432,9 +460,9 @@ export default function FinancialInfo() {
         <h2 className="text-xl font-bold text-white mb-6">Résultats</h2>
         <div className="space-y-4">
           {[
-            ['Cash flow / mois',   results.cfMensuel],
-            ['Cash flow / an',     results.cfAnnuel],
-            ['Cash flow total',    results.cfTotal],
+            ['Cash flow / mois', results.cfMensuel],
+            ['Cash flow / an',   results.cfAnnuel],
+            ['Cash flow total',  results.cfTotal],
           ].map(([label, val], i) => {
             const num = parseNumber(val);
             const colorClass = num >= 0 ? 'text-checkgreen' : 'text-checkred';
@@ -450,9 +478,9 @@ export default function FinancialInfo() {
         </div>
         <div className="border-t border-gray-600 mt-6 pt-4 space-y-4">
           {[
-            ['Cash flow net net / mois',  results.cfNetNetMensuel],
-            ['Cash flow net net / an',    results.cfNetNetAnnuel],
-            ['Cash flow net net total',   results.cfNetNetTotal],
+            ['Cash flow net net / mois', results.cfNetNetMensuel],
+            ['Cash flow net net / an',   results.cfNetNetAnnuel],
+            ['Cash flow net net total',  results.cfNetNetTotal],
           ].map(([label, val], i) => {
             const num = parseNumber(val);
             const colorClass = num >= 0 ? 'text-checkgreen' : 'text-checkred';
