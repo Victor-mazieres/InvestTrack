@@ -86,7 +86,7 @@ export default function EmailVerificationModal({ onVerified, onClose }) {
           <div className="flex justify-center">
             <button
               onClick={handleSendCode}
-              className="w-1/2 bg-greenLight text-white py-2 rounded-xl font-bold hover:bg-blue-700 transition shadow-2xl"
+              className="w-1/2 bg-greenLight text-white py-2 rounded-xl font-bold hover:bg-checkgreen transition shadow-2xl"
             >
               Envoyer le code
             </button>
@@ -107,7 +107,7 @@ export default function EmailVerificationModal({ onVerified, onClose }) {
             {error && <p className="text-red-500 text-center mb-2">{error}</p>}
             <button
               onClick={handleVerifyCode}
-              className="w-full bg-blue-600 text-white py-2 rounded-xl font-bold hover:bg-blue-700 transition"
+              className="w-full bg-blue-600 text-white py-2 rounded-xl font-bold hover:bg-checkgreen transition"
               disabled={code.length !== 6}
             >
               Vérifier

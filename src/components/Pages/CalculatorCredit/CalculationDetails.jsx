@@ -276,7 +276,7 @@ const CalculationDetails = () => {
         <h1 className="text-2xl font-bold text-gray-100 mb-4">Simulation introuvable</h1>
         <button
           onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-checkgreen transition"
           aria-label="Retour"
         >
           Retour
@@ -291,7 +291,7 @@ const CalculationDetails = () => {
       <header className="flex items-center mb-8">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gray-800 rounded-full shadow hover:bg-blue-700 transition"
+          className="p-2 bg-gray-800 rounded-full shadow hover:bg-checkgreen transition"
           aria-label="Retour"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />

@@ -148,7 +148,6 @@ export default function MoreActions() {
 
   const bénéficeColor = totalBénéfice >= 0 ? "text-checkgreen" : "text-checkred";
 
-  // Variantes pour l'animation des onglets
   const tabVariants = {
     initial: { opacity: 0, y: 10 },
     animate: { opacity: 1, y: 0 },
@@ -157,17 +156,27 @@ export default function MoreActions() {
 
   return (
     <motion.div
-      className="w-full p-4 min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-100"
+      className="w-full p-4 min-h-screen text-gray-100"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 p-2 bg-gray-800 rounded-full shadow-md hover:bg-blue-100 transition"
-      >
-        <ArrowLeft className="w-6 h-6 text-greenLight" />
-      </button>
+      <header className="flex items-center mb-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-blue-900 transition"
+        >
+          <ArrowLeft className="w-6 h-6 text-greenLight" />
+        </button>
+        <motion.h1
+          className="ml-4 text-2xl font-bold text-gray-100"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Retour
+        </motion.h1>
+      </header>
 
       <AnimatePresence>
         {showPopup && (
@@ -189,7 +198,8 @@ export default function MoreActions() {
         <p className={`text-lg font-semibold mt-1 ${bénéficeColor}`}>
           {totalBénéfice >= 0
             ? `+${totalBénéfice.toFixed(2)}€`
-            : `${totalBénéfice.toFixed(2)}€`} (bénéfice)
+            : `${totalBénéfice.toFixed(2)}€`}{" "}
+          (bénéfice)
         </p>
       </div>
 
@@ -275,12 +285,7 @@ export default function MoreActions() {
           >
             <h2 className="text-lg font-bold text-gray-100 mb-4">Ajouter une action</h2>
             <div className="space-y-3">
-              <FloatingLabelInput
-                label="Nom de l'action"
-                name="name"
-                value={newAction.name}
-                onChange={handleInputChange}
-              />
+              <ActionAutoComplete onSelect={handleSelectAction} />
               <FloatingLabelInput
                 label="Quantité"
                 name="quantity"
@@ -293,6 +298,13 @@ export default function MoreActions() {
                 name="purchasePrice"
                 type="number"
                 value={newAction.purchasePrice}
+                onChange={handleInputChange}
+              />
+              <FloatingLabelInput
+                label="Frais (€)"
+                name="fees"
+                type="number"
+                value={newAction.fees}
                 onChange={handleInputChange}
               />
               <FloatingLabelInput

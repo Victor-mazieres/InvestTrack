@@ -1,211 +1,234 @@
 // src/pages/ImmobilierDashboard.jsx
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Trash } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Trash } from 'lucide-react';
+import { motion } from 'framer-motion';
+import MetricPieChart from './Components/MetricPieChart';
+import { useFetch } from './PropertyDetail/hooks/useFetch';
 
-const COLORS = ["#2e8e97", "#bdced3", "#d2dde1"];
+const sectionVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1 },
+};
+
+const wrapperClass =
+  "w-full p-4 bg-gradient-to-br from-gray-800 to-gray-700 " +
+  "border border-gray-600 rounded-3xl shadow-2xl " +
+  "hover:shadow-3xl transition-all duration-300 mb-6";
 
 export default function ImmobilierDashboard() {
-  const [properties, setProperties] = useState([]);
-  const [tenants, setTenants] = useState([]);
-  const [error, setError] = useState(null);
-
-  // Exemple de données statiques pour le graphique en camembert
-  const dataImmo = [
-    { name: "Loyers", value: 65 },
-    { name: "Charges", value: 20 },
-    { name: "Taxes", value: 15 },
-  ];
-
-  // Récupération du userId en le convertissant en nombre si possible
+  const navigate  = useNavigate();
   const rawUserId = localStorage.getItem('userId');
-  const userId = rawUserId ? Number(rawUserId) : null;
+  const userId    = rawUserId ? Number(rawUserId) : null;
 
-  // Récupération des biens immobiliers, filtrés par userId si défini
+  // Redirige vers login si pas authentifié
   useEffect(() => {
-    const url = userId 
-      ? `http://localhost:5000/api/properties?userId=${encodeURIComponent(userId)}`
-      : `http://localhost:5000/api/properties`;
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("HTTP error, status = " + res.status);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setProperties(data);
-        } else {
-          throw new Error("Format de données incorrect : " + JSON.stringify(data));
-        }
-      })
-      .catch((err) => {
-        console.error('Erreur lors de la récupération des propriétés:', err);
-        setError(err.message);
-      });
-  }, [userId]);
+    if (!userId) {
+      navigate('/login', { replace: true });
+    }
+  }, [userId, navigate]);
 
-  // Récupération des locataires, filtrés par userId si défini
+  // Avant de créer un nouveau bien, on vide le formulaire sauvegardé
+  const handleNewProperty = useCallback(() => {
+    localStorage.removeItem('propertyFormData');
+    navigate('/nouveau-bien');
+  }, [navigate]);
+
+  const baseUrl    = 'http://localhost:5000/api';
+  const propsUrl   = `${baseUrl}/properties${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`;
+  const tenantsUrl = `${baseUrl}/tenants${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`;
+
+  const {
+    data: properties = [],
+    loading: loadingP,
+    error: errorP
+  } = useFetch(propsUrl);
+
+  const {
+    data: tenants = [],
+    loading: loadingT,
+    error: errorT
+  } = useFetch(tenantsUrl);
+
+  const error = errorP || errorT;
+
+  // États locaux pour pouvoir mettre à jour sans rechargement
+  const [localProperties, setLocalProperties] = useState([]);
+  const [localTenants,    setLocalTenants]    = useState([]);
+
+  // Sync des propriétés
   useEffect(() => {
-    const url = userId 
-      ? `http://localhost:5000/api/tenants?userId=${encodeURIComponent(userId)}`
-      : `http://localhost:5000/api/tenants`;
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("HTTP error, status = " + res.status);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setTenants(data);
-        } else {
-          throw new Error("Format de données incorrect : " + JSON.stringify(data));
-        }
-      })
-      .catch((err) => {
-        console.error('Erreur lors de la récupération des locataires:', err);
-        setError(err.message);
-      });
-  }, [userId]);
+    if (!loadingP) {
+      setLocalProperties(properties);
+    }
+  }, [loadingP, properties]);
 
-  // Fonction de suppression d'un bien immobilier
+  // Sync des locataires
+  useEffect(() => {
+    if (!loadingT) {
+      setLocalTenants(tenants);
+    }
+  }, [loadingT, tenants]);
+
   const handleDeleteProperty = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/properties/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error("Erreur lors de la suppression du bien");
-      }
-      setProperties(properties.filter(prop => (prop._id || prop.id) !== id));
+      const res = await fetch(`${baseUrl}/properties/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Erreur lors de la suppression du bien');
+      // Mise à jour locale : on filtre le bien supprimé
+      setLocalProperties(prev => prev.filter(p => (p._id || p.id) !== id));
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Fonction de suppression d'un locataire
   const handleDeleteTenant = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/tenants/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error("Erreur lors de la suppression du locataire");
-      }
-      setTenants(tenants.filter(tenant => (tenant._id || tenant.id) !== id));
+      const res = await fetch(`${baseUrl}/tenants/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Erreur lors de la suppression du locataire');
+      // Mise à jour locale : on retire le locataire supprimé
+      setLocalTenants(prev => prev.filter(t => (t._id || t.id) !== id));
     } catch (err) {
       console.error(err);
     }
   };
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen pt-16">
-      <h1 className="text-2xl font-bold text-gray-100">Suivi Immobilier</h1>
-      
-      {error && <p className="text-red-500 mb-4">Erreur : {error}</p>}
+    <div className="p-4 bg-gray-900 min-h-screen pt-8">
+      <h1 className="text-2xl font-bold text-gray-100 mb-6">Suivi Immobilier</h1>
+      {error && <p className="text-red-500 mb-4">Erreur : {error.message || error}</p>}
 
-      {/* Graphique en camembert */}
-      <div className="w-full mt-6">
-        <h2 className="text-lg font-semibold text-gray-300 mb-4">
-          Répartition des revenus
-        </h2>
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={dataImmo}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={60}
-            >
-              {dataImmo.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index]} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
+      {/* Répartition des métriques */}
+      <div className="w-full mb-6">
+        <MetricPieChart properties={localProperties} />
       </div>
 
-      {/* Liste des biens immobiliers */}
-      <div className="mt-6">
+      {/* Vos Biens */}
+      <motion.div
+        className={wrapperClass}
+        initial="hidden"
+        animate="visible"
+        variants={sectionVariants}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-300">Vos Biens</h2>
-          <Link to="/nouveau-bien">
-            <button className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-600">
-              Créer un bien
-            </button>
-          </Link>
+          <h2 className="text-lg font-semibold text-gray-100">Vos Biens</h2>
+          <button
+            onClick={handleNewProperty}
+            className="flex items-center bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-600 transition"
+          >
+            <Plus className="w-4 h-4 mr-1" /> Créer un bien
+          </button>
         </div>
-        {properties.length > 0 ? (
-          properties.map((prop) => (
-            <Link key={prop._id || prop.id} to={`/property/${prop._id || prop.id}`}>
-              <div className="relative bg-gray-800 p-4 rounded-3xl shadow-xl mt-2 border border-gray-600 cursor-pointer transition overflow-hidden">
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDeleteProperty(prop._id || prop.id);
-                  }}
-                  className="absolute top-2 right-2 bg-checkred text-white p-2 rounded-3xl shadow-xl hover:bg-red-700"
-                  aria-label="Supprimer le bien"
+
+        {loadingP ? (
+          <p className="text-gray-300">Chargement…</p>
+        ) : localProperties.length > 0 ? (
+          <div className="space-y-3">
+            {localProperties.map(prop => {
+              const id = prop._id || prop.id;
+              const tenantId   = prop.owner || prop.tenantId;
+              const associated = localTenants.find(t => (t._id || t.id) === tenantId);
+
+              return (
+                <div
+                  key={id}
+                  className="bg-gray-800 p-4 rounded-2xl flex flex-col space-y-1 cursor-pointer hover:bg-gray-700 transition"
                 >
-                  <Trash className="w-5 h-5" />
-                </button>
-                <p className="text-gray-100 font-semibold">{prop.name}</p>
-                <p className="text-gray-400">{prop.city} - {prop.address}</p>
-                <p className="text-gray-400">Valeur : {prop.value}€</p>
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-greenLight rounded-b-3xl"></div>
-              </div>
-            </Link>
-          ))
+                  <div
+                    className="flex justify-between items-start"
+                    onClick={() => navigate(`/property/${id}`)}
+                  >
+                    <div>
+                      <p className="text-gray-100 font-semibold">{prop.name}</p>
+                      <p className="text-gray-400 text-sm">{prop.city} — {prop.address}</p>
+                      <p className="text-gray-400 text-sm">Valeur : {prop.value} €</p>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleDeleteProperty(id); }}
+                      className="bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700"
+                      aria-label="Supprimer le bien"
+                    >
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {associated && (
+                    <p className="text-greenLight text-sm">
+                      Associé à : {associated.firstName} {associated.name}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <p className="text-gray-300">Aucun bien enregistré.</p>
         )}
-      </div>
+      </motion.div>
 
-      {/* Liste des locataires */}
-      <div className="mt-6">
+      {/* Locataires */}
+      <motion.div
+        className={wrapperClass}
+        initial="hidden"
+        animate="visible"
+        variants={sectionVariants}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-300">Locataires</h2>
-          <Link to="/nouveau-locataire">
-            <button className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-700 transition">
-              Créer un locataire
-            </button>
-          </Link>
+          <h2 className="text-lg font-semibold text-gray-100">Locataires</h2>
+          <button
+            onClick={() => navigate('/nouveau-locataire', { state: { fromDashboard: true } })}
+            className="flex items-center bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-600 transition"
+          >
+            <Plus className="w-4 h-4 mr-1" /> Créer un locataire
+          </button>
         </div>
-        {tenants.length > 0 ? (
-          tenants.map((tenant) => (
-            <Link
-              key={tenant.id || tenant._id}
-              to={`/locataire/${tenant.id || tenant._id}`}
-            >
-              <div className="relative bg-gray-800 p-4 rounded-3xl shadow-xl mt-2 border border-gray-600 cursor-pointer">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDeleteTenant(tenant.id || tenant._id);
-                  }}
-                  className="absolute top-2 right-2 bg-checkred text-white p-2 rounded-3xl shadow-xl hover:bg-red-700"
-                  aria-label="Supprimer le locataire"
+
+        {loadingT ? (
+          <p className="text-gray-300">Chargement…</p>
+        ) : localTenants.length > 0 ? (
+          <div className="space-y-3">
+            {localTenants.map(t => {
+              const id = t._id || t.id;
+              const associatedProps = localProperties
+                .filter(p => (p.owner || p.tenantId) === id)
+                .map(p => p.name);
+              const label = associatedProps.length > 1 ? 'Associés à' : 'Associé à';
+
+              return (
+                <div
+                  key={id}
+                  className="bg-gray-800 p-4 rounded-2xl flex flex-col space-y-1 cursor-pointer hover:bg-gray-700 transition"
                 >
-                  <Trash className="w-5 h-5" />
-                </button>
-                <p className="text-gray-100 font-semibold">{tenant.name}</p>
-                <p className="text-gray-400">{tenant.email}</p>
-                <p className="text-gray-400">{tenant.phone}</p>
-              </div>
-            </Link>
-          ))
+                  <div
+                    className="flex justify-between items-start"
+                    onClick={() => navigate(`/locataire/${id}`)}
+                  >
+                    <div>
+                      <p className="text-gray-100 font-semibold">{t.name}</p>
+                      <p className="text-gray-400 text-sm">{t.email}</p>
+                      <p className="text-gray-400 text-sm">{t.phone}</p>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleDeleteTenant(id); }}
+                      className="bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700"
+                      aria-label="Supprimer le locataire"
+                    >
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {associatedProps.length > 0 && (
+                    <p className="text-greenLight text-sm">
+                      {label} : {associatedProps.join(', ')}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <p className="text-gray-300">Aucun locataire enregistré.</p>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

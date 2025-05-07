@@ -35,10 +35,12 @@
     "react-input-mask": "^2.0.4",
     "react-loading-skeleton": "^3.5.0",
     "react-router-dom": "^7.1.5",
+    "react-slick": "^0.30.3",
     "react-swipeable": "^7.0.2",
     "react-tabs": "^6.1.0",
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.1",
+    "slick-carousel": "^1.8.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

@@ -5,10 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      // Toutes les requêtes /api/* seront redirigées sur le port 5000
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
-        // Ne réécrivez pas le chemin si votre backend attend bien le préfixe /api
+      },
+      // Et idem pour /uploads/* (tes images)
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
       }
     }
   }

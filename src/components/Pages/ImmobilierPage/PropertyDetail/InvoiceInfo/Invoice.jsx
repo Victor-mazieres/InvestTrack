@@ -6,6 +6,7 @@ const BillsTab = ({ propertyId }) => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState('');       // ← nouveau state pour le titre
   const [amount, setAmount] = useState('');
   const [file, setFile] = useState(null);
 
@@ -21,8 +22,9 @@ const BillsTab = ({ propertyId }) => {
 
   const handleSubmit = e => {
     e.preventDefault();
-    if (!amount || !file) return;
+    if (!title || !amount || !file) return;    // titre requis
     const formData = new FormData();
+    formData.append('title', title);            // ← on ajoute le titre
     formData.append('amount', amount);
     formData.append('file', file);
 
@@ -37,6 +39,7 @@ const BillsTab = ({ propertyId }) => {
       .then(newBill => {
         setBills([newBill, ...bills]);
         setShowForm(false);
+        setTitle('');      // on réinitialise aussi le titre
         setAmount('');
         setFile(null);
       })
@@ -53,9 +56,12 @@ const BillsTab = ({ propertyId }) => {
             <ul className="space-y-2">
               {bills.map(b => (
                 <li key={b.id} className="flex justify-between items-center bg-gray-700 p-2 rounded">
-                  <span>
-                    {new Date(b.date).toLocaleDateString()} — {b.amount.toLocaleString('fr-FR')} €
-                  </span>
+                  <div>
+                    <div className="font-semibold">{b.title}</div> {/* affiche désormais le titre */}
+                    <div className="text-sm text-gray-300">
+                      {new Date(b.date).toLocaleDateString()} — {b.amount.toLocaleString('fr-FR')} €
+                    </div>
+                  </div>
                   <a
                     href={b.fileUrl}
                     target="_blank"
@@ -74,13 +80,24 @@ const BillsTab = ({ propertyId }) => {
           {!showForm ? (
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition"
+              className="flex items-center gap-2 px-4 py-2 bg-grennLight rounded-2xl hover:bg-checkgreen transition"
             >
               <Plus className="w-5 h-5" />
               <span>Ajouter</span>
             </button>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3 bg-gray-700 p-4 rounded">
+              <div>
+                <label className="block text-gray-400">Titre de la facture</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-gray-800 rounded text-white"
+                  placeholder="Ex. Travaux plomberie"
+                  required
+                />
+              </div>
               <div>
                 <label className="block text-gray-400">Montant (€)</label>
                 <input
@@ -107,6 +124,7 @@ const BillsTab = ({ propertyId }) => {
                   type="button"
                   onClick={() => {
                     setShowForm(false);
+                    setTitle('');
                     setAmount('');
                     setFile(null);
                   }}

@@ -26,7 +26,7 @@ function ConfirmResetModal({ onConfirm, onClose }) {
         <div className="flex space-x-4">
           <button 
             onClick={onConfirm} 
-            className="flex-1 bg-blue-600 text-white py-3 rounded-3xl text-center hover:bg-blue-700 transition"
+            className="flex-1 bg-blue-600 text-white py-3 rounded-3xl text-center hover:bg-checkgreen transition"
           >
             Oui
           </button>

@@ -1,30 +1,32 @@
 // src/pages/CreatePropertyStep1.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { ArrowLeft, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocalStorage } from './hooks/useLocalStorage';
 import FloatingInput from '../../PeaPage/Modules/Reutilisable/FloatingLabelInput';
 import CustomDatePicker from '../../PeaPage/Modules/Actions/CustomDatePickerAddAction/CustomDatePicker';
 import CustomSelect from '../../PeaPage/Modules/Reutilisable/CustomSelect';
 
-// Options pour le type de bien
+// --- Liste complète des types de bien ---
 const propertyTypeOptions = [
-  { value: 'Appartement', label: 'Appartement' },
-  { value: 'Maison', label: 'Maison' },
-  { value: 'Bureau', label: 'Bureau' },
-  { value: 'Chalet', label: 'Chalet' },
-  { value: 'Commerce', label: 'Commerce' },
-  { value: 'Duplex', label: 'Duplex' },
-  { value: 'Garage', label: 'Garage' },
-  { value: 'Immeuble', label: 'Immeuble' },
-  { value: 'Loft', label: 'Loft' },
-  { value: 'Mobil-home', label: 'Mobil-home' },
+  { value: 'Appartement',         label: 'Appartement' },
+  { value: 'Maison',              label: 'Maison' },
+  { value: 'Bureau',              label: 'Bureau' },
+  { value: 'Chalet',              label: 'Chalet' },
+  { value: 'Commerce',            label: 'Commerce' },
+  { value: 'Duplex',              label: 'Duplex' },
+  { value: 'Garage',              label: 'Garage' },
+  { value: 'Immeuble',            label: 'Immeuble' },
+  { value: 'Loft',                label: 'Loft' },
+  { value: 'Mobil-home',          label: 'Mobil-home' },
   { value: 'Maison individuelle', label: 'Maison individuelle' },
-  { value: 'Studio', label: 'Studio' },
-  { value: 'Villa', label: 'Villa' },
-  { value: 'Autre', label: 'Autre' }
+  { value: 'Studio',              label: 'Studio' },
+  { value: 'Villa',               label: 'Villa' },
+  { value: 'Autre',               label: 'Autre' }
 ];
 
-// Valeurs par défaut du formulaire de bien
+// --- Valeurs par défaut du formulaire ---
 const defaultProperty = {
   userId: localStorage.getItem('userId') || '',
   name: '',
@@ -42,35 +44,36 @@ const defaultProperty = {
   value: ''
 };
 
-const CreatePropertyStep1 = () => {
+const CreatePropertyStep1 = ({ apiUrl = '/api/tenants' }) => {
   const navigate = useNavigate();
+  const { state: locationState } = useLocation();
 
-  // Initialiser l'état avec les données sauvegardées si elles existent
-  const [property, setProperty] = useState(() => {
-    const saved = localStorage.getItem("propertyFormData");
-    return saved ? JSON.parse(saved) : defaultProperty;
-  });
+  const [property, setProperty] = useLocalStorage(
+    'propertyFormData',
+    defaultProperty
+  );
 
-  // State pour les options du propriétaire récupérées depuis l'API
   const [ownerOptions, setOwnerOptions] = useState([]);
 
+  // --- Chargement des locataires (propriétaires) ---
   useEffect(() => {
-    // Remplacer l'URL par celle de votre API qui retourne la liste des locataires
-    fetch('http://localhost:5000/api/tenants')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Erreur lors de la récupération des locataires");
+    fetch(apiUrl, { headers: { Accept: 'application/json' } })
+      .then(res => {
+        const ct = res.headers.get('content-type') || '';
+        if (!res.ok || !ct.includes('application/json')) {
+          return res.text().then(txt => {
+            console.error('API locataires a renvoyé :', txt);
+            throw new Error('Réponse non-JSON');
+          });
         }
         return res.json();
       })
-      .then((data) => {
-        // Transformer les données en options pour le dropdown
-        const options = data.map((tenant) => ({
-          value: tenant.id.toString(),
-          label: `${tenant.firstName} ${tenant.name}`
+      .then(data => {
+        const tenants = data.map(t => ({
+          value: t.id.toString(),
+          label: `${t.firstName} ${t.name}`
         }));
-        // Ajouter l'option "Créer" avec l'icône à la fin
-        options.push({
+        const createOption = {
           value: 'create',
           label: (
             <div className="flex items-center">
@@ -78,115 +81,67 @@ const CreatePropertyStep1 = () => {
               Créer
             </div>
           )
-        });
-        setOwnerOptions(options);
+        };
+        setOwnerOptions(
+          tenants.length === 0
+            ? [createOption]
+            : [{ value: '', label: 'Sélectionnez un locataire' }, ...tenants, createOption]
+        );
       })
-      .catch((error) => console.error(error));
-  }, []);
+      .catch(err => console.error(err));
+  }, [apiUrl]);
 
-  // Modification de handleChange pour nettoyer le champ postalCode
-  const handleChange = (e) => {
+  // --- Handlers avec useCallback pour perf ---
+  const handleChange = useCallback(e => {
     const { name, value } = e.target;
-    if (name === "postalCode") {
-      // Conserver uniquement les chiffres
-      const digits = value.replace(/\D/g, "");
-      setProperty({
-        ...property,
-        [name]: digits
-      });
+    setProperty(prev => ({
+      ...prev,
+      [name]: name === 'postalCode' ? value.replace(/\D/g, '') : value
+    }));
+  }, [setProperty]);
+
+  const handleDateChange = useCallback(date => {
+    setProperty(prev => ({ ...prev, acquisitionDate: date }));
+  }, [setProperty]);
+
+  const handleSelectChange = useCallback((name, val) => {
+    if (val === 'create') {
+      // on reste en mémoire, on navigue vers création de locataire
+      navigate('/nouveau-locataire', { state: { from: 'nouveau-bien' } });
     } else {
-      setProperty({
-        ...property,
-        [name]: value
-      });
+      setProperty(prev => ({ ...prev, [name]: val }));
     }
-  };
+  }, [navigate, setProperty]);
 
-  const handleDateChange = (date) => {
-    setProperty({
-      ...property,
-      acquisitionDate: date
-    });
-  };
-
-  const handleSelectChange = (name, value) => {
-    // Si l'option "Créer" est sélectionnée, on sauvegarde le formulaire et on navigue vers la création d'un locataire
-    if (value === 'create') {
-      localStorage.setItem("propertyFormData", JSON.stringify(property));
-      navigate('/nouveau-locataire', { state: { from: "nouveau-bien" } });
-    } else {
-      setProperty({
-        ...property,
-        [name]: value
-      });
+  // --- Validation ---
+  const validateForm = useCallback(() => {
+    if (!property.name.trim())    { alert("Le champ 'Nom / Référence' est obligatoire."); return false; }
+    if (!property.address.trim()) { alert("Le champ 'Adresse' est obligatoire."); return false; }
+    if (!/^\d+$/.test(property.postalCode)) {
+      alert("Le champ 'Code Postal' doit être numérique."); return false;
     }
-  };
-
-  // Fonction de validation du formulaire
-  const validateForm = () => {
-    if (!property.name.trim()) {
-      alert("Le champ 'Nom / Référence' est obligatoire.");
-      return false;
-    }
-    if (!property.address.trim()) {
-      alert("Le champ 'Adresse' est obligatoire.");
-      return false;
-    }
-    if (!property.postalCode.trim()) {
-      alert("Le champ 'Code Postal' est obligatoire.");
-      return false;
-    }
-    if (!/^\d+$/.test(property.postalCode.trim())) {
-      alert("Le champ 'Code Postal' doit contenir uniquement des chiffres.");
-      return false;
-    }
-    if (!property.city.trim()) {
-      alert("Le champ 'Ville' est obligatoire.");
-      return false;
-    }
-    if (!property.surface.toString().trim()) {
-      alert("Le champ 'Surface' est obligatoire.");
-      return false;
-    }
-    if (!property.propertyType.trim()) {
-      alert("Le champ 'Type de bien' est obligatoire.");
-      return false;
-    }
-    if (!property.owner.trim()) {
-      alert("Le champ 'Propriétaire' est obligatoire.");
-      return false;
-    }
-    if (!property.acquisitionDate) {
-      alert("Le champ 'Date d'acquisition' est obligatoire.");
-      return false;
-    }
-    if (!property.value.toString().trim()) {
-      alert("Le champ 'Valeur d'achat' est obligatoire.");
-      return false;
-    }
+    if (!property.city.trim())         { alert("Le champ 'Ville' est obligatoire."); return false; }
+    if (!property.surface.toString().trim())   { alert("Le champ 'Surface' est obligatoire."); return false; }
+    if (!property.propertyType)        { alert("Le champ 'Type de bien' est obligatoire."); return false; }
+    if (!property.owner)               { alert("Le champ 'Locataire' est obligatoire."); return false; }
+    if (!property.acquisitionDate)     { alert("Le champ 'Date d'acquisition' est obligatoire."); return false; }
+    if (!property.value.toString().trim()) { alert("Le champ 'Valeur d'achat' est obligatoire."); return false; }
     return true;
-  };
+  }, [property]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback(e => {
     e.preventDefault();
-
-    // Vérifier que tous les champs obligatoires sont remplis et valides
-    if (!validateForm()) {
-      return;
-    }
-
-    // Sauvegarder le formulaire dans le localStorage
-    localStorage.setItem("propertyFormData", JSON.stringify(property));
-    // Passage à l'étape suivante (ici, vous pouvez adapter la redirection)
+    if (!validateForm()) return;
+    // Les données sont déjà en storage, on passe à l'étape 2
     navigate('/nouveau-bien/etape-2', { state: { ...property } });
-  };
+  }, [navigate, property, validateForm]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-100 p-6">
+    <div className="min-h-screen text-gray-100 p-6">
       <header className="flex items-center mb-4">
-        <button
+      <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-blue-900 transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-blue-900 transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
@@ -195,118 +150,57 @@ const CreatePropertyStep1 = () => {
 
       <div className="max-w-xl bg-gray-800 shadow-xl rounded-3xl p-6">
         <h1 className="text-2xl font-bold mb-6 text-gray-100">
-          Créer un Bien Immobilier - <span className="text-greenLight">Étape 1</span>
+          Créer un Bien Immobilier – <span className="text-greenLight">Étape 1</span>
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <FloatingInput
-            label="Nom / Référence"
-            name="name"
-            value={property.name}
-            onChange={handleChange}
-          />
-
-          <FloatingInput
-            label="Adresse"
-            name="address"
-            value={property.address}
-            onChange={handleChange}
-          />
+          <FloatingInput label="Nom / Référence" name="name" value={property.name} onChange={handleChange} />
+          <FloatingInput label="Adresse" name="address" value={property.address} onChange={handleChange} />
 
           <div className="flex space-x-4">
-            <FloatingInput
-              label="Code Postal"
-              name="postalCode"
-              value={property.postalCode}
-              onChange={handleChange}
-              inputMode="numeric"
-              pattern="[0-9]+"
-            />
-            <FloatingInput
-              label="Ville"
-              name="city"
-              value={property.city}
-              onChange={handleChange}
-            />
+            <FloatingInput label="Code Postal" name="postalCode" value={property.postalCode} onChange={handleChange} inputMode="numeric" />
+            <FloatingInput label="Ville"       name="city"       value={property.city}       onChange={handleChange} />
           </div>
 
-          <FloatingInput
-            label="Surface (m²)"
-            name="surface"
-            type="number"
-            value={property.surface}
-            onChange={handleChange}
-          />
+          <FloatingInput label="Surface (m²)"     name="surface" type="number" value={property.surface} onChange={handleChange} />
 
           <CustomSelect
             name="propertyType"
             value={property.propertyType}
-            onChange={(val) => handleSelectChange('propertyType', val)}
+            onChange={v => handleSelectChange('propertyType', v)}
             options={propertyTypeOptions}
-            placeholder="Sélectionnez le Type de bien"
+            placeholder="Sélectionnez le type de bien"
             className="bg-gray-800 text-gray-100 border border-gray-500"
-            dropdownClassName="bg-gray-800 text-gray-100 w-full border border-gray-500"
-            dropdownSize="max-h-60"
           />
 
-          <FloatingInput
-            label="Bâtiment"
-            name="building"
-            value={property.building}
-            onChange={handleChange}
-          />
-          <FloatingInput
-            label="Lot numéro"
-            name="lot"
-            value={property.lot}
-            onChange={handleChange}
-          />
-          <FloatingInput
-            label="Étage"
-            name="floor"
-            value={property.floor}
-            onChange={handleChange}
-          />
-          <FloatingInput
-            label="Porte"
-            name="door"
-            value={property.door}
-            onChange={handleChange}
-          />
+          <FloatingInput label="Bâtiment"    name="building" value={property.building} onChange={handleChange} />
+          <div className="flex space-x-4">
+            <FloatingInput label="Lot numéro" name="lot"    value={property.lot}    onChange={handleChange} />
+            <FloatingInput label="Étage"      name="floor"  value={property.floor}  onChange={handleChange} />
+            <FloatingInput label="Porte"      name="door"   value={property.door}   onChange={handleChange} />
+          </div>
 
           <CustomSelect
             name="owner"
             value={property.owner}
-            onChange={(val) => handleSelectChange('owner', val)}
+            onChange={v => handleSelectChange('owner', v)}
             options={ownerOptions}
-            placeholder="Sélectionnez un propriétaire"
+            placeholder="Sélectionnez un locataire"
             className="bg-gray-800 text-gray-100 border border-gray-500"
-            dropdownClassName="bg-gray-800 text-gray-100 w-full border border-gray-500"
-            dropdownSize="max-h-60"
           />
 
-          <div className="w-full">
-            <CustomDatePicker
-              selected={property.acquisitionDate}
-              onChange={handleDateChange}
-              placeholderText="Sélectionnez la date d'acquisition"
-              className="w-full"
-            />
-          </div>
-
-          <FloatingInput
-            label="Valeur d'achat"
-            name="value"
-            type="number"
-            value={property.value}
-            onChange={handleChange}
+          <CustomDatePicker
+            selected={property.acquisitionDate}
+            onChange={handleDateChange}
+            placeholderText="Sélectionnez la date d'acquisition"
+            className="w-full"
           />
+
+          <FloatingInput label="Valeur d'achat" name="value" type="number" value={property.value} onChange={handleChange} />
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-700 transition"
-            >
+            <button type="submit" className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-checkgreen
+             transition">
               Suivant
             </button>
           </div>
@@ -314,6 +208,11 @@ const CreatePropertyStep1 = () => {
       </div>
     </div>
   );
+};
+
+CreatePropertyStep1.propTypes = {
+  /** URL de l'API pour récupérer les locataires (doit renvoyer JSON) */
+  apiUrl: PropTypes.string
 };
 
 export default CreatePropertyStep1;

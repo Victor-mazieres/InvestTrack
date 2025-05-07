@@ -1,10 +1,14 @@
+// src/components/Pages/ImmobilierPage/PropertyDetail/FinancialDataDisplay.jsx
 import React from 'react';
 import jsPDF from 'jspdf';
 
 function fmt(v) {
   const n = typeof v === 'string' ? parseFloat(v) : v;
   if (isNaN(n)) return '—';
-  return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  return n.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + ' €';
 }
 
 const sections = [
@@ -20,7 +24,7 @@ const sections = [
     items: [
       { label: 'Taxe foncière', key: 'taxeFonciere' },
       { label: 'Charges copropriété', key: 'chargesCopro' },
-      { label: 'Assurance PNO', key: 'assurancePNO' },
+      { label: 'Assurance PNO', key: 'assurancePno' },
       { label: 'Charges récupérables', key: 'chargeRecup' },
       { label: 'Total sorties', key: 'totalSorties' },
     ],
@@ -28,9 +32,9 @@ const sections = [
   {
     title: 'Flux Locatifs',
     items: [
-      { label: 'Loyer HC', key: 'loyerHC' },
+      { label: 'Loyer HC', key: 'loyerHc' },
       { label: 'Charges locataire', key: 'chargesLoc' },
-      { label: 'Total CC', key: 'totalCC' },
+      { label: 'Total CC', key: 'totalCc' },
     ],
   },
   {
@@ -54,7 +58,10 @@ const sections = [
   },
 ];
 
-export default function FinancialDataDisplay({ data }) {
+export default function FinancialDataDisplay({ data, results }) {
+  // merge persisted data + résultats calculés
+  const pdfData = { ...data, ...results };
+
   const handleExportPdf = () => {
     const doc = new jsPDF();
     let y = 10;
@@ -67,13 +74,15 @@ export default function FinancialDataDisplay({ data }) {
       doc.text(sec.title, 14, y);
       y += 6;
       sec.items.forEach(item => {
-        const value = fmt(data?.[item.key]);
+        const value = fmt(pdfData[item.key]);
         doc.text(`${item.label}: ${value}`, 20, y);
         y += 6;
       });
       y += 4;
-      // Add page if needed
-      if (y > 280) { doc.addPage(); y = 10; }
+      if (y > 280) {
+        doc.addPage();
+        y = 10;
+      }
     });
 
     doc.save('rapport_financier.pdf');
@@ -89,7 +98,7 @@ export default function FinancialDataDisplay({ data }) {
               {sec.items.map((it, j) => (
                 <div key={j} className="flex justify-between">
                   <span className="text-gray-300">{it.label}</span>
-                  <span className="font-medium text-white">{fmt(data?.[it.key])}</span>
+                  <span className="font-medium text-white">{fmt(pdfData[it.key])}</span>
                 </div>
               ))}
             </div>
@@ -99,7 +108,7 @@ export default function FinancialDataDisplay({ data }) {
       <div className="mt-6 text-center">
         <button
           onClick={handleExportPdf}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
         >
           Exporter en PDF
         </button>

@@ -32,7 +32,7 @@ export default class GeneralErrorBoundary extends Component {
           <div className="flex space-x-4">
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition duration-300"
+              className="px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-checkgreen transition duration-300"
               aria-label="Actualiser la page"
             >
               Actualiser

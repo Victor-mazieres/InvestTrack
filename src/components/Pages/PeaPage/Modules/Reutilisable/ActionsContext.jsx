@@ -1,7 +1,13 @@
-// ActionsContext.jsx
-import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+// src/contexts/ActionsContext.jsx
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef
+} from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../../../../api/index';
 
 export const ActionsContext = createContext({
   actions: [],
@@ -14,31 +20,23 @@ export const ActionsContext = createContext({
 
 export function ActionsProvider({ children }) {
   const [actions, setActions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const API_URL = "http://localhost:5000";
+  const [loading, setLoading]   = useState(true);
+  const navigate                = useNavigate();
+  const hasFetchedRef           = useRef(false);
 
-  // Fonction pour récupérer les actions depuis l'API
   const fetchActions = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/connexion");
-        return;
-      }
-      const res = await axios.get(`${API_URL}/api/actions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get('/actions');
       setActions(res.data);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des actions :", error);
+    } catch (err) {
+      console.error('Erreur lors de la récupération des actions :', err);
+      // si c'est un 401, l'intercepteur redirige automatiquement
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, []);
 
-  // Appeler fetchActions une seule fois lors du montage du provider
-  const hasFetchedRef = useRef(false);
+  // On fetch seulement une fois au montage
   useEffect(() => {
     if (!hasFetchedRef.current) {
       fetchActions();
@@ -46,59 +44,44 @@ export function ActionsProvider({ children }) {
     }
   }, [fetchActions]);
 
-  // Fonctions pour ajouter, mettre à jour et supprimer des actions
-  const addAction = async (newActionData) => {
+  const addAction = useCallback(async newActionData => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/connexion");
-        return;
-      }
-      const res = await axios.post(`${API_URL}/api/actions`, newActionData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setActions((prev) => [...prev, res.data]);
+      const res = await api.post('/actions', newActionData);
+      setActions(prev => [...prev, res.data]);
       return res.data;
-    } catch (error) {
-      console.error("Erreur lors de l'ajout d'une action :", error);
+    } catch (err) {
+      console.error("Erreur lors de l'ajout d'une action :", err);
     }
-  };
+  }, []);
 
-  const updateAction = async (id, updatedData) => {
+  const updateAction = useCallback(async (id, updatedData) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/connexion");
-        return;
-      }
-      const res = await axios.put(`${API_URL}/api/actions/${id}`, updatedData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setActions((prev) => prev.map((a) => (a.id === id ? res.data : a)));
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour de l'action :", error);
+      const res = await api.put(`/actions/${id}`, updatedData);
+      setActions(prev => prev.map(a => (a.id === id ? res.data : a)));
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour de l'action :", err);
     }
-  };
+  }, []);
 
-  const deleteAction = async (id) => {
+  const deleteAction = useCallback(async id => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/connexion");
-        return;
-      }
-      await axios.delete(`${API_URL}/api/actions/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setActions((prev) => prev.filter((a) => a.id !== id));
-    } catch (error) {
-      console.error("Erreur lors de la suppression de l'action :", error);
+      await api.delete(`/actions/${id}`);
+      setActions(prev => prev.filter(a => a.id !== id));
+    } catch (err) {
+      console.error("Erreur lors de la suppression de l'action :", err);
     }
-  };
+  }, []);
 
   return (
     <ActionsContext.Provider
-      value={{ actions, loading, fetchActions, addAction, updateAction, deleteAction }}
+      value={{
+        actions,
+        loading,
+        fetchActions,
+        addAction,
+        updateAction,
+        deleteAction
+      }}
     >
       {children}
     </ActionsContext.Provider>
