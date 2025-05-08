@@ -157,7 +157,7 @@ const CreateTenant = () => {
           className="
             p-2 bg-gradient-to-br from-gray-800 to-gray-700 
             border border-gray-600 rounded-full shadow-md 
-            hover:bg-blue-900 transition
+            hover:bg-checkgreen transition
           "
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />

@@ -114,7 +114,7 @@ export default function ImmobilierDashboard() {
           <h2 className="text-lg font-semibold text-gray-100">Vos Biens</h2>
           <button
             onClick={handleNewProperty}
-            className="flex items-center bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-600 transition"
+            className="flex items-center bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-chechgreen transition"
           >
             <Plus className="w-4 h-4 mr-1" /> Créer un bien
           </button>
@@ -177,7 +177,7 @@ export default function ImmobilierDashboard() {
           <h2 className="text-lg font-semibold text-gray-100">Locataires</h2>
           <button
             onClick={() => navigate('/nouveau-locataire', { state: { fromDashboard: true } })}
-            className="flex items-center bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-blue-600 transition"
+            className="flex items-center bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-chechgreen transition"
           >
             <Plus className="w-4 h-4 mr-1" /> Créer un locataire
           </button>

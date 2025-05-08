@@ -1,12 +1,18 @@
 // src/components/PhotoCarousel.jsx
-import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from 'react'
+import React, { useRef, useState, useLayoutEffect, useCallback } from 'react'
 import Slider from 'react-slick'
 import { Plus, X } from 'lucide-react'
 import PropTypes from 'prop-types'
 import "slick-carousel/slick/slick.css"
 import "slick-carousel/slick/slick-theme.css"
 
-export default function PhotoCarousel({ photos, onAdd, onDelete, maxPhotos = 6, maxFileSize = 5 * 1024 * 1024 }) {
+export default function PhotoCarousel({
+  photos,
+  onAdd,
+  onDelete,
+  maxPhotos = 6,
+  maxFileSize = 5 * 1024 * 1024
+}) {
   const sliderRef     = useRef(null)
   const inputRef      = useRef(null)
   const prevCountRef  = useRef(photos.length)
@@ -19,11 +25,9 @@ export default function PhotoCarousel({ photos, onAdd, onDelete, maxPhotos = 6, 
     const prev = prevCountRef.current
     const curr = photos.length
     if (curr > prev) {
-      // ajout → aller à la dernière
       sliderRef.current?.slickGoTo(curr - 1)
     } else if (curr < prev) {
-      // suppression → rester sur la slide la plus proche
-      const idx = Math.min(currentSlide, curr - 1, Math.max(0, curr - 1))
+      const idx = Math.min(currentSlide, curr - 1)
       sliderRef.current?.slickGoTo(Math.max(0, idx))
     }
     prevCountRef.current = curr
@@ -68,7 +72,6 @@ export default function PhotoCarousel({ photos, onAdd, onDelete, maxPhotos = 6, 
 
     setLoading(true)
     try {
-      // onAdd peut accepter un array ou un fichier à la fois
       for (let file of toUpload) {
         await onAdd(file)
       }
@@ -109,9 +112,11 @@ export default function PhotoCarousel({ photos, onAdd, onDelete, maxPhotos = 6, 
           <div key={photo.id} className="relative px-2">
             <img
               src={photo.url}
-              alt=""
+              alt={photo.caption || ''}
               className="w-full h-64 object-cover rounded-lg"
-              onLoad={e => URL.revokeObjectURL(e.target.src)} // sécurité
+              loading="lazy"
+              width={800}
+              height={600}
             />
             <button
               onClick={() => handleDelete(photo.id)}
@@ -154,12 +159,12 @@ export default function PhotoCarousel({ photos, onAdd, onDelete, maxPhotos = 6, 
 }
 
 PhotoCarousel.propTypes = {
-  photos:    PropTypes.arrayOf(PropTypes.shape({
-               id:   PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-               url:  PropTypes.string.isRequired
-             })).isRequired,
-  onAdd:     PropTypes.func.isRequired,
-  onDelete:  PropTypes.func.isRequired,
-  maxPhotos: PropTypes.number,
-  maxFileSize: PropTypes.number,
+  photos: PropTypes.arrayOf(PropTypes.shape({
+    id:  PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    url: PropTypes.string.isRequired
+  })).isRequired,
+  onAdd:      PropTypes.func.isRequired,
+  onDelete:   PropTypes.func.isRequired,
+  maxPhotos:  PropTypes.number,
+  maxFileSize:PropTypes.number,
 }

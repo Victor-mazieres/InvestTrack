@@ -9,7 +9,7 @@ export default function IncomeSection({ values, onChange, results }) {
       <h2 className="text-xl font-bold text-white mb-6">Entrées</h2>
       <div className="space-y-4 mb-4">
         {[
-          ['Loyer HC',      'loyerHc',    onChange.setLoyerHc],   // déjà correct
+          ['Loyer Hc',      'loyerHc',    onChange.setLoyerHc],   // déjà correct
           ['Charges locataire', 'chargesLoc', onChange.setChargesLoc],
         ].map(([label, key, setter]) => (
           <div key={key} className="flex justify-between items-center">

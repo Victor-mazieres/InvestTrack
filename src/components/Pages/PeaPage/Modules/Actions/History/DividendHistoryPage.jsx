@@ -160,7 +160,7 @@ export default function DividendHistoryPage() {
       <header className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-blue-900 transition"
+          className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-checkgreen transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>

@@ -140,7 +140,7 @@ const CreatePropertyStep2 = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-100 p-6">
       <header className="flex items-center mb-4">
-        <button onClick={() => navigate(-1)} className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-blue-900 transition">
+        <button onClick={() => navigate(-1)} className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-checkgreen transition">
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
         <h1 className="ml-4 text-2xl font-bold text-white">Retour</h1>

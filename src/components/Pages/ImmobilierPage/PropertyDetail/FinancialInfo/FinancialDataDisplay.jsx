@@ -16,50 +16,50 @@ const sections = [
     title: 'Détails du Prêt',
     items: [
       { label: 'Montant emprunté', key: 'emprunt' },
-      { label: 'Mensualité', key: 'mensualite' },
+      { label: 'Mensualité',      key: 'mensualite' },
     ],
   },
   {
     title: 'Charges & Taxes',
     items: [
-      { label: 'Taxe foncière', key: 'taxeFonciere' },
-      { label: 'Charges copropriété', key: 'chargesCopro' },
-      { label: 'Assurance PNO', key: 'assurancePno' },
+      { label: 'Taxe foncière',        key: 'taxeFonciere' },
+      { label: 'Charges copropriété',  key: 'chargesCopro' },
+      { label: 'Assurance PNO',        key: 'assurancePno' },
       { label: 'Charges récupérables', key: 'chargeRecup' },
-      { label: 'Total sorties', key: 'totalSorties' },
+      { label: 'Total sorties',        key: 'totalSorties' },
     ],
   },
   {
     title: 'Flux Locatifs',
     items: [
-      { label: 'Loyer HC', key: 'loyerHc' },
-      { label: 'Charges locataire', key: 'chargesLoc' },
-      { label: 'Total CC', key: 'totalCc' },
+      { label: 'Loyer HC',            key: 'loyerHc' },
+      { label: 'Charges locataire',   key: 'chargesLoc' },
+      { label: 'Total CC',            key: 'totalCc' },
     ],
   },
   {
     title: 'Impôts',
     items: [
-      { label: 'Impôt mensuel', key: 'impotMensuel' },
-      { label: 'Impôt annuel total', key: 'impotAnnuel' },
+      { label: 'Impôt mensuel',       key: 'impotMensuel' },
+      { label: 'Impôt annuel total',  key: 'impotAnnuel' },
     ],
   },
   {
     title: 'Cash Flow & Intérêts',
     items: [
-      { label: 'Cash flow / mois', key: 'cfMensuel' },
-      { label: 'Cash flow / an', key: 'cfAnnuel' },
-      { label: 'Cash flow total', key: 'cfTotal' },
+      { label: 'Cash flow / mois',         key: 'cfMensuel' },
+      { label: 'Cash flow / an',           key: 'cfAnnuel' },
+      { label: 'Cash flow total',          key: 'cfTotal' },
       { label: 'Cash flow net net / mois', key: 'cfNetNetMensuel' },
-      { label: 'Cash flow net net / an', key: 'cfNetNetAnnuel' },
-      { label: 'Cash flow net net total', key: 'cfNetNetTotal' },
-      { label: 'Total intérêts', key: 'interets' },
+      { label: 'Cash flow net net / an',   key: 'cfNetNetAnnuel' },
+      { label: 'Cash flow net net total',  key: 'cfNetNetTotal' },
+      { label: 'Total intérêts',           key: 'interets' },
     ],
   },
 ];
 
 export default function FinancialDataDisplay({ data, results }) {
-  // merge persisted data + résultats calculés
+
   const pdfData = { ...data, ...results };
 
   const handleExportPdf = () => {
@@ -98,7 +98,9 @@ export default function FinancialDataDisplay({ data, results }) {
               {sec.items.map((it, j) => (
                 <div key={j} className="flex justify-between">
                   <span className="text-gray-300">{it.label}</span>
-                  <span className="font-medium text-white">{fmt(pdfData[it.key])}</span>
+                  <span className="font-medium text-white">
+                    {fmt(pdfData[it.key])}
+                  </span>
                 </div>
               ))}
             </div>

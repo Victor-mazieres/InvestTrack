@@ -141,7 +141,7 @@ const CreatePropertyStep1 = ({ apiUrl = '/api/tenants' }) => {
       <header className="flex items-center mb-4">
       <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-blue-900 transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
@@ -195,8 +195,6 @@ const CreatePropertyStep1 = ({ apiUrl = '/api/tenants' }) => {
             placeholderText="Sélectionnez la date d'acquisition"
             className="w-full"
           />
-
-          <FloatingInput label="Valeur d'achat" name="value" type="number" value={property.value} onChange={handleChange} />
 
           <div className="flex justify-end">
             <button type="submit" className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-checkgreen
