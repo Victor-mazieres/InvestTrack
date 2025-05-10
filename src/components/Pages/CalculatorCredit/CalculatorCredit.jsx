@@ -350,7 +350,7 @@ function StepFive({ computedResults, onPrev, onShowModal }) {
       </div>
       <div className="mt-6 flex justify-between">
         <button onClick={onPrev} className="px-6 py-3 bg-gray-600 text-gray-200 rounded-3xl">Précédent</button>
-        <button onClick={onShowModal} className="px-6 py-3 bg-greenLight text-white rounded-3xl">Sauvegarder la simulation</button>
+        <button onClick={onShowModal} className="px-6 py-3 bg-greenLight text-white rounded-3xl">Sauvegarder</button>
       </div>
     </section>
   );
@@ -551,11 +551,14 @@ const MortageSimulator = () => {
           onClose={popup.onClose ? popup.onClose : () => setPopup(null)}
         />
       )}
-      <header className="flex items-center mb-8">
-        <button onClick={() => navigate(-1)} className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-gray-700 transition">
+      <header className="flex items-center mb-4">
+      <button
+          onClick={() => navigate(-1)}
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
+        >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-white">Simulation d'investissement locatif</h1>
+        <h1 className="ml-4 text-2xl font-bold text-white">Simaltion d'investissement</h1>
       </header>
       {currentStep === 1 && (
         <StepOne

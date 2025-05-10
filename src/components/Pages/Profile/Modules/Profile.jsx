@@ -243,7 +243,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 overflow-hidden p-6">
+    <div className="min-h-screen text-gray-100 overflow-hidden">
       {notification && (
         <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-3 rounded-xl shadow-lg z-50 w-3/4">
           <div className="flex items-center justify-between">
@@ -400,11 +400,12 @@ export default function Profile() {
       <div className="absolute bottom-5 w-full flex justify-end px-4 py-3">
         <button 
           onClick={handleSubmit} 
-          className="bg-primary text-white w-5/12 p-3 rounded-3xl font-bold"
+          className="bg-primary text-white w-5/12 p-3 rounded-3xl font-bold mr-6"
         >
           Valider
         </button>
       </div>
+
 
       {showConfirmReset && (
         <ConfirmResetModal 

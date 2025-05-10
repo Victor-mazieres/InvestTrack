@@ -288,15 +288,14 @@ const CalculationDetails = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
       {/* Header */}
-      <header className="flex items-center mb-8">
-        <button
+      <header className="flex items-center mb-4">
+      <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gray-800 rounded-full shadow hover:bg-checkgreen transition"
-          aria-label="Retour"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-white">Détails de la Simulation</h1>
+        <h1 className="ml-4 text-2xl font-bold text-white">Détails de la simulation</h1>
       </header>
 
       {/* Paramètres du Prêt + Résultats */}

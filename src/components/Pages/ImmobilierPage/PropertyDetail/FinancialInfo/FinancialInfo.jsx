@@ -1,6 +1,7 @@
 // src/components/Pages/ImmobilierPage/PropertyDetail/FinancialInfo.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams }      from 'react-router-dom';
+import { ChevronDown, ChevronUp, Plus, ArrowLeft } from 'lucide-react';
 import useFinancialCalculations        from './components/useFinancialCalculations';
 import CreditSection                   from './components/CreditSection';
 import ExpensesSection                 from './components/ExpensesSection';
@@ -77,14 +78,25 @@ export default function FinancialInfo() {
 
   return (
     <div className="min-h-screen p-6 text-gray-100">
-      <header className="flex items-center justify-between mb-4">
-        <button onClick={() => navigate(-1)} className="text-gray-300 hover:text-white">
-          ← Retour
-        </button>
-        <button onClick={handleSave} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500">
-          Sauvegarder
-        </button>
-      </header>
+      <header className="flex items-center mb-4">
+  {/* Bouton retour + titre côte à côte */}
+  <button
+    onClick={() => navigate(-1)}
+    className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
+  >
+    <ArrowLeft className="w-6 h-6 text-greenLight" />
+  </button>
+  <h1 className="ml-2 text-2xl font-bold text-white">Retour</h1>
+
+  {/* Sauvegarder poussé à droite */}
+  <button
+    onClick={handleSave}
+    className="ml-auto px-6 py-3 bg-greenLight text-white rounded-lg hover:bg-checkgreen"
+  >
+    Sauvegarder
+  </button>
+</header>
+
 
       <CreditSection
         values={fin}

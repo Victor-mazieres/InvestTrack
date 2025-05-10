@@ -16,6 +16,11 @@ const TenantDetails = () => {
   const [tenant, setTenant] = useState(null);
   const [error, setError] = useState(null);
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Récupérer les informations du locataire par son ID (sans token)
   useEffect(() => {
     fetch(`http://localhost:5000/api/tenants/${id}`)
@@ -74,7 +79,9 @@ const TenantDetails = () => {
         </motion.h1>
       </header>
       <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-        <h2 className="text-white text-2xl font-bold mb-6">Fiche de {tenant.name} {tenant.firstName}</h2>
+        <h2 className="text-white text-2xl font-bold mb-6">
+          Fiche de {tenant.name} {tenant.firstName}
+        </h2>
         {imageUrl ? (
           <img
             src={imageUrl}

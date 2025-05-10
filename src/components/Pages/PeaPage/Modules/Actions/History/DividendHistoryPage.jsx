@@ -155,16 +155,16 @@ export default function DividendHistoryPage() {
   }, []);
 
   return (
-    <div className="p-4 min-h-screen bg-gradient-to-br from-gray-800 to-gray-700 text-gray-100">
+    <div className="p-4 min-h-screen bg-gray-900 text-gray-100">
       {/* Barre de navigation */}
-      <header className="flex items-center mb-4">
-        <button
+      <header className="flex items-center mb-4 mt-8">
+      <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-checkgreen transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-white">Retour</h1>
+        <h1 className="ml-4 text-2xl font-bold text-white">Simaltion d'investissement</h1>
       </header>
       <h1 className="text-3xl font-bold mb-4 text-left text-white">
         Historique des dividendes –{" "}

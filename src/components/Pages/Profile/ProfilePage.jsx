@@ -26,7 +26,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 flex flex-col overflow-hidden p-6">
+    <div className="min-h-screen text-gray-100 flex flex-col overflow-hidden p-6">
       {/* Bouton de retour */}
       <div className="mb-4">
         <button

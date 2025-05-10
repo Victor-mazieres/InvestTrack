@@ -1,38 +1,47 @@
 // src/App.jsx
-import React, { lazy, Suspense, memo } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import Skeleton from "react-loading-skeleton";
+import React, { lazy, Suspense, memo } from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate
+} from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
+// Utils
+import ScrollToTop from './components/Utils/ScrollToTop';
+
 // Composants standards
-import Navbar from "./components/Navbar/Navbar";
-import NavigationButton from "./components/Navbar/NavigationButton";
-import { ActionsProvider } from "./components/Pages/PeaPage/Modules/Reutilisable/ActionsContext";
+import Navbar from './components/Navbar/Navbar';
+import NavigationButton from './components/Navbar/NavigationButton';
+import { ActionsProvider } from './components/Pages/PeaPage/Modules/Reutilisable/ActionsContext';
 
-// Import de votre Error Boundary existant
-import GeneralErrorBoundary from "./components/Pages/Errors/GeneralErrorBoundary";
+// Error Boundary
+import GeneralErrorBoundary from './components/Pages/Errors/GeneralErrorBoundary';
 
-// Import du hook personnalisé pour la navigation par swipe
-import useSwipeNavigation from "./components/hooks/useSwipeNavigation";
+// Hook swipe
+import useSwipeNavigation from './components/hooks/useSwipeNavigation';
 
-// Lazy loaded pour les modales et pages secondaires
-const DetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DetailPage"));
-const DividendeDetailPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/DividendeDetailPage"));
-const HistoriqueOrderPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/HistoriqueOrderPage"));
-const MortgageTabs = lazy(() => import("./components/Pages/CalculatorCredit/MortgageTabs"));
-const PeaBarsSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsSecteurs"));
-const PeaBarsValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaBarsValeurs"));
-const PeaPieSecteurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs"));
-const PeaPieValeurs = lazy(() => import("./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs"));
-const CalculationDetails = lazy(() => import("./components/Pages/CalculatorCredit/CalculationDetails"));
-const DividendHistoryPage = lazy(() => import("./components/Pages/PeaPage/Modules/Actions/History/DividendHistoryPage"));
-const FinancialInfo = lazy (() => import("./components/Pages/ImmobilierPage/PropertyDetail/FinancialInfo/FinancialInfo"))
+// Lazy-loaded modales et pages
+const DetailPage            = lazy(() => import('./components/Pages/PeaPage/Modules/Actions/DetailPage'));
+const DividendeDetailPage   = lazy(() => import('./components/Pages/PeaPage/Modules/Actions/DividendeDetailPage'));
+const HistoriqueOrderPage   = lazy(() => import('./components/Pages/PeaPage/Modules/Actions/History/HistoriqueOrderPage'));
+const MortgageTabs          = lazy(() => import('./components/Pages/CalculatorCredit/MortgageTabs'));
+const PeaBarsSecteurs       = lazy(() => import('./components/Pages/PeaPage/Modules/Portfolio/PeaBarsSecteurs'));
+const PeaBarsValeurs        = lazy(() => import('./components/Pages/PeaPage/Modules/Portfolio/PeaBarsValeurs'));
+const PeaPieSecteurs        = lazy(() => import('./components/Pages/PeaPage/Modules/Portfolio/PeaPieSecteurs'));
+const PeaPieValeurs         = lazy(() => import('./components/Pages/PeaPage/Modules/Portfolio/PeaPieValeurs'));
+const CalculationDetails    = lazy(() => import('./components/Pages/CalculatorCredit/CalculationDetails'));
+const DividendHistoryPage   = lazy(() => import('./components/Pages/PeaPage/Modules/Actions/History/DividendHistoryPage'));
+const FinancialInfo         = lazy(() => import('./components/Pages/ImmobilierPage/PropertyDetail/FinancialInfo/FinancialInfo'));
 
-// Import de la configuration des routes principales (ex. routes liées au menu de navigation)
-import { mainRoutes } from "./components/Navbar/routes";
+// Routes principales
+import { mainRoutes } from './components/Navbar/routes';
 
-// Composant LoadingSkeleton pour le fallback
+// Fallback skeleton
 function LoadingSkeleton() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -44,22 +53,19 @@ function LoadingSkeleton() {
   );
 }
 
-// Propriétés d'animation centralisées
+// Props d’animation Framer Motion
 const animationProps = {
-  initial: { x: "100%", opacity: 0 },
+  initial: { x: '100%', opacity: 0 },
   animate: { x: 0, opacity: 1 },
-  exit: { x: "-100%", opacity: 0 },
-  transition: { duration: 0.3, ease: "easeOut" },
+  exit:    { x: '-100%', opacity: 0 },
+  transition: { duration: 0.3, ease: 'easeOut' },
 };
 
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Pour la gestion de modales via location.state
   const background = location.state?.background;
-  // Masquer la navbar sur les pages connexion/inscription
-  const hideNav = location.pathname === "/connexion" || location.pathname === "/inscription";
+  const hideNav = ['/connexion','/inscription'].includes(location.pathname);
 
   return (
     <>
@@ -68,7 +74,7 @@ function AppContent() {
           <MainContent location={background || location} />
         </Suspense>
       </GeneralErrorBoundary>
-      
+
       {background && (
         <AnimatePresence>
           <GeneralErrorBoundary>
@@ -155,7 +161,7 @@ function AppContent() {
                   }
                 />
                 <Route
-                  path="/informartion-financiere"
+                  path="/information-financiere"
                   element={
                     <ModalWrapper onClose={() => navigate(-1)}>
                       <FinancialInfo />
@@ -179,12 +185,11 @@ function AppContent() {
 }
 
 function MainContent({ location }) {
-  // Définition des pages pour la navigation par swipe
-  const pages = ["/pea", "/immobilier", "/MoreActions"];
+  const pages = ['/pea','/immobilier','/MoreActions'];
   const swipeHandlers = useSwipeNavigation(pages, location.pathname);
 
   return (
-    <div {...swipeHandlers} className="h-full flex flex-col overflow-hidden pt-16">
+    <div {...swipeHandlers} className="h-full flex flex-col overflow-hidden pt-16 pb-20">
       <AnimatePresence exitBeforeEnter>
         <Suspense fallback={<LoadingSkeleton />}>
           <motion.div {...animationProps}>
@@ -203,34 +208,25 @@ function MainContent({ location }) {
 function ModalWrapper({ children, onClose }) {
   return (
     <motion.div
-      role="dialog"
-      aria-modal="true"
+      role="dialog" aria-modal="true"
       className="fixed inset-0 z-50 bg-black bg-opacity-40"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       onClick={onClose}
     >
       <motion.div
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-lg"
-        style={{ height: "99vh" }}
-        initial={{ y: "100%" }}
-        animate={{ y: "1%" }}
-        exit={{ y: "100%" }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={{ top: 0, bottom: 0.3 }}
-        onDragEnd={(event, info) => {
-          if (info.offset.y > 150) {
-            onClose();
-          }
-        }}
-        onClick={(e) => e.stopPropagation()}
+        className="absolute bottom-0 left-0 right-0 bg-[#303A49] rounded-t-3xl shadow-lg overflow-visible"
+        style={{ height: '99vh' }}
+        initial={{ y: '100%' }} animate={{ y: '1%' }} exit={{ y: '100%' }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0, bottom: 0.3 }}
+        onDragEnd={(_, info) => info.offset.y > 150 && onClose()}
+        onClick={e => e.stopPropagation()}
       >
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-2 bg-gray-400 rounded-full z-20 pointer-events-none" />
-        <div className="h-full w-full overflow-y-auto">{children}</div>
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-2 bg-gray-400 rounded-full pointer-events-none" />
+        <div className="h-full w-full overflow-y-auto pb-14">
+          {children}
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -241,6 +237,7 @@ const MemoizedNavbar = memo(Navbar);
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <ActionsProvider>
         <AppContent />
       </ActionsProvider>

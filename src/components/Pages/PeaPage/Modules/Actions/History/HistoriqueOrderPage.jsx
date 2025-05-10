@@ -139,7 +139,7 @@ export default function HistoriqueOrderPage() {
 
   return (
     <motion.div
-      className="p-4 min-h-screen bg-gradient-to-br from-gray-800 to-gray-700 text-gray-100"
+      className="p-4 min-h-screen bg-gray-900 text-gray-100"
       variants={containerVariants}
       initial="initial"
       animate="animate"
@@ -148,13 +148,13 @@ export default function HistoriqueOrderPage() {
     >
       {/* Barre de navigation */}
       <motion.header
-        className="flex items-center mb-4"
+        className="flex items-center mb-4 mt-8"
         variants={sectionVariants}
         transition={{ duration: 0.5 }}
       >
         <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gray-800 rounded-full shadow-md hover:bg-checkgreen transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>

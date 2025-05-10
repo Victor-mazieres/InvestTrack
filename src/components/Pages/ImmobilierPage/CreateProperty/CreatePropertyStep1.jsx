@@ -41,7 +41,6 @@ const defaultProperty = {
   door: '',
   owner: '',
   acquisitionDate: null,
-  value: ''
 };
 
 const CreatePropertyStep1 = ({ apiUrl = '/api/tenants' }) => {
@@ -125,7 +124,6 @@ const CreatePropertyStep1 = ({ apiUrl = '/api/tenants' }) => {
     if (!property.propertyType)        { alert("Le champ 'Type de bien' est obligatoire."); return false; }
     if (!property.owner)               { alert("Le champ 'Locataire' est obligatoire."); return false; }
     if (!property.acquisitionDate)     { alert("Le champ 'Date d'acquisition' est obligatoire."); return false; }
-    if (!property.value.toString().trim()) { alert("Le champ 'Valeur d'achat' est obligatoire."); return false; }
     return true;
   }, [property]);
 
