@@ -1,14 +1,27 @@
-// src/hooks/usePhotos.js
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../../../../api/index';
 
 export function usePhotos(propertyId) {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get(`/api/properties/${propertyId}/photos`)
-      .then(res => setPhotos(res.data))
+    setLoading(true);
+    setError(null);
+
+    api.get(`/properties/${propertyId}/photos`)
+      .then(res => {
+        setPhotos(res.data);
+      })
+      .catch(err => {
+        console.error('Error fetching photos:', err);
+        if (err.response?.status === 403) {
+          setError("Accès refusé : vous n'avez pas les droits pour voir ces photos.");
+        } else {
+          setError("Erreur lors du chargement des photos.");
+        }
+      })
       .finally(() => setLoading(false));
   }, [propertyId]);
 
@@ -16,17 +29,24 @@ export function usePhotos(propertyId) {
     const form = new FormData();
     form.append('photo', file);
     form.append('caption', caption);
-    // Ne pas préciser manuellement Content-Type, Axios s’en charge
-    return axios
-      .post(`/api/properties/${propertyId}/photos`, form)
-      .then(res => setPhotos(ps => [...ps, res.data]));
+    return api
+      .post(`/properties/${propertyId}/photos`, form)
+      .then(res => setPhotos(ps => [...ps, res.data]))
+      .catch(err => {
+        console.error('Error adding photo:', err);
+        throw err;
+      });
   };
 
   const deletePhoto = id => {
-    return axios
-      .delete(`/api/properties/photos/${id}`)
-      .then(() => setPhotos(ps => ps.filter(p => p.id !== id)));
+    return api
+      .delete(`/properties/${propertyId}/photos/${id}`)
+      .then(() => setPhotos(ps => ps.filter(p => p.id !== id)))
+      .catch(err => {
+        console.error('Error deleting photo:', err);
+        throw err;
+      });
   };
 
-  return { photos, loading, addPhoto, deletePhoto };
+  return { photos, loading, error, addPhoto, deletePhoto };
 }

@@ -1,7 +1,18 @@
-// Dashboard.jsx
+// src/components/Dashboard.jsx
 import React, { useContext, useMemo, useState, useEffect } from "react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -44,6 +55,9 @@ function useIsMobile() {
 // Prépare la liste d'événements de dividendes
 function getDividendEvents(actions) {
   const events = [];
+  if (!actions || !Array.isArray(actions) || actions.length === 0) {
+    return events;
+  }
   for (const action of actions) {
     const totalQuantity = action.history?.length
       ? action.history.reduce((sum, a) => sum + a.quantity, 0)
@@ -62,7 +76,6 @@ function getDividendEvents(actions) {
         }
       }
     }
-
     // Extraction du dividende principal
     if (action.dividendDate && action.dividendPrice) {
       const d = new Date(action.dividendDate);
@@ -79,25 +92,84 @@ function getDividendEvents(actions) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [modalOpen, setModalOpen] = useState(false);
+  const { actions, fetchActions } = useContext(ActionsContext);
+
+  // États locaux
+  const [profile, setProfile] = useState(null);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
-  const { actions } = useContext(ActionsContext);
+  const [isLoading, setIsLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
+  // Chargement initial : data + profil utilisateur
   useEffect(() => {
-    // Vérification e-mail
-    setShowEmailVerification(localStorage.getItem("emailVerified") !== "true");
-  }, []);
+    const loadDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        await fetchActions();
 
-  // Calcul des événements de dividendes lorsque 'actions' change
-  const dividendEvents = useMemo(() => {
-    if (!actions.length) return [];
-    return getDividendEvents(actions);
-  }, [actions]);
+        const token = localStorage.getItem("token");
+        if (token) {
+          const response = await fetch("http://localhost:5000/auth/profile", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          if (response.ok) {
+            const userData = await response.json();
+            setProfile(userData);
+            // Si pas d'email enregistré OU non vérifié → pop-up
+            if (!userData.email || userData.emailVerified === false) {
+              setShowEmailVerification(true);
+            }
+          } else if (response.status === 401) {
+            // token invalide ou expiré
+            localStorage.removeItem("token");
+            navigate("/connexion");
+          }
+        } else {
+          navigate("/connexion");
+        }
+      } catch (error) {
+        console.error("Erreur dashboard :", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    loadDashboardData();
+  }, [fetchActions, navigate]);
+
+  // Filet de secours : garantir l'ouverture de la modal si besoin
+  useEffect(() => {
+    if (
+      !isLoading &&
+      profile &&
+      (!profile.email || profile.emailVerified === false) &&
+      !showEmailVerification
+    ) {
+      setShowEmailVerification(true);
+    }
+  }, [isLoading, profile, showEmailVerification]);
+
+  // Préparer le calendrier des dividendes
+  const dividendEvents = useMemo(() => getDividendEvents(actions), [actions]);
+
+  // Quand l'utilisateur vérifie son e-mail
   const handleVerified = () => {
-    localStorage.setItem("emailVerified", "true");
+    setProfile((p) => ({ ...p, emailVerified: true }));
     setShowEmailVerification(false);
   };
+
+  // Affichage loading
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-4 bg-gray-900 min-h-screen">
+        <div className="w-16 h-16 border-t-4 border-blue-500 rounded-full animate-spin" />
+        <p className="mt-4 text-gray-300">Chargement des données...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center p-4 bg-gray-900 min-h-screen pt-16">
@@ -111,12 +183,12 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-gray-100">Dashboard</h1>
       </motion.header>
 
-      {/* Graphique de performance du PEA */}
+      {/* --- Performance PEA (chart en début) --- */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full mt-6 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl transition-all duration-300"
+        className="w-full mt-6 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl"
       >
         <h2 className="text-lg font-semibold text-gray-300 mb-4">Performance PEA</h2>
         <ResponsiveContainer width="100%" height={200}>
@@ -130,13 +202,13 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </motion.div>
 
-      {/* Grille côte à côte pour TotalActions et NextDividend */}
+      {/* TotalActions & NextDividend côte à côte */}
       <div className="w-full mt-6 grid grid-cols-2 gap-4 items-stretch">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="p-4 h-full bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300"
+          className="p-4 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl"
         >
           <TotalActions />
         </motion.div>
@@ -144,7 +216,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="p-4 h-full bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300"
+          className="p-4 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl"
         >
           <NextDividend />
         </motion.div>
@@ -155,12 +227,12 @@ export default function Dashboard() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.4 }}
-        className="w-full mt-6 grid grid-cols-1 gap-4"
+        className="w-full mt-6"
       >
         {isMobile ? (
           <motion.div
             whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl cursor-pointer flex items-center justify-between transition-all duration-300"
+            className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl flex justify-between items-center cursor-pointer"
             onClick={() => setModalOpen(true)}
           >
             <div>
@@ -170,19 +242,14 @@ export default function Dashboard() {
             <CalendarIcon className="h-9 w-9 text-gray-400" />
           </motion.div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300"
-          >
+          <div className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl">
             <h3 className="text-md font-semibold text-gray-100 mb-4">Calendrier dividende</h3>
             <DividendCalendar dividends={dividendEvents} />
-          </motion.div>
+          </div>
         )}
       </motion.div>
 
-      {/* Graphique de répartition immobilière */}
+      {/* Répartition immobilière */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -194,7 +261,14 @@ export default function Dashboard() {
         </h2>
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
-            <Pie data={dataImmo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60}>
+            <Pie
+              data={dataImmo}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={60}
+            >
               {dataImmo.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index]} />
               ))}
@@ -204,7 +278,7 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </motion.div>
 
-      {/* Modal de vérification d'e-mail */}
+      {/* Pop-up de vérification d’e-mail */}
       <AnimatePresence>
         {showEmailVerification && (
           <EmailVerificationModal
@@ -214,9 +288,12 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* Modal du calendrier (uniquement sur mobile) */}
+      {/* Modal du calendrier (mobile) */}
       {isMobile && modalOpen && (
-        <DividendCalendarModal dividends={dividendEvents} onClose={() => setModalOpen(false)} />
+        <DividendCalendarModal
+          dividends={dividendEvents}
+          onClose={() => setModalOpen(false)}
+        />
       )}
     </div>
   );

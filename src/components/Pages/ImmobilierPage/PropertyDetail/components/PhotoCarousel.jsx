@@ -1,4 +1,3 @@
-// src/components/PhotoCarousel.jsx
 import React, { useRef, useState, useLayoutEffect, useCallback } from 'react'
 import Slider from 'react-slick'
 import { Plus, X } from 'lucide-react'
@@ -100,7 +99,11 @@ export default function PhotoCarousel({
   const canAdd = photos.length < maxPhotos
 
   return (
-    <div className="mb-6 relative">
+    <div
+      className="mb-6 relative"
+      onMouseDown={e => e.stopPropagation()}
+      onTouchStart={e => e.stopPropagation()}
+    >
       {error && (
         <div className="absolute top-0 left-0 right-0 bg-red-100 text-red-800 p-2 text-center rounded">
           {error}

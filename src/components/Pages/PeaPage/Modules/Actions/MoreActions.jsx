@@ -179,18 +179,26 @@ export default function MoreActions() {
       </header>
 
       <AnimatePresence>
-        {showPopup && (
-          <motion.div
-            key="popup"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-greenLight text-white p-4 rounded shadow-lg z-50 w-3/4"
-          >
-            Action ajoutée !
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showPopup && (
+        <motion.div
+          key="popup"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="
+            fixed top-4
+            left-0 right-0 mx-auto
+            bg-greenLight text-white p-4
+            rounded shadow-lg z-50
+            max-w-xs
+            text-center      /* <= centrer le texte */
+          "
+        >
+          Action ajoutée !
+        </motion.div>
+      )}
+    </AnimatePresence>
+
 
       <div className="text-center mb-6">
         <h1 className="text-xl font-bold text-gray-100">€ Valorisation totale</h1>
@@ -285,7 +293,21 @@ export default function MoreActions() {
           >
             <h2 className="text-lg font-bold text-gray-100 mb-4">Ajouter une action</h2>
             <div className="space-y-3">
-              <ActionAutoComplete onSelect={handleSelectAction} />
+              {/* wrapper pour styler l'input interne */}
+              <div className="relative">
+                <ActionAutoComplete onSelect={handleSelectAction} />
+                {/* on injecte directement un style global pour l’input interne */}
+                <style>
+                  {`
+                    /* on vise le premier input descendant de ce wrapper */
+                    .relative > input {
+                      @apply w-full p-3 border border-gray-600 rounded-3xl
+                            bg-gray-700 text-gray-100 placeholder-gray-500
+                            focus:outline-none focus:ring-2 focus:ring-greenLight transition;
+                    }
+                  `}
+                </style>
+              </div>
               <FloatingLabelInput
                 label="Quantité"
                 name="quantity"

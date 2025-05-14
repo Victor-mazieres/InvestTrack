@@ -20,6 +20,15 @@ function usePersistedState(key, defaultValue) {
   return [state, setState];
 }
 
+// Nouvelle fonction utilitaire pour récupérer un token CSRF frais
+async function fetchCsrfToken() {
+  const resp = await fetch('http://localhost:5000/csrf-token', {
+    credentials: 'include'
+  });
+  const { csrfToken } = await resp.json();
+  return csrfToken;
+}
+
 function roundToTwo(num) {
   return Math.round(num * 100) / 100;
 }
@@ -481,11 +490,14 @@ const MortageSimulator = () => {
     handleConfirmSave();
   };
 
+  // Modifiez la fonction handleConfirmSave dans MortageSimulator.jsx
+
   const handleConfirmSave = async () => {
     if (!saveName.trim()) {
       setPopup({ message: "Veuillez entrer un nom pour la sauvegarde.", type: "error", duration: 3000 });
       return;
     }
+
     const simulationData = {
       name: saveName,
       propertyPrice,
@@ -508,38 +520,46 @@ const MortageSimulator = () => {
       discount,
       results: computedResults,
     };
+
     try {
       const token = localStorage.getItem('token');
+      // 1) on récupère un CSRF token fraîchement généré
+      const csrfToken = await fetchCsrfToken();
+
+      // 2) on envoie la requête avec le header X-XSRF-TOKEN
       const response = await fetch('http://localhost:5000/api/simulations', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
+          'X-XSRF-TOKEN': csrfToken
         },
         body: JSON.stringify(simulationData),
       });
-      const data = await response.json();
-      if (response.ok) {
-        setPopup({
-          message: "Simulation sauvegardée !",
-          type: "success",
-          duration: 3000,
-          onClose: () => {
-            navigate(`/detailscalcul/${data.simulation.id}`);
-            setPopup(null);
-          },
-        });
-      } else {
-        setPopup({ message: "Erreur : " + data.message, type: "error", duration: 3000 });
-      }
-    } catch (error) {
-      console.error(error);
-      setPopup({ message: "Erreur lors de la sauvegarde de la simulation.", type: "error", duration: 3000 });
-    } finally {
-      setShowModal(false);
-      setSaveName("");
+    
+    const data = await response.json();
+    if (response.ok) {
+      setPopup({
+        message: "Simulation sauvegardée !",
+        type: "success",
+        duration: 3000,
+        onClose: () => {
+          navigate(`/detailscalcul/${data.simulation.id}`);
+          setPopup(null);
+        },
+      });
+    } else {
+      setPopup({ message: "Erreur : " + data.message, type: "error", duration: 3000 });
     }
-  };
+  } catch (error) {
+    console.error(error);
+    setPopup({ message: "Erreur lors de la sauvegarde de la simulation.", type: "error", duration: 3000 });
+  } finally {
+    setShowModal(false);
+    setSaveName("");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-100 p-6">

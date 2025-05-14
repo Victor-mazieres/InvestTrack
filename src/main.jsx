@@ -7,7 +7,6 @@ import './index.css';
 import App from './App';
 import GeneralErrorBoundary from './components/Pages/Errors/GeneralErrorBoundary';
 
-// Crée une instance de QueryClient pour React Query
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')).render(
@@ -19,3 +18,17 @@ createRoot(document.getElementById('root')).render(
     </QueryClientProvider>
   </StrictMode>
 );
+
+// ⬇️ Enregistrement du SW seulement en production
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then(reg => {
+        console.log('Service Worker enregistré avec succès:', reg.scope);
+      })
+      .catch(err => {
+        console.error('Erreur lors de l’enregistrement du SW :', err);
+      });
+  });
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Check, ArrowLeft, X, Lock, MapPin, Home, Building, Mailbox, ChevronRight, Mail } from "lucide-react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Check, ArrowLeft, X, Lock, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function LoginPinPage() {
@@ -11,7 +11,21 @@ export default function LoginPinPage() {
   const [error, setError] = useState("");
   const [notification, setNotification] = useState("");
   const [progress, setProgress] = useState(100);
+  const [showSessionExpired, setShowSessionExpired] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Vérifie si la session a expiré via l'URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    if (urlParams.get('sessionExpired') === 'true') {
+      setShowSessionExpired(true);
+      // Nettoie l'URL pour éviter de remontrer la notification si la page est rafraîchie
+      const url = new URL(window.location.href);
+      url.searchParams.delete('sessionExpired');
+      window.history.replaceState({}, '', url);
+    }
+  }, [location]);
 
   // À l'initialisation, vérifie si un username a été sauvegardé
   useEffect(() => {
@@ -125,6 +139,30 @@ export default function LoginPinPage() {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-gray-900 to-gray-800 p-6 flex items-center justify-center overflow-hidden">
+      {/* Notification de session expirée */}
+      <AnimatePresence>
+        {showSessionExpired && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.4 }}
+            className="fixed top-6 left-0 right-0 z-50 flex justify-center"
+          >
+            <div className="bg-amber-700 bg-opacity-90 text-amber-50 rounded-xl shadow-lg flex items-center p-4 max-w-md">
+              <AlertCircle className="mr-3 text-amber-100" size={24} />
+              <span className="flex-1">Votre session a expiré. Veuillez vous reconnecter.</span>
+              <button 
+                onClick={() => setShowSessionExpired(false)}
+                className="ml-3 text-amber-100 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="bg-gray-800 rounded-3xl shadow-xl p-8 max-w-xl w-full relative flex flex-col items-center">
         <motion.h1
           className="text-3xl font-extrabold mb-2 text-center text-gray-100"
