@@ -153,18 +153,6 @@ export default function FinancialInfo() {
 
       <ResultsSection results={results} />
 
-      {/* Ajout de FinancialDataDisplay pour le récapitulatif et le PDF */}
-      <FinancialDataDisplay
-        data={{
-          taxeFonciere: fin.taxeFonciere,
-          chargesCopro: fin.chargesCopro,
-          assurancePno: fin.assurancePno,
-          chargeRecup:  fin.chargeRecup,
-          loyerHc:      fin.loyerHc,
-          chargesLoc:   fin.chargesLoc,
-        }}
-        results={results}
-      />
 
       <TmiModal
         isOpen={showTmiModal}
