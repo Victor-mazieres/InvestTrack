@@ -1,7 +1,7 @@
 // src/pages/PropertyDetail.jsx
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Plus, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, ArrowLeft, Eye, Trash } from 'lucide-react';
 
 import DonutChart           from './components/DonutChart';
 import FinancialDataDisplay from './FinancialInfo/FinancialDataDisplay';
@@ -161,6 +161,29 @@ export default function PropertyDetail() {
               travauxEstimes={travauxEstimes}
               totalBills={totalBills}
               budgetRestant={budgetRestant}
+              /* 👇 Boutons œil + poubelle injectés depuis le parent */
+              renderActions={(bill) => (
+                <div className="flex items-center gap-2">
+                  <a
+                    href={bill.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded hover:bg-gray-600 transition"
+                    aria-label="Voir la facture"
+                    title="Voir la facture"
+                  >
+                    <Eye className="w-5 h-5 text-blue-400" />
+                  </a>
+                  <button
+                    onClick={() => deleteBill(bill.id)}
+                    className="p-2 rounded hover:bg-gray-600 transition"
+                    aria-label="Supprimer la facture"
+                    title="Supprimer"
+                  >
+                    <Trash className="w-5 h-5 text-red-400" />
+                  </button>
+                </div>
+              )}
             />
           </SectionLoader>
         </Tab>

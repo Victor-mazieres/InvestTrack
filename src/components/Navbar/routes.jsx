@@ -19,6 +19,7 @@ const PropertyDetail = lazy(() => import("../Pages/ImmobilierPage/PropertyDetail
 const CreateTenant = lazy(() => import("../Pages/ImmobilierPage/Tenant/CreateTenant/"));
 const TenantDetails = lazy(() => import("../Pages/ImmobilierPage/Tenant/TenantDetails"));
 const FinancialInfo = lazy (() => import("../Pages/ImmobilierPage/PropertyDetail/FinancialInfo/FinancialInfo"));
+const DashboardImmobilierSelection = lazy(() => import('../Pages/Profile/Modules/SelectDashboardImmo'));
 
 // Error Pages
 const NotFoundPage = lazy(() => import("../Pages/Errors/NotFoundPage"));
@@ -48,4 +49,6 @@ export const mainRoutes = [
   { path: "/401", element: <UnauthorizedPage /> },
   { path: "/500", element: <InternalServerError /> },
   { path: "*", element: <NotFoundPage /> },
+  { path: "/dashboard-immobilier-selection", element: <DashboardImmobilierSelection /> },
+  
 ];

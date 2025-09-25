@@ -59,5 +59,6 @@ export const modalRoutes = [
   {
     path: '/information-financiere',
     Component: FinancialInfo
-  }
+  },
+
 ];

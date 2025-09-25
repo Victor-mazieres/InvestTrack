@@ -9,6 +9,7 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  Home,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -17,6 +18,7 @@ export default function ProfilePage() {
   // Fonctions d'action
   const handleProfile = () => navigate("/info-profile");
   const handleNotifications = () => console.log("Accéder aux Notifications");
+  const handleDashboard = () => navigate("/dashboard-immobilier-selection"); // ✅ nouvelle fonction
   const handlePrivacy = () => console.log("Accéder à la Politique de confidentialité");
   const handleTerms = () => console.log("Accéder aux Conditions générales");
   const handleHelp = () => console.log("Accéder à l'Aide");
@@ -65,6 +67,17 @@ export default function ProfilePage() {
               <div className="flex items-center space-x-3">
                 <Bell className="text-gray-400" />
                 <span className="font-medium">Notifications</span>
+              </div>
+              <ChevronRight className="text-gray-400" />
+            </button>
+            {/* ✅ Nouveau bouton Dashboard Immobilier */}
+            <button
+              onClick={handleDashboard}
+              className="w-full flex items-center justify-between bg-gray-800 rounded-3xl p-3 shadow-sm hover:bg-gray-700 transition"
+            >
+              <div className="flex items-center space-x-3">
+                <Home className="text-gray-400" />
+                <span className="font-medium">Sélection Dashboard Immobilier</span>
               </div>
               <ChevronRight className="text-gray-400" />
             </button>
