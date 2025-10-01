@@ -76,7 +76,7 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
       {/* Bloc Répartition par secteur */}
       <div
         onClick={handleSectorClick}
-        className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl cursor-pointer transition-all duration-300"
+        className=" border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl cursor-pointer transition-all duration-300"
       >
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-medium text-gray-100">
@@ -121,7 +121,7 @@ export default function PeaBars({ onSectorClick, onValueClick }) {
       {/* Bloc Répartition par valeur */}
       <div
         onClick={handleValueClick}
-        className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl cursor-pointer transition-all duration-300"
+        className=" border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl cursor-pointer transition-all duration-300"
       >
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-medium text-gray-100">Répartition par valeur</h3>

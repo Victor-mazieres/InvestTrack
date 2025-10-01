@@ -5,7 +5,6 @@ import { Plus, Trash } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-// Lazy load the heavy chart component
 const MetricPieChart = lazy(() => import('./Components/MetricPieChart'));
 
 const sectionVariants = {
@@ -18,7 +17,6 @@ const wrapperClass =
   "border border-gray-600 rounded-3xl shadow-2xl " +
   "hover:shadow-3xl transition-all duration-300 mb-6";
 
-// Added `relative` so that absolute-positioned delete button is placed relative to this container
 const cardClass =
   "relative bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105";
 
@@ -28,7 +26,6 @@ export default function ImmobilierDashboard() {
 
   const userId = useMemo(() => Number(localStorage.getItem('userId')), []);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!userId) navigate('/login', { replace: true });
   }, [userId, navigate]);
@@ -37,7 +34,6 @@ export default function ImmobilierDashboard() {
   const propsUrl = `${baseUrl}/properties?userId=${encodeURIComponent(userId)}`;
   const tenantsUrl = `${baseUrl}/tenants?userId=${encodeURIComponent(userId)}`;
 
-  // Queries
   const {
     data: properties = [],
     isLoading: loadingP,
@@ -58,7 +54,6 @@ export default function ImmobilierDashboard() {
     enabled: !!userId
   });
 
-  // Mutations
   const deletePropertyMutation = useMutation({
     mutationFn: id => fetch(`${baseUrl}/properties/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['properties', userId] })
@@ -69,7 +64,6 @@ export default function ImmobilierDashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tenants', userId] })
   });
 
-  // Callbacks
   const handleNewProperty = useCallback(() => {
     localStorage.removeItem('propertyFormData');
     navigate('/nouveau-bien');
@@ -89,17 +83,26 @@ export default function ImmobilierDashboard() {
     deleteTenantMutation.mutate(id);
   }, [deleteTenantMutation]);
 
-  // Tenant map for quick lookup
-  const tenantsMap = useMemo(() =>
-    tenants.reduce((acc, t) => { acc[t._id || t.id] = t; return acc; }, {}),
-  [tenants]
+  const tenantsMap = useMemo(
+    () => tenants.reduce((acc, t) => { acc[t._id || t.id] = t; return acc; }, {}),
+    [tenants]
   );
 
   const error = errorP || errorT;
 
+  const rentalProps = useMemo(
+    () => properties.filter(p => (p.mode || '').toLowerCase() === 'location'),
+    [properties]
+  );
+  const flipProps = useMemo(
+    () => properties.filter(p => (p.mode || '').toLowerCase() === 'achat_revente'),
+    [properties]
+  );
+
   return (
     <div className="p-6 bg-gray-900 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-100 mb-8">Suivi Immobilier</h1>
+
       {error && <p className="text-red-500 mb-6">Erreur : {error.message || error}</p>}
 
       {/* Metrics Chart */}
@@ -109,7 +112,7 @@ export default function ImmobilierDashboard() {
         </Suspense>
       </div>
 
-      {/* Properties Section */}
+      {/* Properties Section — LOCATION */}
       <motion.div
         className={wrapperClass}
         initial="hidden"
@@ -117,21 +120,12 @@ export default function ImmobilierDashboard() {
         variants={sectionVariants}
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-100">Vos Biens</h2>
-          <button
-            onClick={handleNewProperty}
-            className="flex items-center bg-greenLight text-white px-4 py-2 rounded-full shadow hover:bg-checkgreen transition"
-          >
-            <Plus className="w-5 h-5 mr-2" /> Créer un bien
-          </button>
-        </div>
-
+        <h2 className="text-xl font-semibold text-gray-100 mb-6">Vos Biens (Location)</h2>
         {loadingP ? (
           <p className="text-gray-300">Chargement…</p>
-        ) : properties.length > 0 ? (
+        ) : rentalProps.length > 0 ? (
           <div className="grid gap-4">
-            {properties.map(prop => {
+            {rentalProps.map(prop => {
               const id = prop._id || prop.id;
               const tenant = tenantsMap[prop.owner || prop.tenantId];
 
@@ -141,7 +135,6 @@ export default function ImmobilierDashboard() {
                   className={cardClass}
                   onClick={() => navigate(`/property/${id}`)}
                 >
-                  {/* Delete button positioned at top-right */}
                   <button
                     onClick={e => handleDeleteProperty(id, e)}
                     className="absolute top-4 right-4 bg-checkred p-2 rounded-full hover:bg-checkred transition"
@@ -150,23 +143,64 @@ export default function ImmobilierDashboard() {
                     <Trash className="w-5 h-5 text-white" />
                   </button>
 
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="text-gray-100 font-semibold text-lg">{prop.name}</p>
-                      <p className="text-gray-400 text-sm mt-1">{prop.city} — {prop.address}</p>
-                      {tenant && (
-                        <p className="text-green-400 text-sm mt-2">
-                          Associé à : {tenant.firstName} {tenant.name}
-                        </p>
-                      )}
-                    </div>
+                  <div>
+                    <p className="text-gray-100 font-semibold text-lg">{prop.name}</p>
+                    <p className="text-gray-400 text-sm mt-1">{prop.city} — {prop.address}</p>
+                    {tenant && (
+                      <p className="text-green-400 text-sm mt-2">
+                        Associé à : {tenant.firstName} {tenant.name}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          <p className="text-gray-300">Aucun bien enregistré.</p>
+          <p className="text-gray-300">Aucun bien de location enregistré.</p>
+        )}
+      </motion.div>
+
+      {/* Properties Section — ACHAT/REVENTE */}
+      <motion.div
+        className={wrapperClass}
+        initial="hidden"
+        animate="visible"
+        variants={sectionVariants}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
+        <h2 className="text-xl font-semibold text-gray-100 mb-6">Biens Achat / Revente</h2>
+        {loadingP ? (
+          <p className="text-gray-300">Chargement…</p>
+        ) : flipProps.length > 0 ? (
+          <div className="grid gap-4">
+            {flipProps.map(prop => {
+              const id = prop._id || prop.id;
+
+              return (
+                <div
+                  key={id}
+                  className={cardClass}
+                  onClick={() => navigate(`/property/${id}`)}
+                >
+                  <button
+                    onClick={e => handleDeleteProperty(id, e)}
+                    className="absolute top-4 right-4 bg-checkred p-2 rounded-full hover:bg-checkred transition"
+                    aria-label="Supprimer le bien"
+                  >
+                    <Trash className="w-5 h-5 text-white" />
+                  </button>
+
+                  <div>
+                    <p className="text-gray-100 font-semibold text-lg">{prop.name}</p>
+                    <p className="text-gray-400 text-sm mt-1">{prop.city} — {prop.address}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-gray-300">Aucun bien Achat/Revente enregistré.</p>
         )}
       </motion.div>
 
@@ -205,7 +239,6 @@ export default function ImmobilierDashboard() {
                   className={cardClass}
                   onClick={() => navigate(`/locataire/${id}`)}
                 >
-                  {/* Delete button positioned at top-right */}
                   <button
                     onClick={e => handleDeleteTenant(id, e)}
                     className="absolute top-4 right-4 bg-checkred p-2 rounded-full hover:bg-checkred transition"
@@ -214,17 +247,15 @@ export default function ImmobilierDashboard() {
                     <Trash className="w-5 h-5 text-white" />
                   </button>
 
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="text-gray-100 font-semibold text-lg">{t.name}</p>
-                      <p className="text-gray-400 text-sm mt-1">{t.email}</p>
-                      <p className="text-gray-400 text-sm mt-1">{t.phone}</p>
-                      {associatedProps.length > 0 && (
-                        <p className="text-green-400 text-sm mt-2">
-                          {label} : {associatedProps.join(', ')}
-                        </p>
-                      )}
-                    </div>
+                  <div>
+                    <p className="text-gray-100 font-semibold text-lg">{t.name}</p>
+                    <p className="text-gray-400 text-sm mt-1">{t.email}</p>
+                    <p className="text-gray-400 text-sm mt-1">{t.phone}</p>
+                    {associatedProps.length > 0 && (
+                      <p className="text-green-400 text-sm mt-2">
+                        {label} : {associatedProps.join(', ')}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
@@ -234,6 +265,32 @@ export default function ImmobilierDashboard() {
           <p className="text-gray-300">Aucun locataire enregistré.</p>
         )}
       </motion.div>
+
+      {/* Floating Action Button (FAB) */}
+<button
+  onClick={handleNewProperty}
+  className="
+    fixed z-50
+    right-4                         /* marge à droite */
+    bottom-[88px]                   /* hauteur de ta bottom bar (~72px) + marge */
+    sm:bottom-[96px]
+    rounded-full shadow-2xl
+    bg-greenLight text-white
+    flex items-center justify-center
+    w-16 h-16                       /* mobile: bouton circulaire */
+    md:w-auto md:h-12 md:px-4 md:gap-2  /* desktop: icône + label */
+    hover:bg-checkgreen active:translate-y-[1px] transition
+  "
+  style={{
+    /* sécurité iOS (notch) : ajoute le safe area si présent */
+    bottom: `calc(88px + env(safe-area-inset-bottom, 0px))`
+  }}
+  aria-label="Créer un bien"
+>
+  <Plus className="w-5 h-5" />
+  <span className="hidden md:inline">Créer un bien</span>
+</button>
+
     </div>
   );
 }

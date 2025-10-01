@@ -1,6 +1,6 @@
 // src/components/Dashboard.jsx
 import React, { useContext, useMemo, useState, useEffect } from "react";
-import { CalendarIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, BanknotesIcon } from "@heroicons/react/24/outline";
 import {
   ResponsiveContainer,
   LineChart,
@@ -23,7 +23,37 @@ import DividendCalendarModal from "./Modules/DividendCalendarModal";
 import EmailVerificationModal from "../ConnexionPage/EmailVerificationModal";
 import { ActionsContext } from "../PeaPage/Modules/Reutilisable/ActionsContext";
 
-// Données simulées pour le graphique PEA
+/* -------- Card interne : relief marqué (aucun import externe) -------- */
+function Card({ children, className = "", interactive = false, elevation = "md", ...rest }) {
+  const shadow =
+    elevation === "lg"
+      ? "shadow-[0_22px_50px_-12px_rgba(0,0,0,0.8)]"
+      : elevation === "sm"
+      ? "shadow-[0_8px_20px_-8px_rgba(0,0,0,0.6)]"
+      : "shadow-[0_14px_34px_-12px_rgba(0,0,0,0.7)]";
+
+  return (
+    <div
+      className={[
+        "relative rounded-3xl overflow-hidden p-4",
+        "bg-gradient-to-br from-[#111821] via-[#0f1620] to-[#0b1118]",
+        "border border-white/10",
+        "before:content-[''] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/15",
+        "after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-black/40",
+        shadow,
+        "ring-1 ring-black/10",
+        interactive && "transition-transform duration-200 will-change-transform hover:-translate-y-[2px]",
+        className,
+      ].join(" ")}
+      {...rest}
+    >
+      <span className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.035),transparent_60%)]" />
+      {children}
+    </div>
+  );
+}
+
+/* ---------------- Données mock ---------------- */
 const dataPEA = [
   { name: "Jan", value: 1200 },
   { name: "Fév", value: 1600 },
@@ -32,7 +62,6 @@ const dataPEA = [
   { name: "Mai", value: 1800 },
 ];
 
-// Données simulées pour la répartition immobilière
 const dataImmo = [
   { name: "Loyer", value: 65 },
   { name: "Charges", value: 20 },
@@ -41,9 +70,9 @@ const dataImmo = [
 
 const COLORS = ["#2e8e97", "#bdced3", "#d2dde1"];
 
-// Hook pour détecter si l'écran est mobile
+/* ---------------- Hooks & utils ---------------- */
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : true);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
@@ -52,18 +81,15 @@ function useIsMobile() {
   return isMobile;
 }
 
-// Prépare la liste d'événements de dividendes
 function getDividendEvents(actions) {
   const events = [];
-  if (!actions || !Array.isArray(actions) || actions.length === 0) {
-    return events;
-  }
+  if (!actions || !Array.isArray(actions) || actions.length === 0) return events;
+
   for (const action of actions) {
     const totalQuantity = action.history?.length
       ? action.history.reduce((sum, a) => sum + a.quantity, 0)
       : action.quantity || 1;
 
-    // Extraction de l'historique des dividendes
     if (Array.isArray(action.dividendsHistory)) {
       for (const div of action.dividendsHistory) {
         if (div.date && div.amount) {
@@ -76,7 +102,6 @@ function getDividendEvents(actions) {
         }
       }
     }
-    // Extraction du dividende principal
     if (action.dividendDate && action.dividendPrice) {
       const d = new Date(action.dividendDate);
       events.push({
@@ -89,18 +114,17 @@ function getDividendEvents(actions) {
   return events;
 }
 
+/* ---------------- Component ---------------- */
 export default function Dashboard() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { actions, fetchActions } = useContext(ActionsContext);
 
-  // États locaux
   const [profile, setProfile] = useState(null);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Chargement initial : data + profil utilisateur
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
@@ -118,12 +142,10 @@ export default function Dashboard() {
           if (response.ok) {
             const userData = await response.json();
             setProfile(userData);
-            // Si pas d'email enregistré OU non vérifié → pop-up
             if (!userData.email || userData.emailVerified === false) {
               setShowEmailVerification(true);
             }
           } else if (response.status === 401) {
-            // token invalide ou expiré
             localStorage.removeItem("token");
             navigate("/connexion");
           }
@@ -136,149 +158,201 @@ export default function Dashboard() {
         setIsLoading(false);
       }
     };
-
     loadDashboardData();
   }, [fetchActions, navigate]);
 
-  // Filet de secours : garantir l'ouverture de la modal si besoin
   useEffect(() => {
-    if (
-      !isLoading &&
-      profile &&
-      (!profile.email || profile.emailVerified === false) &&
-      !showEmailVerification
-    ) {
+    if (!isLoading && profile && (!profile.email || profile.emailVerified === false) && !showEmailVerification) {
       setShowEmailVerification(true);
     }
   }, [isLoading, profile, showEmailVerification]);
 
-  // Préparer le calendrier des dividendes
   const dividendEvents = useMemo(() => getDividendEvents(actions), [actions]);
 
-  // Quand l'utilisateur vérifie son e-mail
   const handleVerified = () => {
     setProfile((p) => ({ ...p, emailVerified: true }));
     setShowEmailVerification(false);
   };
 
-  // Affichage loading
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-4 bg-gray-900 min-h-screen">
-        <div className="w-16 h-16 border-t-4 border-blue-500 rounded-full animate-spin" />
+      <div className="flex flex-col items-center justify-center p-4 bg-gray-950 min-h-screen">
+        <div className="w-16 h-16 border-t-4 border-emerald-500 rounded-full animate-spin" />
         <p className="mt-4 text-gray-300">Chargement des données...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center p-4 bg-gray-900 min-h-screen pt-16">
+    <div className="flex flex-col items-center p-4 min-h-screen pt-16 bg-[#050a0f] bg-[radial-gradient(1200px_600px_at_-10%_-10%,rgba(57,217,138,0.06),transparent_60%),radial-gradient(900px_500px_at_110%_110%,rgba(57,217,138,0.04),transparent_60%)]">
       {/* Header animé */}
       <motion.header
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full flex justify-between items-center mb-4 px-4"
+        transition={{ duration: 0.45 }}
+        className="w-full flex justify-between items-center mb-4 px-1"
       >
-        <h1 className="text-2xl font-bold text-gray-100">Dashboard</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-white">Dashboard</h1>
       </motion.header>
 
-      {/* --- Performance PEA (chart en début) --- */}
+      {/* --- Performance PEA --- */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full mt-6 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl"
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className="w-full"
       >
-        <h2 className="text-lg font-semibold text-gray-300 mb-4">Performance PEA</h2>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={dataPEA}>
-            <XAxis dataKey="name" stroke="#bdced3" />
-            <YAxis stroke="#bdced3" />
-            <Tooltip contentStyle={{ backgroundColor: "#2e2e2e", color: "#fff" }} />
-            <CartesianGrid stroke="#444" strokeDasharray="5 5" />
-            <Line type="monotone" dataKey="value" stroke="#2e8e97" strokeWidth={3} />
-          </LineChart>
-        </ResponsiveContainer>
+        <Card elevation="lg" className="p-5">
+          <h2 className="text-lg font-semibold text-white mb-4">Performance PEA</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={dataPEA}>
+              <CartesianGrid stroke="#1f2a36" strokeDasharray="3 3" />
+              <XAxis dataKey="name" stroke="#cdd6df" />
+              <YAxis stroke="#cdd6df" />
+              <Tooltip
+                contentStyle={{
+                  background: "#0b1220",
+                  border: "1px solid #223042",
+                  borderRadius: 14,
+                  color: "#fff",
+                }}
+                itemStyle={{ color: "#e5e7eb" }}
+                labelStyle={{ color: "#9ca3af" }}
+              />
+              <Line type="monotone" dataKey="value" stroke="#39d98a" strokeWidth={3} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
       </motion.div>
 
-      {/* TotalActions & NextDividend côte à côte */}
-      <div className="w-full mt-6 grid grid-cols-2 gap-4 items-stretch">
+      {/* --- Grille exactement comme avant : 2 cols / 3 cols md, aspect-square sur les tuiles --- */}
+      <div className="w-full mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 items-stretch">
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -16 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="p-4 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl"
+          transition={{ duration: 0.45, delay: 0.25 }}
+          className="h-full"
         >
-          <TotalActions />
+          <Card elevation="md" className="h-full">
+            <TotalActions />
+          </Card>
         </motion.div>
+
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
+          initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="p-4 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl shadow-2xl"
+          transition={{ duration: 0.45, delay: 0.25 }}
+          className="h-full"
         >
-          <NextDividend />
+          <Card elevation="md" className="h-full">
+            <NextDividend />
+          </Card>
         </motion.div>
+
+        {/* Tuile carrée : Optimiseur d’épargne */}
+        <motion.button
+          type="button"
+          onClick={() => navigate("/budget-optimizer")}
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="group aspect-square w-full"
+          aria-label="Ouvrir l’optimiseur d’épargne"
+        >
+          <Card interactive elevation="md" className="h-full flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-[#0a1016]/70 border border-white/10 flex items-center justify-center ring-1 ring-black/20">
+                <BanknotesIcon className="h-7 w-7 text-[#39d98a]" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-semibold">Optimiseur d’épargne</p>
+                <p className="text-xs text-gray-400 mt-0.5">Salaire • Fixes • Dépenses</p>
+              </div>
+            </div>
+          </Card>
+        </motion.button>
+
+        {/* Tuile carrée : Salaire + TMI */}
+        <motion.button
+          type="button"
+          onClick={() => navigate("/TMI")}
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="group aspect-square w-full"
+          aria-label="Ouvrir TMI"
+        >
+          <Card interactive elevation="md" className="h-full flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-[#0a1016]/70 border border-white/10 flex items-center justify-center ring-1 ring-black/20">
+                <BanknotesIcon className="h-7 w-7 text-[#39d98a]" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-semibold">Salaire + TMI</p>
+                <p className="text-xs text-gray-400 mt-0.5">Stockage • Calcul TMI</p>
+              </div>
+            </div>
+          </Card>
+        </motion.button>
       </div>
 
-      {/* Calendrier des dividendes */}
+      {/* Calendrier des dividendes (ta logique inchangée) */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
+        transition={{ duration: 0.45, delay: 0.35 }}
         className="w-full mt-6"
       >
         {isMobile ? (
-          <motion.div
-            whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl flex justify-between items-center cursor-pointer"
-            onClick={() => setModalOpen(true)}
-          >
-            <div>
-              <h3 className="text-md font-semibold text-gray-100">Calendrier dividende</h3>
-              <p className="text-sm text-gray-400">Cliquez pour ouvrir</p>
-            </div>
-            <CalendarIcon className="h-9 w-9 text-gray-400" />
+          <motion.div whileTap={{ scale: 0.96 }} onClick={() => setModalOpen(true)}>
+            <Card interactive elevation="md" className="flex justify-between items-center cursor-pointer">
+              <div>
+                <h3 className="text-md font-semibold text-white">Calendrier dividende</h3>
+                <p className="text-sm text-gray-400">Cliquez pour ouvrir</p>
+              </div>
+              <CalendarIcon className="h-9 w-9 text-gray-300" />
+            </Card>
           </motion.div>
         ) : (
-          <div className="bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl">
-            <h3 className="text-md font-semibold text-gray-100 mb-4">Calendrier dividende</h3>
+          <Card elevation="lg">
+            <h3 className="text-md font-semibold text-white mb-4">Calendrier dividende</h3>
             <DividendCalendar dividends={dividendEvents} />
-          </div>
+          </Card>
         )}
       </motion.div>
 
       {/* Répartition immobilière */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
         className="w-full mt-6"
       >
-        <h2 className="text-lg font-semibold text-gray-300 mb-4">
-          Répartition Immobilière
-        </h2>
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={dataImmo}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={60}
-            >
-              {dataImmo.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index]} />
-              ))}
-            </Pie>
-            <Tooltip contentStyle={{ backgroundColor: "#2e2e2e", color: "#fff" }} />
-          </PieChart>
-        </ResponsiveContainer>
+        <Card elevation="lg" className="p-5">
+          <h2 className="text-lg font-semibold text-white mb-4">Répartition Immobilière</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie data={dataImmo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70}>
+                {dataImmo.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={["#39d98a", "#22d3ee", "#a78bfa"][index]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  background: "#0b1220",
+                  border: "1px solid #223042",
+                  borderRadius: 14,
+                  color: "#fff",
+                }}
+                itemStyle={{ color: "#e5e7eb" }}
+                labelStyle={{ color: "#9ca3af" }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </Card>
       </motion.div>
 
-      {/* Pop-up de vérification d’e-mail */}
+      {/* Modales */}
       <AnimatePresence>
         {showEmailVerification && (
           <EmailVerificationModal
@@ -288,12 +362,8 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* Modal du calendrier (mobile) */}
       {isMobile && modalOpen && (
-        <DividendCalendarModal
-          dividends={dividendEvents}
-          onClose={() => setModalOpen(false)}
-        />
+        <DividendCalendarModal dividends={dividendEvents} onClose={() => setModalOpen(false)} />
       )}
     </div>
   );

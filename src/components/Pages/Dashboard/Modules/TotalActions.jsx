@@ -15,7 +15,7 @@ export default function TotalActions() {
   );
 
   return (
-    <div className="flex flex-col items-center bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300">
+    <div className="flex flex-col items-center p-4 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300">
       <h3 className="text-md font-semibold text-gray-100 mb-2">Total d'actions</h3>
       <div className="relative flex items-center justify-center w-24 h-24">
         <motion.svg className="absolute" width="96" height="96" viewBox="0 0 100 100">

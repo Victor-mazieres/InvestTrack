@@ -20,6 +20,8 @@ const CreateTenant = lazy(() => import("../Pages/ImmobilierPage/Tenant/CreateTen
 const TenantDetails = lazy(() => import("../Pages/ImmobilierPage/Tenant/TenantDetails"));
 const FinancialInfo = lazy (() => import("../Pages/ImmobilierPage/PropertyDetail/FinancialInfo/FinancialInfo"));
 const DashboardImmobilierSelection = lazy(() => import('../Pages/Profile/Modules/SelectDashboardImmo'));
+const BudgetOptimizer = lazy(() => import('../Pages/Dashboard/Modules/BudgetOptimizer/BudgetOptimizer'));
+const PayslipsPage = lazy(() => import('../Pages/Dashboard/Modules/PayslipsPage/PayslipsPage'));
 
 // Error Pages
 const NotFoundPage = lazy(() => import("../Pages/Errors/NotFoundPage"));
@@ -50,5 +52,7 @@ export const mainRoutes = [
   { path: "/500", element: <InternalServerError /> },
   { path: "*", element: <NotFoundPage /> },
   { path: "/dashboard-immobilier-selection", element: <DashboardImmobilierSelection /> },
+  { path: "/budget-optimizer", element: <BudgetOptimizer /> },
+  { path: "/TMI", element: <PayslipsPage /> },
   
 ];

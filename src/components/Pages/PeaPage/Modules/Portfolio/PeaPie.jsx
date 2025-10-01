@@ -118,7 +118,7 @@ export default function PeaPie({ onValueClick }) {
   const handleValueClick = onValueClick || defaultValueClick;
 
   return (
-    <div className="relative w-full bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl transition-all duration-300">
+    <div className="relative w-full  border border-gray-600 rounded-3xl p-4 shadow-2xl hover:shadow-3xl transition-all duration-300">
       {/* Card pour Répartition par secteur */}
       <div
         onClick={handleSectorClick}

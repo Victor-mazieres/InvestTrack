@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CustomSelect from '../../PeaPage/Modules/Reutilisable/CustomSelect';
+import PrimaryButton from "../../PeaPage/Modules/Reutilisable/PrimaryButton";
 
 // Utilitaire pour récupérer un CSRF token frais
 async function fetchCsrfToken() {
@@ -204,43 +205,55 @@ const CreatePropertyStep2 = () => {
           />
 
           <div>
-            <p className="mb-2">Équipements :</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { name: 'cave', label: 'Cave' },
-                { name: 'grenier', label: 'Grenier' },
-                { name: 'garage', label: 'Garage' },
-                { name: 'parking', label: 'Parking' },
-                { name: 'cellier', label: 'Cellier' },
-                { name: 'dependance', label: 'Dépendance' },
-                { name: 'piscine', label: 'Piscine' },
-                { name: 'terrasse', label: 'Terrasse' },
-                { name: 'balcon', label: 'Balcon' },
-                { name: 'jardin', label: 'Jardin' },
-                { name: 'veranda', label: 'Véranda' },
-                { name: 'abriJardin', label: 'Abri jardin' },
-              ].map(amenity => (
-                <label key={amenity.name} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name={amenity.name}
-                    checked={details.amenities[amenity.name]}
-                    onChange={handleAmenityChange}
-                    className="form-checkbox h-5 w-5 text-blue-600"
-                  />
-                  <span>{amenity.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+  <p className="mb-2">Équipements :</p>
+  <div className="flex flex-wrap gap-2">
+    {[
+      { name: 'cave', label: 'Cave' },
+      { name: 'grenier', label: 'Grenier' },
+      { name: 'garage', label: 'Garage' },
+      { name: 'parking', label: 'Parking' },
+      { name: 'cellier', label: 'Cellier' },
+      { name: 'dependance', label: 'Dépendance' },
+      { name: 'piscine', label: 'Piscine' },
+      { name: 'terrasse', label: 'Terrasse' },
+      { name: 'balcon', label: 'Balcon' },
+      { name: 'jardin', label: 'Jardin' },
+      { name: 'veranda', label: 'Véranda' },
+      { name: 'abriJardin', label: 'Abri jardin' },
+    ].map(amenity => {
+      const selected = details.amenities[amenity.name];
+      return (
+        <button
+          key={amenity.name}
+          type="button"
+          onClick={() =>
+            setDetails(prev => ({
+              ...prev,
+              amenities: {
+                ...prev.amenities,
+                [amenity.name]: !prev.amenities[amenity.name],
+              },
+            }))
+          }
+          className={[
+            "px-3 py-2 rounded-full text-sm font-medium border transition",
+            selected
+              ? "bg-greenLight text-white border-greenLight shadow"
+              : "bg-gray-800 text-gray-200 border-gray-600 hover:border-gray-500 hover:bg-gray-750",
+          ].join(" ")}
+        >
+          {amenity.label}
+        </button>
+      );
+    })}
+  </div>
+</div>
+
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-greenLight text-white px-4 py-2 rounded-3xl shadow-xl hover:bg-checkgreen transition"
-            >
-              Enregistrer
-            </button>
+          <PrimaryButton type="submit">
+            Enregistrer
+          </PrimaryButton>
           </div>
         </form>
       </div>
