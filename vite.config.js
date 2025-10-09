@@ -14,7 +14,9 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true,
-      }
-    }
-  }
+      },
+    },
+    // 👇 Cette ligne résout ton problème de "page introuvable" :
+    historyApiFallback: true,
+  },
 })

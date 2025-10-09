@@ -75,7 +75,7 @@ export default function NextDividend() {
 
   return (
     <div
-      className="flex flex-col items-center cursor-pointer bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl transition-transform duration-300 transform hover:scale-105"
+      className="flex flex-col items-center cursor-pointer  border-gray-600 p-4 rounded-3xl shadow-2xl hover:shadow-3xl transition-transform duration-300 transform hover:scale-105"
       onClick={handleToggle}
     >
       <h3 className="text-md font-semibold text-gray-100 mb-5">

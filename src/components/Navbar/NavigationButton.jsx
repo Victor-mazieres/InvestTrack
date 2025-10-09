@@ -1,24 +1,25 @@
 // src/components/BottomNav.jsx
+import React from "react";
 import { Home, LineChart, Building2, Calculator, User } from "lucide-react";
-import { NavLink, Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 export default function BottomNav() {
   const location = useLocation();
   const tabs = [
-    { path: "/dashboard", Icon: Home },
-    { path: "/pea", Icon: LineChart },
+    { path: "/dashboard",  Icon: Home },
+    { path: "/pea",        Icon: LineChart },
     { path: "/immobilier", Icon: Building2 },
-    { path: "/calcul", Icon: Calculator, isModal: true },
-    { path: "/profile", Icon: User },
+    { path: "/calcul",     Icon: Calculator, isModal: true },
+    { path: "/profile",    Icon: User },
   ];
   const activeIndex = tabs.findIndex(tab => location.pathname === tab.path);
 
   // --- paramètres du notch ---
-  const radius = 32; // rayon de la bulle en px
-  const centerPct = activeIndex * 20 + 10; // centre en % (chaque onglet = 20%)
+  const radius    = 32;                       // rayon de la bulle
+  const centerPct = activeIndex * 20 + 10;    // position centre en %
 
-  // gradient radial : transparent au centre, opaque autour
+  // gradient radial : transparence au centre, opaque autour
   const maskImage = `radial-gradient(
     circle ${radius}px at ${centerPct}% 0px,
     transparent ${radius}px,
@@ -33,12 +34,12 @@ export default function BottomNav() {
       <div
         className="absolute inset-0 bg-white"
         style={{
-          WebkitMaskImage: maskImage,
-          maskImage: maskImage,
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
+          WebkitMaskImage:    maskImage,
+          maskImage:          maskImage,
+          WebkitMaskRepeat:   "no-repeat",
+          maskRepeat:         "no-repeat",
           WebkitMaskPosition: "top center",
-          maskPosition: "top center",
+          maskPosition:       "top center",
         }}
       />
 
@@ -55,9 +56,10 @@ export default function BottomNav() {
 
       {/* 3) Icônes */}
       {tabs.map((tab, idx) => {
+        // on laisse toujours NavLink, et on passe le state pour la modal
         const linkProps = tab.isModal
-          ? { to: tab.path, state: { background: location }, as: Link }
-          : { to: tab.path, as: NavLink };
+          ? { to: tab.path, state: { background: location } }
+          : { to: tab.path };
 
         return (
           <NavLink
@@ -73,7 +75,7 @@ export default function BottomNav() {
               whileHover={{ scale: 1.3 }}
               animate={{
                 scale: activeIndex === idx ? 1.5 : 1,
-                y: activeIndex === idx ? -26 : 0,
+                y:     activeIndex === idx ? -26   : 0,
               }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >

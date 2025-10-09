@@ -22,8 +22,9 @@ import DividendCalendar from "./Modules/DividendCalendar";
 import DividendCalendarModal from "./Modules/DividendCalendarModal";
 import EmailVerificationModal from "../ConnexionPage/EmailVerificationModal";
 import { ActionsContext } from "../PeaPage/Modules/Reutilisable/ActionsContext";
+import OngoingTasks from "./Modules/OngoingTasks";
 
-/* -------- Card interne : relief marqué (aucun import externe) -------- */
+/* -------- Card interne -------- */
 function Card({ children, className = "", interactive = false, elevation = "md", ...rest }) {
   const shadow =
     elevation === "lg"
@@ -67,8 +68,6 @@ const dataImmo = [
   { name: "Charges", value: 20 },
   { name: "Taxes", value: 15 },
 ];
-
-const COLORS = ["#2e8e97", "#bdced3", "#d2dde1"];
 
 /* ---------------- Hooks & utils ---------------- */
 function useIsMobile() {
@@ -124,6 +123,9 @@ export default function Dashboard() {
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // ✅ statusFilter stable (évite refetchs inutiles)
+  const defaultStatusFilter = useMemo(() => ["in_progress", "todo", "blocked"], []);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -225,8 +227,8 @@ export default function Dashboard() {
         </Card>
       </motion.div>
 
-      {/* --- Grille exactement comme avant : 2 cols / 3 cols md, aspect-square sur les tuiles --- */}
-      <div className="w-full mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 items-stretch">
+      {/* === Grille 1 : deux cartes (Total actions, Prochain dividende) === */}
+      <div className="w-full mt-6 grid grid-cols-2 md:grid-cols-2 gap-4 items-stretch">
         <motion.div
           initial={{ opacity: 0, x: -16 }}
           animate={{ opacity: 1, x: 0 }}
@@ -248,55 +250,9 @@ export default function Dashboard() {
             <NextDividend />
           </Card>
         </motion.div>
-
-        {/* Tuile carrée : Optimiseur d’épargne */}
-        <motion.button
-          type="button"
-          onClick={() => navigate("/budget-optimizer")}
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="group aspect-square w-full"
-          aria-label="Ouvrir l’optimiseur d’épargne"
-        >
-          <Card interactive elevation="md" className="h-full flex items-center justify-center">
-            <div className="flex flex-col items-center justify-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-[#0a1016]/70 border border-white/10 flex items-center justify-center ring-1 ring-black/20">
-                <BanknotesIcon className="h-7 w-7 text-[#39d98a]" />
-              </div>
-              <div className="text-center">
-                <p className="text-white font-semibold">Optimiseur d’épargne</p>
-                <p className="text-xs text-gray-400 mt-0.5">Salaire • Fixes • Dépenses</p>
-              </div>
-            </div>
-          </Card>
-        </motion.button>
-
-        {/* Tuile carrée : Salaire + TMI */}
-        <motion.button
-          type="button"
-          onClick={() => navigate("/TMI")}
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="group aspect-square w-full"
-          aria-label="Ouvrir TMI"
-        >
-          <Card interactive elevation="md" className="h-full flex items-center justify-center">
-            <div className="flex flex-col items-center justify-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-[#0a1016]/70 border border-white/10 flex items-center justify-center ring-1 ring-black/20">
-                <BanknotesIcon className="h-7 w-7 text-[#39d98a]" />
-              </div>
-              <div className="text-center">
-                <p className="text-white font-semibold">Salaire + TMI</p>
-                <p className="text-xs text-gray-400 mt-0.5">Stockage • Calcul TMI</p>
-              </div>
-            </div>
-          </Card>
-        </motion.button>
       </div>
 
-      {/* Calendrier des dividendes (ta logique inchangée) */}
+      {/* === Calendrier des dividendes (immédiatement sous les deux cartes) === */}
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -320,6 +276,55 @@ export default function Dashboard() {
           </Card>
         )}
       </motion.div>
+
+      {/* === Grille 2 : tuiles carrées (Optimiseur d’épargne, Salaire+TMI) === */}
+      <div className="w-full mt-6 grid grid-cols-2 md:grid-cols-2 gap-4 items-stretch">
+        {/* Optimiseur d’épargne */}
+        <motion.button
+          type="button"
+          onClick={() => navigate("/budget-optimizer")}
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="group aspect-square w-full"
+          aria-label="Ouvrir l’optimiseur d’épargne"
+        >
+          <Card interactive elevation="md" className="h-full flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-[#0a1016]/70 border border-white/10 flex items-center justify-center ring-1 ring-black/20">
+                <BanknotesIcon className="h-7 w-7 text-[#39d98a]" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-semibold">Optimiseur d’épargne</p>
+                <p className="text-xs text-gray-400 mt-0.5">Salaire • Fixes • Dépenses</p>
+              </div>
+            </div>
+          </Card>
+        </motion.button>
+
+        {/* Salaire + TMI */}
+        <motion.button
+          type="button"
+          onClick={() => navigate("/TMI")}
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="group aspect-square w-full"
+          aria-label="Ouvrir TMI"
+        >
+          <Card interactive elevation="md" className="h-full flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-[#0a1016]/70 border border-white/10 flex items-center justify-center ring-1 ring-black/20">
+                <BanknotesIcon className="h-7 w-7 text-[#39d98a]" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-semibold">Salaire + TMI</p>
+                <p className="text-xs text-gray-400 mt-0.5">Stockage • Calcul TMI</p>
+              </div>
+            </div>
+          </Card>
+        </motion.button>
+      </div>
 
       {/* Répartition immobilière */}
       <motion.div
@@ -349,6 +354,22 @@ export default function Dashboard() {
               />
             </PieChart>
           </ResponsiveContainer>
+        </Card>
+      </motion.div>
+
+      {/* Tâches en cours (SOUS la répartition immobilière) */}
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.45 }}
+        className="w-full mt-6"
+      >
+        <Card elevation="lg" className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Tâches en cours</h2>
+            <p className="text-xs text-gray-400">Aperçu global par bien</p>
+          </div>
+          <OngoingTasks statusFilter={defaultStatusFilter} />
         </Card>
       </motion.div>
 
