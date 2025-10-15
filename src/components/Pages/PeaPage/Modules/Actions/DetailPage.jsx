@@ -14,7 +14,7 @@ import PeaActionChart from "../Actions/PeaActionChart";
 import CustomDatePicker from "../Actions/CustomDatePickerAddAction/CustomDatePicker";
 import { format, parse } from "date-fns";
 import { ActionsContext } from "../Reutilisable/ActionsContext";
-import FloatingLabelInput from "../../Modules/Reutilisable/FloatingLabelInput"; // Vérifiez le chemin d'importation
+import FloatingLabelInput from "../../../../Reutilisable/FloatingLabelInput"; // Vérifiez le chemin d'importation
 
 // Fonction utilitaire pour formater une date ISO en "dd/MM/yyyy"
 function formatIsoDate(dateString) {
