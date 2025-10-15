@@ -5,14 +5,9 @@ import { ArrowLeft } from 'lucide-react';
 
 import { Loader } from './Loader';
 import { useProperty } from '../hooks/useProperty';
+import  PrimaryButton  from '../../../../Reutilisable/PrimaryButton'
 
-/**
- * LCD (Location Courte Durée)
- * - Enregistrer des séjours (check-in / check-out, prix/nuit, frais ménage)
- * - Enregistrer des paiements (montant, date, mode, lié à un séjour facultatif)
- * - KPIs mensuels basiques : nuits du mois, facturé ce mois, encaissé ce mois, reste à encaisser
- * Mobile-first.
- */
+
 export default function ShortTermRents() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -179,13 +174,6 @@ export default function ShortTermRents() {
     <div className="min-h-screen bg-noir-780 text-gray-100 p-4 sm:p-6">
       {/* Header */}
       <header className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 sm:p-2.5 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
-          aria-label="Revenir en arrière"
-        >
-          <ArrowLeft className="w-6 h-6 text-greenLight" />
-        </button>
         <h1 className="text-xl sm:text-2xl font-bold text-white">
           Séjours & Paiements (LCD) — <span className="text-greenLight">{property?.name}</span>
         </h1>
@@ -283,12 +271,10 @@ export default function ShortTermRents() {
               />
             </div>
             <div className="sm:col-span-2 flex items-center justify-end">
-              <button
-                type="submit"
-                className="w-full sm:w-auto px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-b from-greenLight to-checkgreen hover:from-checkgreen hover:to-greenLight shadow-md hover:shadow-lg transition"
-              >
+             <PrimaryButton type="submit" className="w-full sm:w-auto">
                 Ajouter le séjour
-              </button>
+            </PrimaryButton>
+
             </div>
           </form>
         </GlassCard>
@@ -368,12 +354,13 @@ export default function ShortTermRents() {
               />
             </div>
             <div className="sm:col-span-2 flex items-center justify-end">
-              <button
+              <PrimaryButton
                 type="submit"
-                className="w-full sm:w-auto px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-b from-greenLight to-checkgreen hover:from-checkgreen hover:to-greenLight shadow-md hover:shadow-lg transition"
+                className="w-full sm:w-auto"
               >
                 Enregistrer le paiement
-              </button>
+              </PrimaryButton>
+
             </div>
           </form>
         </GlassCard>

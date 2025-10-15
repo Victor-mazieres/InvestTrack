@@ -11,7 +11,7 @@ import {
   Filter,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import CustomSelect from "./Reutilisable/CustomSelect";
+import CustomSelect from '../../../Reutilisable/CustomSelect';
 import { ActionsContext } from "./Reutilisable/ActionsContext";
 
 /* ---------- Card locale : relief marqué (pas d'import externe) ---------- */

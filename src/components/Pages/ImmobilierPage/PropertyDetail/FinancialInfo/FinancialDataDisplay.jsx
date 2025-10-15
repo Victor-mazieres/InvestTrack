@@ -3,33 +3,32 @@ import React from "react";
 import jsPDF from "jspdf";
 import { FileDown } from "lucide-react";
 
-/* ---------- Format monétaire ---------- */
+/* ---------- Formatters blindés ---------- */
+const toNum = (v) => {
+  if (typeof v === "number") return Number.isFinite(v) ? v : NaN;
+  if (typeof v === "string" && v.trim() !== "") {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : NaN;
+  }
+  return NaN;
+};
+
 function fmt(v) {
-  const n = typeof v === "string" ? parseFloat(v) : v;
-  if (isNaN(n)) return "—";
-  return (
-    n.toLocaleString("fr-FR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }) + " €"
-  );
+  const n = toNum(v);
+  if (!Number.isFinite(n)) return "—";
+  return n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 }
 
-function money(n) {
-  const v = typeof n === "string" ? parseFloat(n) : n;
-  if (isNaN(v)) return "—";
-  return v.toLocaleString("fr-FR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }) + " €";
+function money(v) {
+  return fmt(v); // alias historique
 }
 
-const signClass = (v) =>
-  (typeof v === "number" ? v : parseFloat(v)) >= 0
-    ? "text-emerald-400"
-    : "text-red-400";
+const signClass = (v) => {
+  const n = toNum(v);
+  return Number.isFinite(n) && n < 0 ? "text-red-400" : "text-emerald-400";
+};
 
-/* ---------- Toutes les sections (inchangées) ---------- */
+/* ---------- Sections (inchangées) ---------- */
 const sections = [
   {
     title: "Détails du Prêt",
@@ -108,7 +107,7 @@ function StatLine({ label, value }) {
 }
 
 /* ---------- Composant principal ---------- */
-export default function FinancialDataDisplay({ data, results }) {
+export default function FinancialDataDisplay({ data = {}, results = {} }) {
   const pdfData = { ...data, ...results };
 
   const handleExportPdf = () => {
@@ -123,7 +122,8 @@ export default function FinancialDataDisplay({ data, results }) {
       doc.text(sec.title, 14, y);
       y += 6;
       sec.items.forEach((item) => {
-        const value = fmt(pdfData[item.key]);
+        const valueRaw = pdfData[item.key];
+        const value = fmt(valueRaw);
         doc.text(`${item.label}: ${value}`, 20, y);
         y += 6;
       });
@@ -151,9 +151,7 @@ export default function FinancialDataDisplay({ data, results }) {
                   <StatLine
                     key={j}
                     label={it.label}
-                    value={
-                      (data && data[it.key]) ?? (results && results[it.key])
-                    }
+                    value={(data && data[it.key]) ?? (results && results[it.key])}
                   />
                 ))}
 
@@ -165,9 +163,7 @@ export default function FinancialDataDisplay({ data, results }) {
                   <StatLine
                     key={j}
                     label={it.label}
-                    value={
-                      (data && data[it.key]) ?? (results && results[it.key])
-                    }
+                    value={(data && data[it.key]) ?? (results && results[it.key])}
                   />
                 ))}
 
@@ -175,21 +171,17 @@ export default function FinancialDataDisplay({ data, results }) {
 
                 <StatLine
                   label="Total intérêts"
-                  value={
-                    (data && data.interets) ?? (results && results.interets)
-                  }
+                  value={(data && data.interets) ?? (results && results.interets)}
                 />
               </>
             ) : (
-              // Autres sections (inchangées)
+              // Autres sections
               <div className="space-y-2">
                 {sec.items.map((it, j) => (
                   <StatLine
                     key={j}
                     label={it.label}
-                    value={
-                      (data && data[it.key]) ?? (results && results[it.key])
-                    }
+                    value={(data && data[it.key]) ?? (results && results[it.key])}
                   />
                 ))}
               </div>

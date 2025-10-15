@@ -5,19 +5,17 @@ import {
   ChevronDown, ChevronUp, Camera
 } from "lucide-react";
 import { useWork } from "../hooks/useWork";
+import { api } from "../../../../../api/api";
+import PrimaryButton from "../../../../Reutilisable/PrimaryButton";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-/** Utilitaire preview fichier -> URL (gère aussi {url}) */
+/* ------------------ Utils ------------------ */
 const toPreview = (f) => {
   if (!f) return null;
   if (typeof f === "string") return f;
   if (f.url) return f.url;
-  try { return URL.createObjectURL(f); }
-  catch { return null; }
+  try { return URL.createObjectURL(f); } catch { return null; }
 };
 
-/** État initial d’une pièce */
 const newRoom = (name = "") => ({
   id: crypto.randomUUID(),
   name,
@@ -25,16 +23,16 @@ const newRoom = (name = "") => ({
   todos: [],
   timeLogs: [],
   photos: { before: [], after: [] },
-  collapsed: false,
+  collapsed: true,
 });
 
-export default function WorkProgress({ propertyId, userId }) {
-  // ⬇️ IMPORTANT : on passe userId au hook pour éviter le 401
-  const { rooms, setRooms, loading, error, saving, saveWork } = useWork(propertyId, userId);
+/* ------------------ Component ------------------ */
+export default function WorkProgress({ propertyId }) {
+  const { rooms, setRooms, loading, error, saving, saveWork } = useWork(propertyId);
 
   const [addingRoom, setAddingRoom] = React.useState(false);
-  const [roomName, setRoomName] = React.useState("");
-  const [savedOnce, setSavedOnce] = React.useState(false);
+  const [roomName, setRoomName]     = React.useState("");
+  const [message, setMessage]       = React.useState(null);
 
   React.useEffect(() => {
     if (!loading && rooms.length === 0) {
@@ -49,7 +47,6 @@ export default function WorkProgress({ propertyId, userId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
-  /* Calcul pondéré par surface */
   const totals = React.useMemo(() => {
     const byRoom = rooms.map((r) => {
       const totalTodos = r.todos.length || 0;
@@ -68,7 +65,6 @@ export default function WorkProgress({ propertyId, userId }) {
     return { byRoom, totalHours, avgPct: Math.round(weightedAvg) };
   }, [rooms]);
 
-  /* Mutations rooms */
   const patchRoom = (id, updater) => {
     setRooms(prev => prev.map(r => (r.id === id ? updater({ ...r }) : r)));
   };
@@ -79,8 +75,8 @@ export default function WorkProgress({ propertyId, userId }) {
   };
   const removeRoom = (id) => setRooms(prev => prev.filter(r => r.id !== id));
 
-  // TODOS
-  const addTodo = (roomId, text) => {
+  // Todos
+  const addTodo    = (roomId, text) => {
     if (!text.trim()) return;
     patchRoom(roomId, (r) => {
       r.todos = [{ id: crypto.randomUUID(), text: text.trim(), done: false }, ...r.todos];
@@ -100,7 +96,7 @@ export default function WorkProgress({ propertyId, userId }) {
     });
   };
 
-  // TIME LOGS
+  // Time logs
   const addLog = (roomId, dayLabel, hours) => {
     if (!dayLabel.trim() || !hours) return;
     patchRoom(roomId, (r) => {
@@ -115,23 +111,17 @@ export default function WorkProgress({ propertyId, userId }) {
     });
   };
 
-  // PHOTOS (branchées au back)
+  // Photos (upload + delete) — API authentifiée
   const addPhotos = async (roomId, type, files) => {
     if (!files?.length) return;
     try {
       const form = new FormData();
       form.append("roomId", roomId);
-      form.append("type", type);
+      form.append("type", type); // 'before' | 'after'
       Array.from(files).forEach((f) => form.append("files", f));
 
-      const res = await fetch(`${API_BASE}/api/properties/${propertyId}/works/photos`, {
-        method: "POST",
-        body: form,
-      });
-      if (!res.ok) throw new Error("Upload échoué");
-      const data = await res.json();
-      const urls = data.urls || [];
-
+      const data = await api.post(`/api/properties/${propertyId}/works/photos`, form);
+      const urls = data?.urls || [];
       patchRoom(roomId, (r) => {
         const current = r.photos?.[type] || [];
         r.photos = r.photos || { before: [], after: [] };
@@ -139,7 +129,7 @@ export default function WorkProgress({ propertyId, userId }) {
         return r;
       });
     } catch (e) {
-      console.error(e);
+      console.error('Upload échoué, fallback local:', e);
       // fallback local
       patchRoom(roomId, (r) => {
         const arr = Array.from(files).slice(0, 12);
@@ -151,13 +141,10 @@ export default function WorkProgress({ propertyId, userId }) {
 
   const removePhoto = async (roomId, type, idx) => {
     try {
-      const res = await fetch(`${API_BASE}/api/properties/${propertyId}/works/photos`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, type, index: idx }),
+      await api.del(`/api/properties/${propertyId}/works/photos`, {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, type, index: idx })
       });
-      if (!res.ok) throw new Error("Suppression échouée");
-
       patchRoom(roomId, (r) => {
         const copy = [...(r.photos?.[type] || [])];
         copy.splice(idx, 1);
@@ -165,8 +152,7 @@ export default function WorkProgress({ propertyId, userId }) {
         return r;
       });
     } catch (e) {
-      console.error(e);
-      // fallback local
+      console.error('Suppression échouée, fallback local:', e);
       patchRoom(roomId, (r) => {
         const copy = [...(r.photos?.[type] || [])];
         copy.splice(idx, 1);
@@ -176,17 +162,19 @@ export default function WorkProgress({ propertyId, userId }) {
     }
   };
 
-  const onSaveClick = async () => {
-    const ok = await saveWork(rooms);
-    if (ok) setSavedOnce(true);
-    setTimeout(() => setSavedOnce(false), 1500);
+  const onSave = async () => {
+    const res = await saveWork(rooms);
+    if (res.ok) setMessage({ tone: 'ok', text: 'Travaux enregistrés.' });
+    else setMessage({ tone: 'err', text: res.error || 'Erreur inconnue.' });
+    setTimeout(() => setMessage(null), 3000);
   };
 
   if (loading) return <div className="p-4 text-gray-300">Chargement du suivi des travaux…</div>;
+  if (error)   return <div className="p-4 text-red-400">Erreur : {error}</div>;
 
   return (
     <div className="space-y-4">
-      {/* HEADER + STATS GLOBALES */}
+      {/* Header stats */}
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-400">Suivi des travaux</p>
@@ -197,28 +185,25 @@ export default function WorkProgress({ propertyId, userId }) {
             <span className="px-2 py-1 rounded-md bg-white/5 border border-white/10">
               Heures totales : <b className="text-white">{totals.totalHours} h</b>
             </span>
-            {error && (
-              <span className="px-2 py-1 rounded-md bg-red-500/20 border border-red-500/40 text-red-300">
-                {String(error)}
-              </span>
-            )}
-            {savedOnce && !saving && !error && (
-              <span className="px-2 py-1 rounded-md bg-green-500/20 border border-green-500/40 text-green-300">
-                Enregistré ✔
+            {message && (
+              <span className={`px-2 py-1 rounded-md border ${message.tone === 'ok'
+                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20'
+                : 'bg-red-500/15 text-red-300 border-red-500/20'}`}>
+                {message.text}
               </span>
             )}
           </div>
         </div>
-        <button
-          onClick={onSaveClick}
-          disabled={saving}
-          className="px-4 py-2 rounded-2xl font-medium text-white bg-gradient-to-b from-greenLight to-checkgreen hover:from-checkgreen hover:to-greenLight shadow-md hover:shadow-lg transition disabled:opacity-60"
-        >
-          {saving ? "Enregistrement…" : "Enregistrer"}
-        </button>
+        <PrimaryButton
+  onClick={onSave}
+  disabled={saving}
+  className="px-4 py-2 rounded-2xl disabled:opacity-60"
+>
+  {saving ? "Enregistrement…" : "Enregistrer"}
+</PrimaryButton>
       </div>
 
-      {/* AJOUT D’UNE PIÈCE */}
+      {/* Ajout pièce */}
       <div className="rounded-2xl border border-white/10 bg-[#0a1016]/60 p-3 ring-1 ring-black/10">
         {!addingRoom ? (
           <button
@@ -249,7 +234,7 @@ export default function WorkProgress({ propertyId, userId }) {
         )}
       </div>
 
-      {/* LISTE DES PIÈCES */}
+      {/* Liste des pièces */}
       <div className="grid grid-cols-1 gap-3">
         {rooms.map((r) => {
           const totalTodos = r.todos.length || 0;
@@ -266,7 +251,6 @@ export default function WorkProgress({ propertyId, userId }) {
                     {doneTodos}/{totalTodos} tâches • {hours} h • {pct}%
                   </p>
 
-                  {/* Barre de progression */}
                   <div className="w-full bg-white/10 rounded-full h-2 mt-2 overflow-hidden">
                     <div
                       className={`h-2 rounded-full transition-all ${
@@ -278,14 +262,11 @@ export default function WorkProgress({ propertyId, userId }) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Surface (m²) */}
                   <div className="relative">
                     <input
                       type="number"
                       value={r.surface}
-                      onChange={(e) =>
-                        patchRoom(r.id, (room) => ({ ...room, surface: Number(e.target.value) }))
-                      }
+                      onChange={(e) => patchRoom(r.id, (room) => ({ ...room, surface: Number(e.target.value) }))}
                       placeholder="Surface (m²)"
                       className="h-9 w-32 rounded-lg bg-gray-900/60 border border-white/10 px-3 pr-8 text-sm text-white text-center"
                     />
@@ -340,8 +321,7 @@ export default function WorkProgress({ propertyId, userId }) {
   );
 }
 
-/* === Sous-composants === */
-
+/* ---------- Sub components ---------- */
 function TodoSection({ todos, onAdd, onToggle, onDelete }) {
   const [val, setVal] = React.useState("");
   return (
@@ -373,15 +353,8 @@ function TodoSection({ todos, onAdd, onToggle, onDelete }) {
         {todos.map((t) => (
           <div key={t.id} className="flex items-center justify-between gap-2 rounded-lg bg-[#0a1016]/60 border border-white/10 px-3 py-2">
             <label className="flex items-center gap-2 w-full">
-              <input
-                type="checkbox"
-                checked={t.done}
-                onChange={() => onToggle(t.id)}
-                className="accent-green-500"
-              />
-              <span className={`text-sm ${t.done ? "line-through text-gray-500" : "text-gray-100"}`}>
-                {t.text}
-              </span>
+              <input type="checkbox" checked={t.done} onChange={() => onToggle(t.id)} className="accent-green-500" />
+              <span className={`text-sm ${t.done ? "line-through text-gray-500" : "text-gray-100"}`}>{t.text}</span>
             </label>
             <button onClick={() => onDelete(t.id)} className="p-1 rounded-md hover:bg-white/10">
               <Trash className="w-4 h-4 text-red-400" />
@@ -395,7 +368,7 @@ function TodoSection({ todos, onAdd, onToggle, onDelete }) {
 
 function TimeSection({ logs, onAdd, onDelete }) {
   const [day, setDay] = React.useState("");
-  const [h, setH] = React.useState("");
+  const [h, setH]     = React.useState("");
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
@@ -412,8 +385,7 @@ function TimeSection({ logs, onAdd, onDelete }) {
           <input
             value={h}
             onChange={(e) => setH(e.target.value)}
-            type="number"
-            step="0.25"
+            type="number" step="0.25"
             className="h-10 w-full sm:w-20 rounded-lg bg-gray-900/60 border border-white/10 px-3 text-sm text-white placeholder:text-gray-400"
             placeholder="Heures"
           />
@@ -421,8 +393,7 @@ function TimeSection({ logs, onAdd, onDelete }) {
             onClick={() => { onAdd(day, h); setDay(""); setH(""); }}
             className="h-10 w-full sm:w-auto flex items-center justify-center gap-1 rounded-lg bg-white/10 hover:bg-white/15 text-sm text-gray-100 transition"
           >
-            <Plus className="w-4 h-4" />
-            <span className="sm:hidden">Ajouter</span>
+            <Plus className="w-4 h-4" /><span className="sm:hidden">Ajouter</span>
           </button>
         </div>
       </div>

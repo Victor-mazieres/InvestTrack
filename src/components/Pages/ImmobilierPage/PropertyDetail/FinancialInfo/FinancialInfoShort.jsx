@@ -4,7 +4,18 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 /* ================================
+   Utils format
+   ================================ */
+const fmtMoney = n => (Number(n) || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+const fmtPct   = n => `${((Number(n) || 0)).toFixed(1)}%`;
+const int      = n => Math.round(Number(n) || 0);
+
+// Optionnel : si pas de proxy Vite, mets VITE_API_BASE="http://localhost:5000" dans ton .env front
+const API_BASE = import.meta?.env?.VITE_API_BASE || "";
+
+/* ================================
    HOOK DE CALCUL — COURTE DURÉE
+   (Revenus simplifiés : prix/nuit 2p + taxe/pers./nuit)
    ================================ */
 function useShortTermCalculations(fin) {
   const num = v => (isNaN(parseFloat(v)) ? 0 : parseFloat(v));
@@ -25,7 +36,7 @@ function useShortTermCalculations(fin) {
     const mRate = num(fin.tauxPret) / 100 / 12;
     const n     = Math.max(1, num(fin.dureePretAnnees) * 12);
     const mensualite = mRate > 0 ? (principal * mRate) / (1 - Math.pow(1 + mRate, -n)) : principal / n;
-    const monthlyInsurance = num(fin.assurEmprunteur);
+    const monthlyInsurance  = num(fin.assurEmprunteur);
     const annualDebtService = (mensualite + monthlyInsurance) * 12;
 
     // ---- Charges fixes annuelles
@@ -38,109 +49,83 @@ function useShortTermCalculations(fin) {
       num(fin.entretien) * 12 +
       num(fin.autreSortie);
 
-    // ---- LCD block
+    // ---- Bloc LCD simplifié "type Airbnb"
     const lcd = {
-      availabilityRate: 100,
-      avgOccupancyRate: 65,
+      nightlyPrice2p: 85,
       avgStayLength: 3,
-      adr: 85,
-      seasonalityEnabled: false,
-      seasonality: new Array(12).fill(0).map(() => ({ adr: 85, occ: 65 })),
+      taxeSejourPerNightPerPerson: 0,
+      avgGuests: 2,
       platformFeePct: 3,
       managementPct: 0,
       cleaningCostPerStay: 35,
       laundryCostPerStay: 8,
       suppliesPerStay: 4,
       otherVarPerStay: 0,
-      taxeSejourPerNight: 0,
-      avgGuests: 2,
       channelManagerMonthly: 0,
-      cleaningFeeChargedToGuest: 0,
-      extraFeesPerStay: 0,
+      availabilityRate: 100,
+      avgOccupancyRate: 65,
       ...(fin?.lcd || {}),
     };
 
-    const availDays = 365 * (num(lcd.availabilityRate) / 100);
+    // Revenus de référence
+    const adr = num(lcd.nightlyPrice2p);
+    const guests = Math.max(1, num(lcd.avgGuests));
+    const stayLen = Math.max(1, num(lcd.avgStayLength));
 
-    // Revenus : saisonnalité ou moyen
-    let nightsBooked = 0;
-    let grossRent    = 0; // hébergement pur
+    // Variables
+    const varPerStay = num(lcd.cleaningCostPerStay) + num(lcd.laundryCostPerStay) + num(lcd.suppliesPerStay) + num(lcd.otherVarPerStay);
+    const perNightVarFromStay = varPerStay / stayLen;
+    const taxeSejourPerNight = num(lcd.taxeSejourPerNightPerPerson) * guests;
 
-    if (lcd.seasonalityEnabled) {
-      for (let m = 0; m < 12; m++) {
-        const days   = 365 / 12;
-        const occPct = num(lcd.seasonality[m]?.occ ?? lcd.avgOccupancyRate) / 100;
-        const adrm   = num(lcd.seasonality[m]?.adr ?? lcd.adr);
-        const nm     = days * occPct;
-        nightsBooked += nm;
-        grossRent    += nm * adrm;
-      }
-      const scale = availDays / 365;
-      nightsBooked *= scale;
-      grossRent    *= scale;
-    } else {
-      nightsBooked = availDays * (num(lcd.avgOccupancyRate) / 100);
-      grossRent    = nightsBooked * num(lcd.adr);
-    }
+    const pctFees = (num(lcd.platformFeePct) + num(lcd.managementPct)) / 100;
 
-    const stays            = nightsBooked / Math.max(1, num(lcd.avgStayLength));
-    const revenueCleaning  = num(lcd.cleaningFeeChargedToGuest) * stays;
-    const revenueExtras    = num(lcd.extraFeesPerStay) * stays;
-    const grossRevenue     = grossRent + revenueCleaning + revenueExtras;
+    // ADR net
+    const effectiveADR = adr * (1 - pctFees) - perNightVarFromStay - taxeSejourPerNight;
 
-    const platformFees  = grossRevenue * (num(lcd.platformFeePct) / 100);
-    const managementFee = grossRevenue * (num(lcd.managementPct) / 100);
-
-    const varPerStay     = num(lcd.cleaningCostPerStay) + num(lcd.laundryCostPerStay) + num(lcd.suppliesPerStay) + num(lcd.otherVarPerStay);
-    const variableCosts  = varPerStay * stays;
-
-    const sejour = num(lcd.taxeSejourPerNight) * nightsBooked * Math.max(1, num(lcd.avgGuests));
+    // Seuil de rentabilité
     const tools  = num(lcd.channelManagerMonthly) * 12;
+    const fixedLike    = annualFixed + tools;
+    const annualTarget = fixedLike + annualDebtService;
 
-    const operatingExpenses = annualFixed + platformFees + managementFee + variableCosts + sejour + tools;
+    const nightsForBreakeven = effectiveADR > 0 ? Math.ceil(annualTarget / effectiveADR) : 0;
+
+    // Scénario indicatif
+    const availDays   = 365 * (num(lcd.availabilityRate) / 100);
+    const nightsBooked = availDays * (num(lcd.avgOccupancyRate) / 100);
+    const grossRent    = nightsBooked * adr;
+    const grossRevenue = grossRent;
+
+    const stays          = nightsBooked / stayLen;
+    const variableCosts  = varPerStay * stays;
+    const platformFees   = grossRevenue * (num(lcd.platformFeePct) / 100);
+    const managementFee  = grossRevenue * (num(lcd.managementPct) / 100);
+    const sejour         = taxeSejourPerNight * nightsBooked;
+
+    const operatingExpenses = annualFixed + tools + platformFees + managementFee + variableCosts + sejour;
     const noi      = grossRevenue - operatingExpenses;
     const cashflow = noi - annualDebtService;
 
-    const adr   = nightsBooked > 0 ? grossRent / nightsBooked : 0;
     const occ   = availDays > 0 ? (nightsBooked / availDays) * 100 : 0;
-    const revpar = grossRent / 365; // CA hébergement / jour calendaire
-
-    // Seuils
-    const pctFees     = (num(lcd.platformFeePct) + num(lcd.managementPct)) / 100;
-    const perNightVar = (varPerStay / Math.max(1, num(lcd.avgStayLength))) + (num(lcd.taxeSejourPerNight) * Math.max(1, num(lcd.avgGuests)));
-    const effectiveADR = num(lcd.adr) * (1 - pctFees) - perNightVar;
-
-    const fixedLike    = annualFixed + tools; // hors variables / %fees
-    const annualTarget = fixedLike + annualDebtService; // pour CF=0
-    const nightsForBreakeven = effectiveADR > 0 ? Math.ceil(annualTarget / effectiveADR) : 0;
-    const occBreakeven       = availDays > 0 ? Math.min(100, (nightsForBreakeven / availDays) * 100) : 0;
-
-    const adrBreakeven = (nightsBooked > 0)
-      ? (annualTarget / nightsBooked) / (1 - pctFees) + perNightVar
-      : 0;
+    const revpar = grossRent / 365;
 
     const cashInvested = apport + notaire + travauxTot;
     const capRate = totalInvestment > 0 ? (noi / totalInvestment) * 100 : 0;
     const coc     = cashInvested > 0 ? (cashflow / cashInvested) * 100 : 0;
 
     return {
-      nightsBooked, availDays, stays, adr, occ, revpar,
-      grossRent, grossRevenue, revenueCleaning, revenueExtras,
+      adr, nightsBooked, availDays, stays, occ, revpar, grossRent, grossRevenue,
       platformFees, managementFee, variableCosts, sejour, tools, annualFixed, operatingExpenses,
       mensualite, monthlyInsurance, annualDebtService, totalInvestment, cashInvested,
       noi, cashflow, capRate, coc,
-      nightsForBreakeven, occBreakeven, adrBreakeven,
+      nightsForBreakeven,
+      effectiveADR, perNightVarFromStay, taxeSejourPerNight,
     };
   }, [fin]);
 }
 
 /* ==============================
-   COMPOSANTS UTILITAIRES (UI)
+   UI de base
    ============================== */
-const fmtMoney = n => (Number(n) || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
-const fmtPct   = n => `${((Number(n) || 0)).toFixed(1)}%`;
-const int      = n => Math.round(Number(n) || 0);
-
 function SectionCard({ title, children, defaultOpen = true, sub }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -206,6 +191,17 @@ function KPI({ label, value, tone }) {
   );
 }
 
+function Chip({ label, value, tone }) {
+  const toneCls = tone === 'pos' ? 'bg-green-500/15 border-green-500/30 text-green-200'
+    : tone === 'neg' ? 'bg-red-500/15 border-red-500/30 text-red-200'
+    : 'bg-white/5 border-white/10 text-gray-100';
+  return (
+    <div className={`whitespace-nowrap px-3 py-2 rounded-xl text-sm border ${toneCls}`}>
+      <span className="text-gray-300">{label}:</span> <b className="ml-1">{value}</b>
+    </div>
+  );
+}
+
 /* =======================================
    INPUTS COMMUNS — ACHAT / CRÉDIT / FIXES
    ======================================= */
@@ -261,33 +257,43 @@ function ExpensesSection({ values, onChange, results }) {
 }
 
 /* ===========================================
-   INPUTS LCD — REVENUS & COÛTS VARIABLES
+   INPUTS LCD — REVENUS (SIMPLIFIÉS)
    =========================================== */
-function STRIncomeSection({ values, onChange }) {
+function STRIncomeSimpleSection({ values, onChange, results }) {
   const v = values || {};
   const set = key => val => onChange(key, val);
 
   return (
-    <SectionCard title="Revenus — Courte durée" sub="Disponibilité, occupation, ADR et saisonnalité">
+    <SectionCard
+      title="Revenus — Prix/nuit & Taxe"
+      sub="Saisissez le prix par nuit (pour 2 pers.) et la taxe de séjour par personne/nuit. Le nombre de nuits à l’équilibre est calculé automatiquement."
+    >
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <Field label="Taux de dispo." value={v.availabilityRate} onChange={set('availabilityRate')} suffix="%" />
-        <Field label="Taux d'occupation" value={v.avgOccupancyRate} onChange={set('avgOccupancyRate')} suffix="%" />
+        <Field label="Prix par nuit (2 pers.)" value={v.nightlyPrice2p} onChange={set('nightlyPrice2p')} suffix="€" />
         <Field label="Durée moy. séjour" value={v.avgStayLength} onChange={set('avgStayLength')} suffix="nuits" />
-        <Field label="ADR (€/nuit)" value={v.adr} onChange={set('adr')} suffix="€" />
+        <Field label="Taxe séjour / pers. / nuit" value={v.taxeSejourPerNightPerPerson} onChange={set('taxeSejourPerNightPerPerson')} suffix="€" />
+        <Field label="Nb moyen de personnes" value={v.avgGuests} onChange={set('avgGuests')} />
       </div>
 
-      <label className="inline-flex items-center gap-2 mt-4 text-sm">
-        <input
-          type="checkbox"
-          checked={!!v.seasonalityEnabled}
-          onChange={e => onChange('seasonalityEnabled', e.target.checked)}
-        />
-        <span>Activer la saisonnalité mensuelle</span>
-      </label>
+      {results && (
+        <div className="mt-4 rounded-xl bg-white/5 border border-white/10 p-3">
+          <p className="text-sm text-gray-300">
+            Avec un prix de <b className="text-white">{fmtMoney(results.adr)}</b> par nuit pour 2 personnes,
+            il faut environ <b className="text-white">{int(results.nightsForBreakeven)}</b> nuits par an pour
+            atteindre l’équilibre (cash-flow 0).
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            ADR net après frais & variables : <b className="text-gray-200">{fmtMoney(results.effectiveADR)}</b> / nuit.
+          </p>
+        </div>
+      )}
     </SectionCard>
   );
 }
 
+/* ===========================================
+   COÛTS — PLATEFORMES & VARIABLES
+   =========================================== */
 function STRCostsSection({ values, onChange }) {
   const v = values || {};
   const set = key => val => onChange(key, val);
@@ -306,26 +312,24 @@ function STRCostsSection({ values, onChange }) {
         <Field label="Consommables / séjour" value={v.suppliesPerStay} onChange={set('suppliesPerStay')} suffix="€" />
         <Field label="Autres variables / séjour" value={v.otherVarPerStay} onChange={set('otherVarPerStay')} suffix="€" />
       </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-3">
-        <Field label="Taxe séjour / nuit / pers." value={v.taxeSejourPerNight} onChange={set('taxeSejourPerNight')} suffix="€" />
-        <Field label="Nb moyen de voyageurs" value={v.avgGuests} onChange={set('avgGuests')} />
-        <Field label="Frais ménage facturés (séjour)" value={v.cleaningFeeChargedToGuest} onChange={set('cleaningFeeChargedToGuest')} suffix="€" />
-        <Field label="Frais annexes (séjour)" value={v.extraFeesPerStay} onChange={set('extraFeesPerStay')} suffix="€" />
-      </div>
     </SectionCard>
   );
 }
 
 /* ===========================================
-   RÉSULTATS LCD — KPIs & SEUILS
+   RÉSULTATS — KPIs & SEUIL
    =========================================== */
 function STRResultsSection({ results }) {
   const r = results || {};
   return (
     <SectionCard title="Résultats — Courte durée" defaultOpen={false}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Box title="Performance">
+        <Box title="Seuil de rentabilité">
+          <KPI label="Nuits à l'équilibre" value={int(r.nightsForBreakeven)} />
+          <KPI label="ADR net (après frais/variables)" value={fmtMoney(r.effectiveADR)} />
+        </Box>
+
+        <Box title="Performance (indicative)">
           <KPI label="ADR moyen" value={fmtMoney(r.adr)} />
           <KPI label="Occupation" value={fmtPct(r.occ)} />
           <KPI label="Nuits vendues (an)" value={int(r.nightsBooked)} />
@@ -333,7 +337,7 @@ function STRResultsSection({ results }) {
           <KPI label="Chiffre d'affaires" value={fmtMoney(r.grossRevenue)} />
         </Box>
 
-        <Box title="Dépenses & NOI">
+        <Box title="Dépenses & NOI (indicatifs)">
           <KPI label="Frais plateforme" value={fmtMoney(r.platformFees)} />
           <KPI label="Conciergerie" value={fmtMoney(r.managementFee)} />
           <KPI label="Variables (séjours)" value={fmtMoney(r.variableCosts)} />
@@ -343,14 +347,11 @@ function STRResultsSection({ results }) {
           <KPI label="Cash-flow annuel" value={fmtMoney(r.cashflow)} tone={r.cashflow >= 0 ? 'pos' : 'neg'} />
         </Box>
 
-        <Box title="Investissement & Seuils">
+        <Box title="Investissement">
           <KPI label="Investissement total" value={fmtMoney(r.totalInvestment)} />
           <KPI label="Cash investi (apport+frais+travaux)" value={fmtMoney(r.cashInvested)} />
           <KPI label="Cap rate" value={fmtPct(r.capRate)} />
           <KPI label="Cash-on-cash" value={fmtPct(r.coc)} />
-          <KPI label="Nuits à l'équilibre" value={int(r.nightsForBreakeven)} />
-          <KPI label="Occupation à l'équilibre" value={fmtPct(r.occBreakeven)} />
-          <KPI label="ADR à l'équilibre" value={fmtMoney(r.adrBreakeven)} />
         </Box>
       </div>
     </SectionCard>
@@ -366,63 +367,64 @@ export default function FinancialInfoShort() {
 
   const [property, setProperty] = useState(null);
   const [error, setError]       = useState(null);
-  const [saving, setSaving]     = useState(false);
-  const [saved, setSaved]       = useState(false);
 
-  // Charger le bien + financialInfo
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved]   = useState(false);
+
+  // Charger le bien (avec financialCld)
   useEffect(() => {
-    fetch(`/api/properties/${id}`)
+    fetch(`${API_BASE}/api/properties/${id}`, { credentials: 'include' })
       .then(r => { if (!r.ok) throw new Error(`Statut ${r.status}`); return r.json(); })
       .then(data => setProperty(data))
       .catch(e => setError(String(e)));
   }, [id]);
 
-  // Valeurs par défaut
-  const fin = property?.financialInfo ?? {
+  // Valeurs par défaut si aucune financialCld
+  const fin = property?.financialCld ?? {
+    // Achat & crédit
     prixAgence: '', fraisAgence: '', netVendeur: '', decoteMeuble: '',
     fraisNotairePct: 8, travaux: 0, travauxEstimes: 0, travauxRestants: 0,
     tauxPret: 0, dureePretAnnees: 20, apport: 0, assurEmprunteur: 0,
+
+    // Charges fixes
     taxeFonciere: 0, chargesCopro: 0, assurancePno: 0,
     elecGaz: 0, internet: 0, entretien: 0, autreSortie: 0,
+
     rentalMode: 'LCD',
+
+    // Bloc LCD simplifié
     lcd: {
-      availabilityRate: 100,
-      avgOccupancyRate: 65,
+      nightlyPrice2p: 85,
       avgStayLength: 3,
-      adr: 85,
-      seasonalityEnabled: false,
-      seasonality: [
-        { adr: 70, occ: 45 }, { adr: 72, occ: 45 }, { adr: 80, occ: 55 }, { adr: 85, occ: 60 },
-        { adr: 90, occ: 65 }, { adr: 95, occ: 70 }, { adr: 110, occ: 80 }, { adr: 105, occ: 78 },
-        { adr: 95, occ: 70 }, { adr: 85, occ: 60 }, { adr: 80, occ: 55 }, { adr: 75, occ: 50 },
-      ],
+      taxeSejourPerNightPerPerson: 0,
+      avgGuests: 2,
+
       platformFeePct: 3,
       managementPct: 0,
       cleaningCostPerStay: 35,
       laundryCostPerStay: 8,
       suppliesPerStay: 4,
       otherVarPerStay: 0,
-      taxeSejourPerNight: 0,
-      avgGuests: 2,
       channelManagerMonthly: 0,
-      cleaningFeeChargedToGuest: 0,
-      extraFeesPerStay: 0,
+
+      availabilityRate: 100,
+      avgOccupancyRate: 65,
     }
   };
 
-  // Helpers update
+  // Helpers update (ciblent financialCld)
   const updateFin = (key, value) => {
     setProperty(prev => ({
       ...prev,
-      financialInfo: { ...(prev?.financialInfo ?? {}), [key]: value }
+      financialCld: { ...(prev?.financialCld ?? {}), [key]: value }
     }));
   };
   const updateLCD = (key, value) => {
     setProperty(prev => ({
       ...prev,
-      financialInfo: {
-        ...(prev?.financialInfo ?? {}),
-        lcd: { ...((prev?.financialInfo?.lcd) ?? fin.lcd), [key]: value }
+      financialCld: {
+        ...(prev?.financialCld ?? {}),
+        lcd: { ...((prev?.financialCld?.lcd) ?? fin.lcd), [key]: value }
       }
     }));
   };
@@ -430,21 +432,45 @@ export default function FinancialInfoShort() {
   // Calculs
   const results = useShortTermCalculations(fin);
 
-  // Sauvegarde
+  // Sauvegarde -> route LCD dédiée + redirection vers la fiche bien
   const handleSave = async () => {
     if (!property) return;
     setSaving(true);
     setSaved(false);
     try {
-      const payload = { propertyId: id, rentalMode: 'LCD', ...property.financialInfo, ...results };
-      const r = await fetch(`/api/properties/${id}/financial`, {
+      const {
+        prixAgence = 0, fraisAgence = 0, netVendeur = 0, decoteMeuble = 0, fraisNotairePct = 0,
+        travaux = 0, travauxEstimes = 0, travauxRestants = 0,
+        tauxPret = 0, dureePretAnnees = 0, apport = 0, assurEmprunteur = 0,
+        taxeFonciere = 0, chargesCopro = 0, assurancePno = 0,
+        elecGaz = 0, internet = 0, entretien = 0, autreSortie = 0,
+        lcd = {}
+      } = property.financialCld || fin;
+
+      const payload = {
+        prixAgence, fraisAgence, netVendeur, decoteMeuble, fraisNotairePct,
+        travaux, travauxEstimes, travauxRestants,
+        tauxPret, dureePretAnnees, apport, assurEmprunteur,
+        taxeFonciere, chargesCopro, assurancePno,
+        elecGaz, internet, entretien, autreSortie,
+        lcd,
+        rentalMode: 'LCD',
+      };
+
+      const r = await fetch(`${API_BASE}/api/properties/${id}/financial/lcd`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload)
       });
-      if (!r.ok) throw new Error(`Statut ${r.status}`);
+      if (!r.ok) {
+        const msg = await r.text().catch(() => "");
+        throw new Error(`HTTP ${r.status} ${msg}`);
+      }
+
       setSaved(true);
-      setTimeout(() => setSaved(false), 1800);
+      // Redirection vers la fiche bien (même logique que LLD)
+      navigate(`/property/${id}`);
     } catch (e) {
       alert(`Erreur : ${e.message}`);
     } finally {
@@ -456,8 +482,8 @@ export default function FinancialInfoShort() {
   if (!property) return <p className="p-4">Chargement…</p>;
 
   return (
-    <div className="min-h-screen text-gray-100">
-      {/* Header compact + primary action */}
+    <div className="min-h-screen text-gray-100 pb-24">
+      {/* Header sans bouton Sauvegarder (on laisse uniquement Retour) */}
       <header className="sticky top-0 z-20 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60 bg-slate-900/80 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
@@ -470,63 +496,73 @@ export default function FinancialInfoShort() {
           <h1 className="text-base sm:text-lg font-semibold text-white">
             Analyse financière — Courte durée
           </h1>
-          <div className="ml-auto hidden sm:flex items-center gap-2">
-            {saved && <span className="text-green-300 text-sm">Enregistré ✔</span>}
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 bg-greenLight text-white rounded-lg hover:bg-checkgreen disabled:opacity-60"
-            >
-              {saving ? 'Sauvegarde…' : 'Sauvegarder'}
-            </button>
-          </div>
+          {/* plus de bouton sauvegarde ici */}
         </div>
       </header>
 
       {/* Contenu */}
       <main className="max-w-6xl mx-auto px-4 py-4 md:py-6 space-y-4 md:space-y-6">
-        {/* Bandeau KPI rapides (scrollable en mobile) */}
+        {/* KPI rapides */}
         <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Chip label="NOI" value={fmtMoney(results.noi)} />
           <Chip label="Cash-flow" value={fmtMoney(results.cashflow)} tone={results.cashflow >= 0 ? 'pos' : 'neg'} />
           <Chip label="Cap rate" value={fmtPct(results.capRate)} />
           <Chip label="CoC" value={fmtPct(results.coc)} />
-          <Chip label="Occupation" value={fmtPct(results.occ)} />
-          <Chip label="ADR" value={fmtMoney(results.adr)} />
+          <Chip label="Nuits à l’équilibre" value={int(results.nightsForBreakeven)} />
+          <Chip label="ADR net" value={fmtMoney(results.effectiveADR)} />
         </div>
 
         {/* Sections */}
-        <CreditSection values={fin} onChange={{
-          setPrixAgence:      v => updateFin('prixAgence', v),
-          setFraisAgence:     v => updateFin('fraisAgence', v),
-          setNetVendeur:      v => updateFin('netVendeur', v),
-          setDecoteMeuble:    v => updateFin('decoteMeuble', v),
-          setFraisNotairePct: v => updateFin('fraisNotairePct', v),
-          setTravaux:         v => updateFin('travaux', v),
-          setTravauxEstimes:  v => updateFin('travauxEstimes', v),
-          setTravauxRestants: v => updateFin('travauxRestants', v),
-          setTauxPret:        v => updateFin('tauxPret', v),
-          setDureePretAnnees: v => updateFin('dureePretAnnees', v),
-          setApport:          v => updateFin('apport', v),
-          setAssurEmprunteur: v => updateFin('assurEmprunteur', v),
-        }} results={results} />
+        <CreditSection
+          values={fin}
+          onChange={{
+            setPrixAgence:      v => updateFin('prixAgence', v),
+            setFraisAgence:     v => updateFin('fraisAgence', v),
+            setNetVendeur:      v => updateFin('netVendeur', v),
+            setDecoteMeuble:    v => updateFin('decoteMeuble', v),
+            setFraisNotairePct: v => updateFin('fraisNotairePct', v),
+            setTravaux:         v => updateFin('travaux', v),
+            setTravauxEstimes:  v => updateFin('travauxEstimes', v),
+            setTravauxRestants: v => updateFin('travauxRestants', v),
+            setTauxPret:        v => updateFin('tauxPret', v),
+            setDureePretAnnees: v => updateFin('dureePretAnnees', v),
+            setApport:          v => updateFin('apport', v),
+            setAssurEmprunteur: v => updateFin('assurEmprunteur', v),
+          }}
+          results={results}
+        />
 
-        <ExpensesSection values={fin} onChange={{
-          setTaxeFonciere:    v => updateFin('taxeFonciere', v),
-          setChargesCopro:    v => updateFin('chargesCopro', v),
-          setAssurancePno:    v => updateFin('assurancePno', v),
-          setElecGaz:         v => updateFin('elecGaz', v),
-          setInternet:        v => updateFin('internet', v),
-          setEntretien:       v => updateFin('entretien', v),
-          setAutreSortie:     v => updateFin('autreSortie', v),
-        }} results={results} />
+        <ExpensesSection
+          values={fin}
+          onChange={{
+            setTaxeFonciere:    v => updateFin('taxeFonciere', v),
+            setChargesCopro:    v => updateFin('chargesCopro', v),
+            setAssurancePno:    v => updateFin('assurancePno', v),
+            setElecGaz:         v => updateFin('elecGaz', v),
+            setInternet:        v => updateFin('internet', v),
+            setEntretien:       v => updateFin('entretien', v),
+            setAutreSortie:     v => updateFin('autreSortie', v),
+          }}
+          results={results}
+        />
 
-        <STRIncomeSection values={fin.lcd} onChange={updateLCD} />
-        <STRCostsSection  values={fin.lcd} onChange={updateLCD} />
-        <STRResultsSection results={results} />
+        <STRIncomeSimpleSection values={fin.lcd} onChange={updateLCD} results={results} />
+        <STRCostsSection       values={fin.lcd} onChange={updateLCD} />
+        <STRResultsSection     results={results} />
+
+        {/* Bouton de sauvegarde bas de page (desktop & tablette) */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="mt-2 px-4 py-2 rounded-xl bg-greenLight text-white font-semibold hover:bg-checkgreen disabled:opacity-60"
+          >
+            {saving ? 'Sauvegarde…' : 'Sauvegarder'}
+          </button>
+        </div>
       </main>
 
-      {/* Save bar mobile (collée en bas) */}
+      {/* Barre de sauvegarde mobile */}
       <div className="fixed sm:hidden bottom-0 left-0 right-0 z-20 p-3">
         <div className="mx-3 rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur px-3 py-2 flex items-center gap-3 shadow-lg">
           {saved && <span className="text-green-300 text-sm">Enregistré ✔</span>}
@@ -539,17 +575,6 @@ export default function FinancialInfoShort() {
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Chip({ label, value, tone }) {
-  const toneCls = tone === 'pos' ? 'bg-green-500/15 border-green-500/30 text-green-200'
-    : tone === 'neg' ? 'bg-red-500/15 border-red-500/30 text-red-200'
-    : 'bg-white/5 border-white/10 text-gray-100';
-  return (
-    <div className={`whitespace-nowrap px-3 py-2 rounded-xl text-sm border ${toneCls}`}>
-      <span className="text-gray-300">{label}:</span> <b className="ml-1">{value}</b>
     </div>
   );
 }

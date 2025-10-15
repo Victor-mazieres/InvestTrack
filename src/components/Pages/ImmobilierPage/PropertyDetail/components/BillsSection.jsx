@@ -16,12 +16,6 @@ function formReducer(state, action) {
   }
 }
 
-/** Zoom & Pan container with:
- * - pinch (2 fingers)
- * - wheel zoom
- * - double click/tap toggle
- * - drag when zoomed
- */
 function ZoomPan({
   children,
   className = '',

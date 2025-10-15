@@ -12,6 +12,7 @@ import {
   User2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import PrimaryButton from '../../../Reutilisable/PrimaryButton';
 
 // Animation standard
 const fadeInUp = (delay = 0) => ({
@@ -143,12 +144,10 @@ export default function TenantDetails() {
         variants={fadeInUp(0.3)}
         className="mt-10 flex justify-end gap-3"
       >
-        <button
-          onClick={() => navigate(`/tenants/edit/${tenant.id}`)}
-          className="px-5 py-2 rounded-3xl font-medium text-white bg-gradient-to-b from-greenLight to-checkgreen shadow-md hover:from-checkgreen hover:to-greenLight hover:shadow-lg transition"
-        >
+        <PrimaryButton onClick={() => navigate(`/tenants/edit/${tenant.id}`)}>
           Modifier
-        </button>
+        </PrimaryButton>
+
         <button
           onClick={() => alert('Suppression du locataire...')}
           className="px-5 py-2 rounded-3xl font-medium text-red-400 bg-white/5 hover:bg-white/10 border border-white/10 transition flex items-center gap-2"

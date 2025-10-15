@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import EmailVerificationModal from "../../ConnexionPage/EmailVerificationModal";
+import PrimaryButton from '../../../Reutilisable/PrimaryButton';
 
 // Modal de confirmation de reset de PIN
 function ConfirmResetModal({ onConfirm, onClose }) {
@@ -560,12 +561,13 @@ export default function Profile() {
 
         {/* Bouton Valider */}
         <div className="w-full flex justify-end mt-12">
-          <button
-            type="submit"
-            className="bg-greenLight text-white w-5/12 p-3 rounded-3xl font-bold mr-6 hover:bg-checkgreen transition"
-          >
-            Valider
-          </button>
+        <PrimaryButton
+          type="submit"
+          className="w-5/12 mr-6"
+          
+        >
+          Valider
+        </PrimaryButton>
         </div>
       </form>
 

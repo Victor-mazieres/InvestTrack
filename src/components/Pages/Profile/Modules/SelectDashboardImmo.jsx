@@ -24,6 +24,7 @@ import {
   Shield,
   ArrowDownCircle,
 } from "lucide-react";
+import PrimaryButton from '../../../Reutilisable/PrimaryButton';
 
 const STORAGE_KEY = "dashboardImmobilierSelection:v1";
 
@@ -134,7 +135,7 @@ export default function DashboardImmobilierSelection({ onSave }) {
       <div className="mb-4 flex gap-2 flex-wrap">
         <ActionButton onClick={selectAll} icon={LayoutGrid} label="Tout sélectionner" />
         <ActionButton onClick={clearAll} icon={RotateCcw} label="Tout désélectionner" />
-        <ActionButton onClick={handleSave} icon={Save} label="Enregistrer" intent="primary" />
+        <PrimaryButton onClick={handleSave} icon={Save}>  Enregistrer</PrimaryButton>
       </div>
 
       {/* Grille de widgets */}
@@ -203,7 +204,7 @@ function WidgetCard({ widget, selected, onToggle }) {
 
 function ActionButton({ onClick, icon: Icon, label, intent = "neutral" }) {
   const base =
-    "inline-flex items-center gap-2 rounded-3xl px-4 py-2 text-sm transition focus:outline-none focus:ring-2";
+    "inline-flex items-center gap-2 rounded-3xl px-4 py-4 text-sm transition focus:outline-none focus:ring-2";
   const styles =
     intent === "primary"
       ? "bg-greenLight/90 text-black hover:bg-greenLight focus:ring-greenLight/40"

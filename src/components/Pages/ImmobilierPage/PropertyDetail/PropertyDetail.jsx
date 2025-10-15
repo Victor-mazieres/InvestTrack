@@ -1,45 +1,52 @@
 // src/pages/PropertyDetail.jsx
-import React, { useState } from 'react';
+import React, { useMemo, useState, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronDown, Plus, ArrowLeft, Eye, Trash,
   MapPin, Building2, Home, Hash, Layers, DoorOpen, User2,
-  CalendarDays, Ruler, Phone, Mail, FileText, DollarSign, Receipt, Hammer
+  CalendarDays, Ruler, Phone, Mail, FileText, DollarSign, Receipt, Hammer, Gauge
 } from 'lucide-react';
 
-import DonutChart           from './components/DonutChart';
-import FinancialDataDisplay from './FinancialInfo/FinancialDataDisplay';
-import PhotoCarousel        from './components/PhotoCarousel';
-import SectionLoader        from './components/SectionLoader';
-import { Loader }           from './components/Loader';
-import TenantTab            from './components/TenantTab';
-import WorkProgress         from './components/WorkProgress';
+import DonutChart                  from './components/DonutChart';
+import FinancialDataDisplay        from './FinancialInfo/FinancialDataDisplay';
+import FinancialDataDisplayShort   from './FinancialInfo/FinancialDataDisplayShort';
+import PhotoCarousel               from './components/PhotoCarousel';
+import SectionLoader               from './components/SectionLoader';
+import { Loader }                  from './components/Loader';
+import TenantTab                   from './components/TenantTab';
+import PrimaryButton               from "../../../Reutilisable/PrimaryButton";
+import BillInlineForm              from './components/BillInlineForm';
 
-// LLD / bail au mois
-import LeasePanel           from './components/LeaseAndRents';
-// LCD / courte durée (nuits & paiements)
-import ShortStayPanel       from './components/ShortStayPanel';
+import DpePanel                    from './components/DpePanel';
+import RecoverableChargesPanel     from './components/RecoverableChargesPanel';
 
 import { useProperty }   from './hooks/useProperty';
 import { useBills }      from './hooks/useBills';
 import { useFinancials } from './hooks/useFinancials';
 import { usePhotos }     from './hooks/usePhotos';
+import { api }           from '../../../../api/api';
+
+// Lazy heavy panels
+const WorkProgress   = React.lazy(() => import('./components/WorkProgress'));
+const LeasePanel     = React.lazy(() => import('./components/LeaseAndRents'));
+const ShortStayPanel = React.lazy(() => import('./components/ShortStayPanel'));
 
 /* ===========================
-   UI Carrés (2×2+) + Panneaux
+   UI: Tile & Panel
    =========================== */
-
-function TileButton({ label, icon, active, onClick }) {
+function TileButton({ idFor, label, icon, active, onClick }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
+      aria-controls={idFor}
+      role="tab"
       className={[
         "group relative aspect-square w-full rounded-2xl p-4",
         "bg-[#0a1016]/60 border border-white/10 ring-1 ring-black/10",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_22px_-12px_rgba(0,0,0,0.65)]",
         active ? "outline outline-2 outline-checkgreen/40" : "hover:bg-white/5",
-        "transition"
+        "transition focus:outline-none focus-visible:ring-2 focus-visible:ring-greenLight/60"
       ].join(" ")}
     >
       <div className="flex h-full w-full flex-col items-center justify-center gap-2">
@@ -59,22 +66,15 @@ function TileButton({ label, icon, active, onClick }) {
   );
 }
 
-function Panel({ show, children }) {
+function Panel({ id, show, children }) {
   return (
-    <div className="col-span-2">
-      <div
-        className={[
-          "overflow-hidden transition-[grid-template-rows] duration-300",
-          show ? "grid grid-rows-[1fr]" : "grid grid-rows-[0fr]"
-        ].join(" ")}
-      >
-        <div className="min-h-0">
-          {show && (
-            <div className="mt-3 rounded-2xl border border-white/10 bg-[#0a1016]/60 p-4 ring-1 ring-black/10">
-              {children}
-            </div>
-          )}
-        </div>
+    <div id={id} role="region" aria-hidden={!show} className="col-span-2">
+      <div className={`transition-all ${show ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'} duration-200`}>
+        {show && (
+          <div className="mt-3 rounded-2xl border border-white/10 bg-[#0a1016]/60 p-4 ring-1 ring-black/10">
+            {children}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -83,34 +83,49 @@ function Panel({ show, children }) {
 /* ===========================
    Page
    =========================== */
-
 export default function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // Charge la propriété (inclut désormais financialLld et/ou financialCld)
   const { property, loading: propLoading, error: propErr } = useProperty(id);
+
+  // Factures & photos
   const { bills, loading: billsLoading, deleteBill, addBill } = useBills(id);
-  const { totalBills, travauxEstimes, budgetRestant, pieData } =
-    useFinancials(property?.financialInfo, bills);
   const { photos, loading: photosLoading, addPhoto, deletePhoto } = usePhotos(id);
 
+  // Détermine le type (LLD/LCD/AV)
+  const rentalKind = useMemo(() => {
+    const rk = String(property?.rentalKind || '').toUpperCase();
+    if (rk === 'LLD' || rk === 'LCD' || rk === 'AV') return rk;
+    const mode = String(property?.mode || '').toLowerCase();
+    const rs   = String(property?.rentalStrategy || '').toLowerCase();
+    if (mode === 'achat_revente') return 'AV';
+    if (mode === 'location') return rs === 'short_term' ? 'LCD' : 'LLD';
+    return 'LLD';
+  }, [property]);
+
+  // Sélectionne la bonne source financière selon le type
+  const finData = useMemo(() => {
+    if (!property) return null;
+    if (rentalKind === 'LCD') return property.financialCld || property.financialLcd || null;
+    if (rentalKind === 'LLD') return property.financialLld || null;
+    return null;
+  }, [property, rentalKind]);
+
+  // Agrégats pour le donut
+  const { totalBills, travauxEstimes, budgetRestant, pieData } =
+    useFinancials(finData, bills);
+
   const [activeTab, setActiveTab] = useState(null);
-
-  // === Base API (utilise .env si présent)
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-  // === Résolution asynchrone du tenantId avant navigation
   const [resolvingTenant, setResolvingTenant] = useState(false);
   const [tenantResolveError, setTenantResolveError] = useState(null);
 
-  const tryFetchJson = async (url) => {
-    const res = await fetch(url);
-    if (!res.ok) return { ok: false, status: res.status, data: null };
-    const data = await res.json();
-    return { ok: true, status: 200, data };
-  };
+  const looksNumeric = (v) => /^\d+$/.test(String(v ?? '').trim());
 
-  const looksLikeNumericId = (v) => /^\d+$/.test(String(v ?? '').trim());
+  const tryGet = async (p) => {
+    try { return await api.get(p); } catch { return null; }
+  };
 
   const resolveTenantIdAsync = async (p) => {
     if (!p) return null;
@@ -121,27 +136,25 @@ export default function PropertyDetail() {
     if (p.owner && typeof p.owner === 'object' && (p.owner.id || p.owner._id)) {
       return String(p.owner.id || p.owner._id);
     }
-    if (looksLikeNumericId(p.owner)) {
-      const r = await tryFetchJson(`${API_BASE}/api/tenants/${p.owner}`);
-      if (r.ok && r.data && (r.data.id || r.data._id)) return String(r.data.id || r.data._id);
-      const r2 = await tryFetchJson(`${API_BASE}/api/tenants?userId=${p.owner}`);
-      if (r2.ok && Array.isArray(r2.data) && r2.data.length > 0) {
-        const t = r2.data[0];
-        if (t && (t.id || t._id)) return String(t.id || t._id);
-      }
+    if (looksNumeric(p.owner)) {
+      const r1 = await tryGet(`/api/tenants/${p.owner}`);
+      if (r1?.id || r1?._id) return String(r1.id || r1._id);
+      const r2 = await tryGet(`/api/tenants?userId=${p.owner}`);
+      const t  = Array.isArray(r2) ? r2[0] : null;
+      if (t?.id || t?._id) return String(t.id || t._id);
     }
-    const all = await tryFetchJson(`${API_BASE}/api/tenants`);
-    if (all.ok && Array.isArray(all.data)) {
+    const all = await tryGet(`/api/tenants`);
+    if (Array.isArray(all)) {
       const hintEmail = p.ownerEmail || p.email || null;
       const hintName  = p.ownerName  || p.name  || null;
       if (hintEmail) {
-        const found = all.data.find(t => (t.email || '').toLowerCase() === String(hintEmail).toLowerCase());
-        if (found && (found.id || found._id)) return String(found.id || found._id);
+        const found = all.find(t => (t.email || '').toLowerCase() === String(hintEmail).toLowerCase());
+        if (found?.id || found?._id) return String(found.id || found._id);
       }
       if (hintName) {
-        const ln = String(hintName).toLowerCase();
-        const found = all.data.find(t => `${t.name ?? ''} ${t.firstName ?? ''}`.toLowerCase().includes(ln));
-        if (found && (found.id || found._id)) return String(found.id || found._id);
+        const key = String(hintName).toLowerCase();
+        const found = all.find(t => `${t.name ?? ''} ${t.firstName ?? ''}`.toLowerCase().includes(key));
+        if (found?.id || found?._id) return String(found.id || found._id);
       }
     }
     return null;
@@ -163,29 +176,14 @@ export default function PropertyDetail() {
     }
   };
 
-  // === Détection via rentalKind (LLD | LCD | AV)
-  const getRentalKind = (p) => {
-    const rk = String(p?.rentalKind || '').toUpperCase();
-    if (rk === 'LLD' || rk === 'LCD' || rk === 'AV') return rk;
-    const mode = String(p?.mode || '').toLowerCase();
-    const rs   = String(p?.rentalStrategy || '').toLowerCase();
-    if (mode === 'achat_revente') return 'AV';
-    if (mode === 'location') return rs === 'short_term' ? 'LCD' : 'LLD';
-    return 'LLD';
-  };
-
-  // === Navigation vers la bonne page financière
   const goToFinancial = () => {
-    const kind = getRentalKind(property);
-    if (kind === 'LCD')      navigate(`/properties/${id}/financial-short?mode=LCD`);
-    else if (kind === 'AV')  navigate(`/properties/${id}/financial-sell?mode=AV`);
-    else                     navigate(`/properties/${id}/financial?mode=LLD`);
+    if (rentalKind === 'LCD')      navigate(`/properties/${id}/financial-short?mode=LCD`);
+    else if (rentalKind === 'AV')  navigate(`/properties/${id}/financial-sell?mode=AV`);
+    else                           navigate(`/properties/${id}/financial?mode=LLD`);
   };
 
   if (propErr)                  return <div className="p-6 text-red-500">{propErr}</div>;
   if (propLoading || !property) return <Loader />;
-
-  const rentalKind = getRentalKind(property); // 'LLD' | 'LCD' | 'AV'
 
   return (
     <div className="min-h-screen bg-noir-780 text-gray-100 p-6">
@@ -215,52 +213,72 @@ export default function PropertyDetail() {
         <p className="mt-2 mb-2 text-sm text-amber-300">{tenantResolveError}</p>
       )}
 
-      {/* ==============================
-          Grille de 6 carrés + panneaux
-         ============================== */}
+      {/* Grille de tuiles */}
       <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
         <TileButton
+          idFor="panel-location"
           label="Location"
           icon={<MapPin className="w-7 h-7" />}
           active={activeTab === 'location'}
           onClick={() => setActiveTab(t => (t === 'location' ? null : 'location'))}
         />
         <TileButton
+          idFor="panel-financial"
           label="Financier"
           icon={<DollarSign className="w-7 h-7" />}
           active={activeTab === 'financial'}
           onClick={() => setActiveTab(t => (t === 'financial' ? null : 'financial'))}
         />
         <TileButton
+          idFor="panel-bills"
           label="Factures"
           icon={<Receipt className="w-7 h-7" />}
           active={activeTab === 'bills'}
           onClick={() => setActiveTab(t => (t === 'bills' ? null : 'bills'))}
         />
         <TileButton
+          idFor="panel-tenant"
           label="Locataire"
           icon={<User2 className="w-7 h-7" />}
           active={activeTab === 'tenant'}
           onClick={() => setActiveTab(t => (t === 'tenant' ? null : 'tenant'))}
         />
         <TileButton
+          idFor="panel-works"
           label="Travaux"
           icon={<Hammer className="w-7 h-7" />}
           active={activeTab === 'works'}
           onClick={() => setActiveTab(t => (t === 'works' ? null : 'works'))}
         />
-        {/* NOUVEAU : BAIL & LOYERS */}
         <TileButton
+          idFor="panel-lease"
           label={rentalKind === 'LCD' ? "Séjours & Paiements" : "Bail & Loyers"}
           icon={<FileText className="w-7 h-7" />}
           active={activeTab === 'lease'}
           onClick={() => setActiveTab(t => (t === 'lease' ? null : 'lease'))}
         />
 
-        {/* --------- PANEL : Location --------- */}
-        <Panel show={activeTab === 'location'}>
+        {/* Nouvelle tuile DPE */}
+        <TileButton
+          idFor="panel-dpe"
+          label="DPE"
+          icon={<Gauge className="w-7 h-7" />}
+          active={activeTab === 'dpe'}
+          onClick={() => setActiveTab(t => (t === 'dpe' ? null : 'dpe'))}
+        />
+
+        {/* Nouvelle tuile Charges récupérables */}
+        <TileButton
+          idFor="panel-rec-charges"
+          label="Charges récupérables"
+          icon={<Receipt className="w-7 h-7" />}
+          active={activeTab === 'rec-charges'}
+          onClick={() => setActiveTab(t => (t === 'rec-charges' ? null : 'rec-charges'))}
+        />
+
+        {/* Panel: Location */}
+        <Panel id="panel-location" show={activeTab === 'location'}>
           <SectionLoader loading={false} error={null}>
-            {/* HEADER */}
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm uppercase tracking-wider text-gray-400">Information location</p>
@@ -283,7 +301,6 @@ export default function PropertyDetail() {
               </div>
             </div>
 
-            {/* GRID */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <SpecTile icon={<Home className="w-4 h-4" />} label="Type de bien" value={property?.propertyType} />
               <SpecTile icon={<Hash className="w-4 h-4" />} label="Code Postal" value={property?.postalCode} />
@@ -301,7 +318,6 @@ export default function PropertyDetail() {
               />
             </div>
 
-            {/* ÉQUIPEMENTS */}
             <div className="mt-6">
               <p className="font-semibold text-gray-300 mb-2">Équipements</p>
               {property?.amenities && Object.keys(property.amenities).some(k => property.amenities[k]) ? (
@@ -324,39 +340,45 @@ export default function PropertyDetail() {
           </SectionLoader>
         </Panel>
 
-        {/* --------- PANEL : Financier --------- */}
-        <Panel show={activeTab === 'financial'}>
+        {/* Panel: Financier */}
+        <Panel id="panel-financial" show={activeTab === 'financial'}>
           <SectionLoader loading={false} error={null}>
-            {property.financialInfo && Object.keys(property.financialInfo).length > 0 ? (
-              <FinancialDataDisplay data={property.financialInfo} />
+            {finData && Object.keys(finData).length > 0 ? (
+              rentalKind === 'LCD' ? (
+                <FinancialDataDisplayShort data={finData} results={finData} />
+              ) : rentalKind === 'AV' ? (
+                <div className="space-y-3">
+                  <GlassCard>
+                    <p className="text-sm text-gray-300">
+                      Ce bien est en mode <b>achat / revente</b>. Consulte l’analyse dédiée.
+                    </p>
+                  </GlassCard>
+                  <button
+                    onClick={() => navigate(`/properties/${id}/financial-sell?mode=AV`)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl font-medium text-white bg-gradient-to-b from-greenLight to-checkgreen shadow-md hover:from-checkgreen hover:to-greenLight hover:shadow-lg transition"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Ouvrir l’analyse revente
+                  </button>
+                </div>
+              ) : (
+                <FinancialDataDisplay data={finData} results={finData} />
+              )
             ) : (
-              <button
-                onClick={goToFinancial}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded hover:bg-checkgreen transition"
-              >
-                <Plus className="w-5 h-5" />
-                <span>Ajouter</span>
-              </button>
+              <PrimaryButton onClick={goToFinancial} icon={Plus}>
+                Ajouter
+              </PrimaryButton>
             )}
           </SectionLoader>
         </Panel>
 
-        {/* --------- PANEL : Factures --------- */}
-        <Panel show={activeTab === 'bills'}>
+        {/* Panel: Factures */}
+        <Panel id="panel-bills" show={activeTab === 'bills'}>
           <SectionLoader loading={billsLoading} error={null}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Gestion des factures</h3>
-              <button
-                onClick={() => setOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl font-medium text-white bg-gradient-to-b from-greenLight to-checkgreen shadow-md hover:from-checkgreen hover:to-greenLight hover:shadow-lg transition"
-                title="Ajouter une facture"
-              >
-                <Plus className="w-5 h-5" />
-                Ajouter
-              </button>
             </div>
 
-            {/* Cartes résumé */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               <GlassCard>
                 <p className="text-xs uppercase tracking-wide text-gray-400">Total factures</p>
@@ -372,10 +394,9 @@ export default function PropertyDetail() {
               </GlassCard>
             </div>
 
-            {/* Formulaire d'ajout (inline) */}
+            {/* Formulaire inline générique */}
             <BillInlineForm onSubmit={addBill} />
 
-            {/* Liste des factures */}
             {Array.isArray(bills) && bills.length > 0 ? (
               <div className="space-y-3">
                 {bills.map((bill) => (
@@ -392,8 +413,8 @@ export default function PropertyDetail() {
           </SectionLoader>
         </Panel>
 
-        {/* --------- PANEL : Locataire --------- */}
-        <Panel show={activeTab === 'tenant'}>
+        {/* Panel: Locataire */}
+        <Panel id="panel-tenant" show={activeTab === 'tenant'}>
           <SectionLoader loading={false} error={null}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Dossier locataire</h3>
@@ -406,14 +427,13 @@ export default function PropertyDetail() {
                 >
                   {resolvingTenant ? 'Ouverture…' : 'Gérer'}
                 </button>
-                <button
+                <PrimaryButton
                   onClick={() => navigate(`/locataire/new?property=${id}`)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl font-medium text-white bg-gradient-to-b from-greenLight to-checkgreen shadow-md hover:from-checkgreen hover:to-greenLight hover:shadow-lg transition"
+                  icon={Plus}
                   title="Ajouter un locataire"
                 >
-                  <Plus className="w-5 h-5" />
                   Ajouter
-                </button>
+                </PrimaryButton>
               </div>
             </div>
 
@@ -448,25 +468,45 @@ export default function PropertyDetail() {
           </SectionLoader>
         </Panel>
 
-        {/* --------- PANEL : Travaux --------- */}
-        <Panel show={activeTab === 'works'}>
+        {/* Panel: DPE (NOUVEAU) */}
+        <Panel id="panel-dpe" show={activeTab === 'dpe'}>
           <SectionLoader loading={false} error={null}>
-            <WorkProgress propertyId={id} />
+            <DpePanel propertyId={id} initialDpe={property?.dpe || null} />
           </SectionLoader>
         </Panel>
 
-        {/* --------- PANEL : Bail / Séjours --------- */}
-        <Panel show={activeTab === 'lease'}>
+        {/* Panel: Charges récupérables (NOUVEAU) */}
+        <Panel id="panel-rec-charges" show={activeTab === 'rec-charges'}>
+          <SectionLoader loading={billsLoading} error={null}>
+            <RecoverableChargesPanel
+              propertyId={id}
+              bills={bills}
+              loading={billsLoading}
+              addBill={addBill}
+              deleteBill={deleteBill}
+            />
+          </SectionLoader>
+        </Panel>
+
+        {/* Panel: Travaux */}
+        <Panel id="panel-works" show={activeTab === 'works'}>
           <SectionLoader loading={false} error={null}>
-            {rentalKind === 'LCD' ? (
-              <ShortStayPanel property={property} propertyId={id} />
-            ) : (
-              <LeasePanel
-                property={property}
-                propertyId={id}
-                onOpenTenant={handleGoToTenant}
-              />
-            )}
+            <Suspense fallback={<SectionLoader loading={true} error={null} />}>
+              <WorkProgress propertyId={id} />
+            </Suspense>
+          </SectionLoader>
+        </Panel>
+
+        {/* Panel: Bail / Séjours */}
+        <Panel id="panel-lease" show={activeTab === 'lease'}>
+          <SectionLoader loading={false} error={null}>
+            <Suspense fallback={<SectionLoader loading={true} error={null} />}>
+              {rentalKind === 'LCD' ? (
+                <ShortStayPanel property={property} propertyId={id} />
+              ) : (
+                <LeasePanel property={property} propertyId={id} onOpenTenant={handleGoToTenant} />
+              )}
+            </Suspense>
           </SectionLoader>
         </Panel>
       </div>
@@ -474,7 +514,7 @@ export default function PropertyDetail() {
   );
 }
 
-/* === Petits composants réutilisés localement === */
+/* === Petits composants réutilisés === */
 function SpecTile({ icon, label, value }) {
   const display = value ?? "—";
   return (
@@ -509,90 +549,6 @@ function GlassCard({ className = "", children }) {
       <span className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03),transparent_65%)]" />
       <div className="relative z-10">{children}</div>
     </div>
-  );
-}
-
-function BillInlineForm({ onSubmit }) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
-  const [file, setFile] = useState(null);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!title || !amount || !file) return;
-    if (!onSubmit) return;
-    const form = new FormData();
-    form.append('title', title);
-    form.append('amount', amount);
-    form.append('file', file);
-    await onSubmit(form);
-    setTitle(''); setAmount(''); setFile(null); setOpen(false);
-  };
-
-  return (
-    <>
-      {!open ? (
-        <button
-          onClick={() => setOpen(true)}
-          className="px-4 py-2 rounded-2xl font-medium text-white bg-white/10 hover:bg-white/15 border border-white/10 transition mb-3"
-        >
-          Ajouter une facture
-        </button>
-      ) : (
-        <GlassCard className="p-4 mb-4">
-          <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div className="md:col-span-2">
-              <label className="block text-gray-400 text-sm">Titre</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full mt-1 px-3 py-2 bg-gray-900/60 border border-white/10 rounded-xl text-white"
-                placeholder="Ex. Facture EDF"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 text-sm">Montant (€)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full mt-1 px-3 py-2 bg-gray-900/60 border border-white/10 rounded-xl text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 text-sm">Document</label>
-              <input
-                type="file"
-                accept="application/pdf,image/*"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="mt-1 text-gray-200 block"
-                required
-              />
-            </div>
-            <div className="md:col-span-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => { setOpen(false); setTitle(''); setAmount(''); setFile(null); }}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-gray-100 transition"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-b from-greenLight to-checkgreen hover:from-checkgreen hover:to-greenLight shadow-md hover:shadow-lg transition"
-              >
-                Enregistrer
-              </button>
-            </div>
-          </form>
-        </GlassCard>
-      )}
-    </>
   );
 }
 

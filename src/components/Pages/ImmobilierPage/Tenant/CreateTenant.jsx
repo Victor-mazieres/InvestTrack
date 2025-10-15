@@ -2,8 +2,9 @@ import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, User } from 'lucide-react';
-import FloatingInput from '../../PeaPage/Modules/Reutilisable/FloatingLabelInput';
+import FloatingInput from '../../../Reutilisable/FloatingLabelInput';
 import DateInput from '../../ImmobilierPage/Tenant/DateInput';
+import PrimaryButton from '../../../Reutilisable/PrimaryButton';
 
 const CreateTenant = () => {
   const navigate = useNavigate();
@@ -247,16 +248,10 @@ const CreateTenant = () => {
           </div>
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="
-                bg-greenLight text-white 
-                px-4 py-2 rounded-3xl shadow-xl 
-                hover:bg-checkgreen transition
-              "
-            >
-              Enregistrer
-            </button>
+          <PrimaryButton type="submit">
+            Enregistrer
+          </PrimaryButton>
+
           </div>
         </form>
       </div>

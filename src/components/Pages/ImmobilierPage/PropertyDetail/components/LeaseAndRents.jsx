@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 
 import { Loader } from './Loader';
 import { useProperty } from '../hooks/useProperty';
+import  PrimaryButton  from '../../../../Reutilisable/PrimaryButton';
 
 export default function LeaseAndRents() {
   const { id } = useParams();
@@ -58,13 +59,6 @@ export default function LeaseAndRents() {
     <div className="min-h-screen bg-noir-780 text-gray-100 p-4 sm:p-6">
       {/* Header responsive */}
       <header className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 sm:p-2.5 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
-          aria-label="Revenir en arrière"
-        >
-          <ArrowLeft className="w-6 h-6 text-greenLight" />
-        </button>
         <h1 className="text-xl sm:text-2xl font-bold text-white">
           Bail & Loyers — <span className="text-greenLight">{property?.name}</span>
         </h1>
@@ -124,12 +118,12 @@ export default function LeaseAndRents() {
             {/* CTA “Enregistrer” : plein largeur sur mobile */}
             {!showPayForm ? (
               <div className="mb-3 sm:mb-4">
-                <button
+                <PrimaryButton
                   onClick={() => setShowPayForm(true)}
-                  className="w-full sm:w-auto px-4 py-2 rounded-xl font-medium text-white bg-gradient-to-b from-greenLight to-checkgreen hover:from-checkgreen hover:to-greenLight shadow-md hover:shadow-lg transition"
+                  className="w-full sm:w-auto"
                 >
                   Enregistrer un paiement
-                </button>
+                </PrimaryButton>
               </div>
             ) : (
               <form onSubmit={addLocalPayment} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">

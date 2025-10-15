@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Trash } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import PrimaryButton from '../../Reutilisable/PrimaryButton';
 
 const MetricPieChart = lazy(() => import('./Components/MetricPieChart'));
 
@@ -22,11 +23,9 @@ const cardClass =
 
 /** Détermine le type (LLD | LCD | AV) de façon robuste */
 function resolveRentalKind(p = {}) {
-  // Nouveau champ prioritaire
   const rk = (p.rentalKind || '').toString().trim().toUpperCase();
   if (rk === 'LLD' || rk === 'LCD' || rk === 'AV') return rk;
 
-  // Fallback anciens champs pour compat
   const mode = (p.mode || '').toString().trim().toLowerCase();
   const rs   = (p.rentalStrategy || p.rental_type || p.rentalMode || '').toString().trim().toLowerCase();
 
@@ -35,7 +34,6 @@ function resolveRentalKind(p = {}) {
     if (['short_term', 'short-term', 'lcd', 'airbnb', 'courte duree', 'courte-duree'].includes(rs)) return 'LCD';
     return 'LLD';
   }
-  // Si rien de clair : on tente de deviner
   if (['short_term', 'short-term', 'lcd', 'airbnb'].includes(rs)) return 'LCD';
   return 'LLD';
 }
@@ -97,7 +95,6 @@ export default function ImmobilierDashboard() {
     queryKey: ['properties', userId],
     queryFn: async () => {
       const res = await fetch(propsUrl);
-      // Si le backend renvoie une erreur JSON, on remonte l'erreur proprement
       if (!res.ok) {
         let msg = `HTTP ${res.status}`;
         try {
@@ -107,7 +104,7 @@ export default function ImmobilierDashboard() {
         throw new Error(msg);
       }
       const data = await res.json();
-      return Array.isArray(data) ? data : []; // robustesse
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!userId
   });
@@ -138,14 +135,79 @@ export default function ImmobilierDashboard() {
 
   const tenants = tenantsRaw ?? [];
 
+  /* ==============================
+     SUPPRESSION BIEN — Optimistic Update
+     ============================== */
   const deletePropertyMutation = useMutation({
-    mutationFn: id => fetch(`${baseUrl}/properties/${id}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['properties', userId] })
+    mutationFn: async (id) => {
+      const res = await fetch(`${baseUrl}/properties/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try {
+          const j = await res.json();
+          if (j?.error) msg = j.error;
+        } catch {}
+        throw new Error(msg);
+      }
+      return { id };
+    },
+    // On met à jour localement le cache immédiatement -> le graphique se met à jour
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['properties', userId] });
+      const previous = queryClient.getQueryData(['properties', userId]);
+
+      queryClient.setQueryData(['properties', userId], (old) => {
+        const list = Array.isArray(old) ? old : [];
+        return list.filter(p => (p._id || p.id) !== id);
+      });
+
+      return { previous };
+    },
+    // Si erreur -> on rétablit l'ancien cache
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['properties', userId], context.previous);
+      }
+    },
+    // Quoi qu’il arrive -> on resynchronise avec l’API
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties', userId] });
+    }
   });
 
+  /* (Optionnel) même logique pour les locataires */
   const deleteTenantMutation = useMutation({
-    mutationFn: id => fetch(`${baseUrl}/tenants/${id}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tenants', userId] })
+    mutationFn: async (id) => {
+      const res = await fetch(`${baseUrl}/tenants/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try {
+          const j = await res.json();
+          if (j?.error) msg = j.error;
+        } catch {}
+        throw new Error(msg);
+      }
+      return { id };
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['tenants', userId] });
+      const previous = queryClient.getQueryData(['tenants', userId]);
+
+      queryClient.setQueryData(['tenants', userId], (old) => {
+        const list = Array.isArray(old) ? old : [];
+        return list.filter(t => (t._id || t.id) !== id);
+      });
+
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['tenants', userId], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenants', userId] });
+    }
   });
 
   const handleNewProperty = useCallback(() => {
@@ -183,7 +245,7 @@ export default function ImmobilierDashboard() {
       const kind = resolveRentalKind(p);
       if (kind === 'AV') av.push(p);
       else if (kind === 'LCD') lcd.push(p);
-      else lld.push(p); // par défaut LLD
+      else lld.push(p);
     }
     return { lldProps: lld, lcdProps: lcd, flipProps: av };
   }, [properties]);
@@ -346,12 +408,11 @@ export default function ImmobilierDashboard() {
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-100">Locataires</h2>
-          <button
-            onClick={handleNewTenant}
-            className="flex items-center bg-greenLight text-white px-4 py-2 rounded-full shadow hover:bg-checkgreen transition"
-          >
-            <Plus className="w-5 h-5 mr-2" /> Créer un locataire
-          </button>
+
+            <PrimaryButton onClick={handleNewTenant} icon={Plus} className="inline-flex items-center gap-2">
+              Créer un locataire
+            </PrimaryButton>
+
         </div>
 
         {loadingT ? (
@@ -398,7 +459,7 @@ export default function ImmobilierDashboard() {
         )}
       </motion.div>
 
-      {/* Floating Action Button (FAB) */}
+      {/* FAB */}
       <button
         onClick={handleNewProperty}
         className="

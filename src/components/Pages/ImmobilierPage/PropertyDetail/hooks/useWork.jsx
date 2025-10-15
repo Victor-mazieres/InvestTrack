@@ -1,64 +1,64 @@
 // src/hooks/useWork.jsx
-import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import React from 'react';
+import { api } from '../../../../../api/api';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
-  withCredentials: true, // utile si tu as des cookies de session
-});
+export function useWork(propertyId) {
+  const [rooms, setRooms]   = React.useState([]);
+  const [loading, setLoad]  = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError]   = React.useState(null);
 
-export function useWork(propertyId, userId) {
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchWork = useCallback(async () => {
-    if (!propertyId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.get(`/api/properties/${propertyId}/works`, {
-        params: userId ? { userId } : {},
-      });
-      const data = res.data;
-      setRooms(Array.isArray(data?.rooms) ? data.rooms : []);
-    } catch (e) {
-      console.error("GET works error:", e);
-      setError(e?.response?.data?.message || e.message || "Erreur chargement");
-      setRooms([]); // garder l’UI utilisable
-    } finally {
-      setLoading(false);
+  React.useEffect(() => {
+    if (!propertyId) {
+      setRooms([]);
+      setLoad(false);
+      return;
     }
-  }, [propertyId, userId]);
 
-  const saveWork = useCallback(
-    async (nextRooms) => {
-      if (!propertyId) return false;
-      setSaving(true);
-      setError(null);
+    const ctrl = new AbortController();
+    let finished = false;
+
+    (async () => {
       try {
-        const res = await api.put(
-          `/api/properties/${propertyId}/works`,
-          { rooms: nextRooms },
-          { params: userId ? { userId } : {} }
-        );
-        setRooms(Array.isArray(res.data?.rooms) ? res.data.rooms : []);
-        return true;
+        setLoad(true);
+        setError(null);
+        const data = await api.get(`/api/properties/${propertyId}/works`, {
+          signal: ctrl.signal,
+          // keepalive est inutile ici, on le garde pour PUT si besoin
+        });
+        if (finished) return; // composant démonté entre-temps
+        setRooms(Array.isArray(data?.rooms) ? data.rooms : []);
       } catch (e) {
-        console.error("PUT works error:", e);
-        setError(e?.response?.data?.message || e.message || "Erreur enregistrement");
-        return false;
+        // 👉 On ignore les aborts : c'est attendu lors d'un remount/changement d'id
+        if (e?.name === 'AbortError') return;
+        console.error('GET works failed (non-abort):', e);
+        if (!finished) setError(e?.message || 'Erreur de chargement');
       } finally {
-        setSaving(false);
+        if (!finished) setLoad(false);
       }
-    },
-    [propertyId, userId]
-  );
+    })();
 
-  useEffect(() => {
-    fetchWork();
-  }, [fetchWork]);
+    return () => { finished = true; ctrl.abort(); };
+  }, [propertyId]);
 
-  return { rooms, setRooms, loading, error, saving, saveWork, reload: fetchWork };
+  const saveWork = React.useCallback(async (newRooms) => {
+    setSaving(true);
+    try {
+      await api.put(
+        `/api/properties/${propertyId}/works`,
+        { rooms: newRooms },
+        { keepalive: true } // utile si l’onglet se ferme juste après un clic
+      );
+      return { ok: true };
+    } catch (e) {
+      if (e?.name === 'AbortError') return { ok: false }; // ignore
+      console.error('PUT works failed:', e);
+      setError(e?.message || 'Erreur d’enregistrement');
+      return { ok: false, error: e?.message };
+    } finally {
+      setSaving(false);
+    }
+  }, [propertyId]);
+
+  return { rooms, setRooms, loading: setLoad ? loading : false, loading: setLoad ? loading : false, loading, error, saving, saveWork };
 }

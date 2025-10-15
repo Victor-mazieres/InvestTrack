@@ -1,9 +1,9 @@
-// src/pages/CreatePropertyStep2.jsx
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CustomSelect from '../../PeaPage/Modules/Reutilisable/CustomSelect';
 import PrimaryButton from "../../PeaPage/Modules/Reutilisable/PrimaryButton";
+import FurnishedTogglePro from '../Reutilisable/FurnishedTogglePro'; // ⬅️ chemin relatif depuis /src/pages
 
 // Utilitaire pour récupérer un CSRF token frais
 async function fetchCsrfToken() {
@@ -17,10 +17,12 @@ async function fetchCsrfToken() {
 const CreatePropertyStep2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const previousData = location.state || {}; // contient rentalKind: 'LLD'|'LCD'|'AV'
+  const previousData = location.state || {}; // contient notamment rentalKind: 'LLD'|'LCD'|'AV'
 
   const [details, setDetails] = useState({
-    pieces: '',
+    // Par défaut: non meublé (tu peux mettre null si tu veux forcer un choix)
+    isFurnished: false,
+
     toilettes: '',
     sallesDeBain: '',
     chauffage: '',
@@ -72,7 +74,8 @@ const CreatePropertyStep2 = () => {
 
   const validateForm = () => {
     const requiredFields = {
-      pieces: 'Nombre de pièces',
+      // Si tu veux rendre le choix obligatoire et partir de null, décommente la ligne suivante
+      // isFurnished: 'Type de location (meublé / non meublé)',
       toilettes: 'Nombre de toilettes',
       sallesDeBain: 'Nombre de salles de bain',
       chauffage: 'Type de chauffage',
@@ -80,7 +83,8 @@ const CreatePropertyStep2 = () => {
     };
 
     for (const [field, label] of Object.entries(requiredFields)) {
-      if (!details[field]) {
+      const v = details[field];
+      if (v === '' || v === null || v === undefined) {
         alert(`Le champ "${label}" est obligatoire`);
         return false;
       }
@@ -92,18 +96,13 @@ const CreatePropertyStep2 = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // 1) CSRF
     const csrfToken = await fetchCsrfToken();
-
-    // 2) rentalKind pivot
     const rk = String(previousData.rentalKind || '').toUpperCase(); // 'LLD'|'LCD'|'AV'
 
-    // 3) Payload pour backend (inclut rentalKind)
     const propertyData = {
       userId: previousData.userId || localStorage.getItem('userId') || null,
 
-      rentalKind: rk, // >>> IMPORTANT : clé pivot
-      // le backend déduira 'mode' automatiquement (AV => achat_revente, sinon location)
+      rentalKind: rk, // le back déduira 'mode'
 
       name: previousData.name || '',
       address: previousData.address || '',
@@ -120,7 +119,10 @@ const CreatePropertyStep2 = () => {
         ? new Date(previousData.acquisitionDate).toISOString()
         : null,
 
-      pieces: Number(details.pieces),
+      // ✅ Meublé / Non meublé
+      isFurnished: !!details.isFurnished,                  // booléen
+      furnished: details.isFurnished ? 'meublé' : 'non_meublé', // doublon texte pratique
+
       toilettes: Number(details.toilettes),
       sallesDeBain: Number(details.sallesDeBain),
       chauffage: details.chauffage,
@@ -153,7 +155,6 @@ const CreatePropertyStep2 = () => {
         return;
       }
 
-      // Redirection vers la fiche du bien — le bouton "Ajouter" routera selon rentalKind
       navigate(`/property/${newId}`, { state: { successMessage: 'Bien créé avec succès!' } });
     } catch (error) {
       console.error('Erreur:', error);
@@ -176,55 +177,56 @@ const CreatePropertyStep2 = () => {
           Créer un Bien Immobilier – <span className="text-greenLight">Étape 2</span>
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <CustomSelect
-            name="pieces"
-            value={details.pieces}
-            onChange={val => handleSelectChange('pieces', val)}
-            options={numberOptions(1, 10)}
-            placeholder="Nombre de pièces*"
-            required
-          />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* ✅ Toggle meublé / non meublé */}
+          <div className="flex flex-col items-start">
+            <FurnishedTogglePro
+              value={details.isFurnished}
+              onChange={(v) => setDetails(prev => ({ ...prev, isFurnished: v }))}
+            />
+          </div>
 
-          <CustomSelect
-            name="toilettes"
-            value={details.toilettes}
-            onChange={val => handleSelectChange('toilettes', val)}
-            options={numberOptions(1, 5)}
-            placeholder="Nombre de toilettes*"
-            required
-          />
+          <div className="grid gap-4">
+            <CustomSelect
+              name="toilettes"
+              value={details.toilettes}
+              onChange={val => handleSelectChange('toilettes', val)}
+              options={numberOptions(1, 5)}
+              placeholder="Nombre de toilettes*"
+              required
+            />
 
-          <CustomSelect
-            name="sallesDeBain"
-            value={details.sallesDeBain}
-            onChange={val => handleSelectChange('sallesDeBain', val)}
-            options={numberOptions(1, 5)}
-            placeholder="Nombre de salles de bain*"
-            required
-          />
+            <CustomSelect
+              name="sallesDeBain"
+              value={details.sallesDeBain}
+              onChange={val => handleSelectChange('sallesDeBain', val)}
+              options={numberOptions(1, 5)}
+              placeholder="Nombre de salles de bain*"
+              required
+            />
 
-          <CustomSelect
-            name="chauffage"
-            value={details.chauffage}
-            onChange={val => handleSelectChange('chauffage', val)}
-            options={chauffageOptions}
-            placeholder="Chauffage*"
-            required
-          />
+            <CustomSelect
+              name="chauffage"
+              value={details.chauffage}
+              onChange={val => handleSelectChange('chauffage', val)}
+              options={chauffageOptions}
+              placeholder="Chauffage*"
+              required
+            />
 
-          <CustomSelect
-            name="eauChaude"
-            value={details.eauChaude}
-            onChange={val => handleSelectChange('eauChaude', val)}
-            options={eauChaudeOptions}
-            placeholder="Eau chaude*"
-            required
-          />
+            <CustomSelect
+              name="eauChaude"
+              value={details.eauChaude}
+              onChange={val => handleSelectChange('eauChaude', val)}
+              options={eauChaudeOptions}
+              placeholder="Eau chaude*"
+              required
+            />
+          </div>
 
           {/* Équipements */}
           <div>
-            <p className="mb-2">Équipements :</p>
+            <p className="mb-2 text-sm">Équipements :</p>
             <div className="flex flex-wrap gap-2">
               {[
                 { name: 'cave', label: 'Cave' },
@@ -255,7 +257,7 @@ const CreatePropertyStep2 = () => {
                       }))
                     }
                     className={[
-                      "px-3 py-2 rounded-full text-sm font-medium border transition",
+                      "px-3 py-2 rounded-full text-xs font-medium border transition",
                       selected
                         ? "bg-greenLight text-white border-greenLight shadow"
                         : "bg-gray-800 text-gray-200 border-gray-600 hover:border-gray-500 hover:bg-gray-750",
@@ -269,9 +271,7 @@ const CreatePropertyStep2 = () => {
           </div>
 
           <div className="flex justify-end">
-            <PrimaryButton type="submit">
-              Enregistrer
-            </PrimaryButton>
+            <PrimaryButton type="submit">Enregistrer</PrimaryButton>
           </div>
         </form>
       </div>
