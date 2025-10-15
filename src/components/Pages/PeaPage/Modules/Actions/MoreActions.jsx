@@ -9,12 +9,12 @@ import {
   LineChart,
   PlusCircle,
 } from "lucide-react";
-import CustomSelect from "../Reutilisable/CustomSelect";
+import CustomSelect from "../../../../Reutilisable/CustomSelect";
 import CustomDatePicker from "./CustomDatePickerAddAction/CustomDatePicker";
 import ActionAutoComplete from "./ActionAutoComplete";
 import { ActionsContext } from "../Reutilisable/ActionsContext";
 import { sectors } from "../Actions/constants/sectors";
-import FloatingLabelInput from "../Reutilisable/FloatingLabelInput";
+import FloatingLabelInput from "../../../../Reutilisable/FloatingLabelInput";
 
 const sectorOptions = sectors.map((sector) => ({
   value: sector === "Tous les secteurs" ? "" : sector,
