@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CustomSelect from '../../../Reutilisable/CustomSelect';
-import PrimaryButton from "../../PeaPage/Modules/Reutilisable/PrimaryButton";
+import PrimaryButton from "../../../Reutilisable/PrimaryButton";
 import FurnishedTogglePro from '../Reutilisable/FurnishedTogglePro'; // ⬅️ chemin relatif depuis /src/pages
 
 // Utilitaire pour récupérer un CSRF token frais
