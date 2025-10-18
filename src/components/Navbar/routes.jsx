@@ -11,6 +11,7 @@ const Profile = lazy(() => import("../Pages/Profile/Modules/Profile"));
 const LoginPinPage = lazy(() => import("../Pages/ConnexionPage/LoginPage/LoginPage"));
 const RegisterPage = lazy(() => import("../Pages/ConnexionPage/RegisterPage/RegisterPage"));
 const Dashboard = lazy(() => import("../Pages/Dashboard/Dashboard"));
+const MortgageTabs = lazy(() => import('../Pages/CalculatorCredit/MortgageTabs'));
 const SavedCalculations = lazy(() => import("../Pages/CalculatorCredit/SavedCalculations"));
 const CalculationDetails = lazy(() => import("../Pages/CalculatorCredit/CalculationDetails"));
 const CreatePropertyStep1 = lazy(() => import("../Pages/ImmobilierPage/CreateProperty/CreatePropertyStep1"));
@@ -20,10 +21,11 @@ const CreateTenant = lazy(() => import("../Pages/ImmobilierPage/Tenant/CreateTen
 const TenantDetails = lazy(() => import("../Pages/ImmobilierPage/Tenant/TenantDetails"));
 const FinancialInfo = lazy (() => import("../Pages/ImmobilierPage/PropertyDetail/FinancialInfo/FinancialInfo"));
 const DashboardImmobilierSelection = lazy(() => import('../Pages/Profile/Modules/SelectDashboardImmo'));
-const BudgetOptimizer = lazy(() => import('../Pages/Dashboard/Modules/BudgetOptimizer/BudgetOptimizer'));
-const PayslipsPage = lazy(() => import('../Pages/Dashboard/Modules/PayslipsPage/PayslipsPage'));
+const BudgetOptimizer = lazy(() => import('../Pages/Tools/BudgetOptimizer/BudgetOptimizer'));
+const PayslipsPage = lazy(() => import('../Pages/Tools/PayslipsPage/PayslipsPage'));
 const FinancialInfoShort = lazy (() => import ('../Pages/ImmobilierPage/PropertyDetail/FinancialInfo/FinancialInfoShort'));
 const LeaseAndRents = lazy (()=> import ('../Pages/ImmobilierPage/PropertyDetail/components/LeaseAndRents'));
+const OutilsPage = lazy (()=> import ('../Pages/Tools/OutilsPage'));
 
 // Error Pages
 const NotFoundPage = lazy(() => import("../Pages/Errors/NotFoundPage"));
@@ -40,6 +42,7 @@ export const mainRoutes = [
   { path: "/connexion", element: <LoginPinPage /> },
   { path: "/inscription", element: <RegisterPage /> },
   { path: "/dashboard", element: <Dashboard /> },
+  { path: "/calcul", element: <MortgageTabs /> },
   { path: "/calculimmobilier", element: <SavedCalculations /> },
   { path: "/calculimmobilier/:timestamp", element: <SavedCalculations /> },
   { path: "/detailscalcul/:id", element: <CalculationDetails /> },
@@ -58,4 +61,5 @@ export const mainRoutes = [
   { path: "/TMI", element: <PayslipsPage /> },
   { path: "/properties/:id/financial-short", element: <FinancialInfoShort />,},
   { path: "/property/:id/lease", element: <LeaseAndRents /> },
+  { path: "/outils", element: <OutilsPage /> },
 ];

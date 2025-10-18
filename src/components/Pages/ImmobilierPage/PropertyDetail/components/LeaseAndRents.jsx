@@ -1,45 +1,114 @@
 // src/pages/LeaseAndRents.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 
 import { Loader } from './Loader';
 import { useProperty } from '../hooks/useProperty';
-import  PrimaryButton  from '../../../../Reutilisable/PrimaryButton';
+import PrimaryButton from '../../Reutilisable/PrimaryButton';
+
+// Store synchronisé (localStorage + backend)
+import {
+  definirConfigBien,
+  enregistrerDateEcheanceServeur,
+  enregistrerPaiementServeur,
+} from '../../utils/rentCalendarStore';
 
 export default function LeaseAndRents() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const token = localStorage.getItem('token') || '';
 
   const { property, loading, error } = useProperty(id);
 
-  // Amorçage à partir de financialInfo si dispo
+  // Montants de base
   const baseRentHC  = useMemo(() => Number(property?.financialInfo?.loyerHc ?? 0), [property]);
   const baseCharges = useMemo(() => Number(property?.financialInfo?.chargesLoc ?? 0), [property]);
   const baseRentCC  = baseRentHC + baseCharges;
 
-  // État local (peut être branché à une API plus tard)
+  // Échéance (date) — champ local + bouton “Confirmer”
+  const initialDueDate = useMemo(() => {
+    // Si tu as déjà une date côté API, mappe-la ici (ex: property?.rentConfig?.startDate)
+    const fromApi = property?.financialInfo?.nextDueDate || property?.rentConfig?.startDate;
+    return fromApi || new Date().toISOString().slice(0, 10);
+  }, [property]);
+
+  const [unsavedDueDate, setUnsavedDueDate] = useState(initialDueDate);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [confirmStatus, setConfirmStatus] = useState(null); // "success" | "error" | null
+
+  // Paiements (UI locale)
   const [rentPayments, setRentPayments] = useState(() => {
-    const init = property?.financialInfo?.rentPayments;
+    // Si tu reçois des paiements du back dans property.financialInfo, amorce ici
+    const init = property?.financialInfo?.rentPayments || property?.rentPayments;
     return Array.isArray(init) ? init : [];
   });
-
   const [showPayForm, setShowPayForm] = useState(false);
   const [payAmount, setPayAmount]     = useState(baseRentCC || '');
   const [payDate, setPayDate]         = useState(() => new Date().toISOString().slice(0,10));
   const [payMethod, setPayMethod]     = useState('virement');
+  const [payLoading, setPayLoading]   = useState(false);
+  const [payError, setPayError]       = useState(null);
 
-  const addLocalPayment = (e) => {
+  // Enrichit le store local (titre utilisé dans le calendrier)
+  useEffect(() => {
+    if (property?.name) {
+      definirConfigBien(id, { title: property.name });
+    }
+  }, [id, property?.name]);
+
+  // Confirme la date d’échéance -> backend + store + calendrier
+  const handleConfirmDueDate = async () => {
+    setConfirmStatus(null);
+    setConfirmLoading(true);
+    try {
+      if (!unsavedDueDate) throw new Error('Aucune date');
+      await enregistrerDateEcheanceServeur({
+        token,
+        propertyId: id,
+        startDate: unsavedDueDate,
+      });
+      setConfirmStatus('success');
+    } catch (e) {
+      console.error(e);
+      setConfirmStatus('error');
+    } finally {
+      setConfirmLoading(false);
+      setTimeout(() => setConfirmStatus(null), 2500);
+    }
+  };
+
+  // Enregistrement d’un paiement -> backend + store + calendrier
+  const submitPayment = async (e) => {
     e?.preventDefault?.();
+    setPayError(null);
     if (!payAmount) return;
-    const newItem = {
-      id: crypto?.randomUUID?.() || String(Date.now()),
-      date: payDate,
-      amount: Number(payAmount),
-      method: payMethod,
-    };
-    setRentPayments(prev => [newItem, ...prev]);
-    setShowPayForm(false);
+
+    setPayLoading(true);
+    try {
+      await enregistrerPaiementServeur({
+        token,
+        propertyId: id,
+        date: payDate,
+        amount: Number(payAmount),
+        method: payMethod,
+      });
+      // UI locale : on empile le nouveau paiement
+      setRentPayments(prev => [
+        {
+          id: crypto?.randomUUID?.() || String(Date.now()),
+          date: payDate,
+          amount: Number(payAmount),
+          method: payMethod,
+        },
+        ...prev,
+      ]);
+      setShowPayForm(false);
+    } catch (err) {
+      console.error(err);
+      setPayError("Erreur lors de l'enregistrement du paiement");
+    } finally {
+      setPayLoading(false);
+    }
   };
 
   const totalPaidThisMonth = useMemo(() => {
@@ -57,16 +126,16 @@ export default function LeaseAndRents() {
 
   return (
     <div className="min-h-screen bg-noir-780 text-gray-100 p-4 sm:p-6">
-      {/* Header responsive */}
+      {/* Header */}
       <header className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-white">
           Bail & Loyers — <span className="text-greenLight">{property?.name}</span>
         </h1>
       </header>
 
-      {/* Grille mobile-first : 1 col → 3 cols en lg */}
+      {/* Grille */}
       <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
-        {/* Résumé bail */}
+        {/* Carte Bail */}
         <GlassCard>
           <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400 mb-2">Bail</p>
 
@@ -85,7 +154,41 @@ export default function LeaseAndRents() {
             <span className="font-semibold">{baseRentCC ? `${baseRentCC.toFixed(2)} €` : '—'}</span>
           </Row>
 
-          {/* Boutons : full width sur mobile */}
+          {/* Échéance — date + bouton de confirmation */}
+          <div className="mt-3 space-y-2">
+            <div>
+              <label className="block text-gray-400 text-sm mb-1">Prochaine échéance (date)</label>
+              <input
+                type="date"
+                value={unsavedDueDate}
+                onChange={(e) => setUnsavedDueDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-gray-900/60 border border-white/10 text-white"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">
+                Cliquez sur <span className="text-gray-300 font-medium">“Confirmer la date”</span> pour mettre à jour le calendrier du Dashboard (et sauvegarder côté serveur).
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleConfirmDueDate}
+                disabled={confirmLoading}
+                className="px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-b from-greenLight to-checkgreen hover:from-checkgreen hover:to-greenLight shadow-md hover:shadow-lg transition disabled:opacity-60"
+              >
+                {confirmLoading ? 'Enregistrement…' : 'Confirmer la date'}
+              </button>
+
+              {confirmStatus === 'success' && (
+                <span className="text-xs text-emerald-400">Date mise à jour ✅</span>
+              )}
+              {confirmStatus === 'error' && (
+                <span className="text-xs text-red-400">Échec de l’enregistrement ❌</span>
+              )}
+            </div>
+          </div>
+
+          {/* Raccourcis */}
           <div className="flex flex-col sm:flex-row gap-2 pt-3">
             <button
               onClick={() => navigate(`/bail/${id}`)}
@@ -102,10 +205,10 @@ export default function LeaseAndRents() {
           </div>
         </GlassCard>
 
-        {/* Suivi paiements */}
+        {/* Carte Paiements */}
         <div className="lg:col-span-2">
           <GlassCard>
-            {/* Pills réactives + wrap */}
+            {/* Stats rapides */}
             <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400">Suivi des paiements</p>
               <div className="flex flex-wrap gap-2">
@@ -115,18 +218,15 @@ export default function LeaseAndRents() {
               </div>
             </div>
 
-            {/* CTA “Enregistrer” : plein largeur sur mobile */}
+            {/* Formulaire paiement (indépendant de l’échéance) */}
             {!showPayForm ? (
               <div className="mb-3 sm:mb-4">
-                <PrimaryButton
-                  onClick={() => setShowPayForm(true)}
-                  className="w-full sm:w-auto"
-                >
+                <PrimaryButton onClick={() => setShowPayForm(true)} className="w-full sm:w-auto">
                   Enregistrer un paiement
                 </PrimaryButton>
               </div>
             ) : (
-              <form onSubmit={addLocalPayment} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <form onSubmit={submitPayment} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div>
                   <label className="block text-gray-400 text-sm">Montant (€)</label>
                   <input
@@ -163,7 +263,6 @@ export default function LeaseAndRents() {
                     <option value="autre">Autre</option>
                   </select>
                 </div>
-                {/* Boutons : stack en mobile */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
                   <button
                     type="button"
@@ -174,19 +273,22 @@ export default function LeaseAndRents() {
                   </button>
                   <button
                     type="submit"
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-b from-greenLight to-checkgreen hover:from-checkgreen hover:to-greenLight shadow-md hover:shadow-lg transition"
+                    disabled={payLoading}
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-b from-greenLight to-checkgreen hover:from-checkgreen hover:to-greenLight shadow-md hover:shadow-lg transition disabled:opacity-60"
                   >
-                    Enregistrer
+                    {payLoading ? 'Enregistrement…' : 'Enregistrer'}
                   </button>
                 </div>
               </form>
             )}
 
-            {/* Liste paiements : limite de hauteur sur mobile pour éviter le scroll infini de la page */}
+            {payError && <p className="text-sm text-red-400 mb-2">{payError}</p>}
+
+            {/* Liste des paiements */}
             {rentPayments.length > 0 ? (
               <div className="space-y-2 max-h-[50vh] sm:max-h-[55vh] overflow-auto pr-1">
                 {rentPayments.map(p => (
-                  <GlassRow key={p.id}>
+                  <GlassRow key={`${p.id}-${p.date}`}>
                     <div className="min-w-0">
                       <p className="text-white font-medium">
                         {new Date(p.date).toLocaleDateString('fr-FR')}
@@ -211,7 +313,7 @@ export default function LeaseAndRents() {
   );
 }
 
-/* === Petits composants UI réutilisables === */
+/* === Petits composants UI === */
 function Row({ label, children }) {
   return (
     <div className="flex items-center justify-between gap-2 sm:gap-3 py-1.5">

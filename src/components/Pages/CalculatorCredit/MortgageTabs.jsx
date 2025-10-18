@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import MortgageSimulator from "./CalculatorCredit";
+import MortgageSimulator from "./MortageSimulator";
 import SavedCalculations from "./SavedCalculations";
 
 export default function MortgageTabs() {

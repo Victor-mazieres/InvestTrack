@@ -46,14 +46,16 @@ function TileButton({ idFor, label, icon, active, onClick }) {
         "bg-[#0a1016]/60 border border-white/10 ring-1 ring-black/10",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_22px_-12px_rgba(0,0,0,0.65)]",
         active ? "outline outline-2 outline-checkgreen/40" : "hover:bg-white/5",
-        "transition focus:outline-none focus-visible:ring-2 focus-visible:ring-greenLight/60"
+        "transition focus:outline-none focus-visible:ring-2 focus-visible:ring-greenLight/60",
+        // responsive padding
+        "sm:p-5 md:p-6"
       ].join(" ")}
     >
       <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-        <span className={["text-2xl", active ? "text-greenLight" : "text-gray-200"].join(" ")}>
+        <span className={["text-2xl sm:text-3xl md:text-4xl", active ? "text-greenLight" : "text-gray-200"].join(" ")}>
           {icon}
         </span>
-        <span className={["text-sm font-medium", active ? "text-white" : "text-gray-300"].join(" ")}>
+        <span className={["text-xs sm:text-sm md:text-base font-medium text-center", active ? "text-white" : "text-gray-300"].join(" ")}>
           {label}
         </span>
       </div>
@@ -68,10 +70,10 @@ function TileButton({ idFor, label, icon, active, onClick }) {
 
 function Panel({ id, show, children }) {
   return (
-    <div id={id} role="region" aria-hidden={!show} className="col-span-2">
+    <div id={id} role="region" aria-hidden={!show} className="col-span-full">
       <div className={`transition-all ${show ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'} duration-200`}>
         {show && (
-          <div className="mt-3 rounded-2xl border border-white/10 bg-[#0a1016]/60 p-4 ring-1 ring-black/10">
+          <div className="mt-3 rounded-2xl border border-white/10 bg-[#0a1016]/60 p-3 sm:p-4 md:p-5 lg:p-6 ring-1 ring-black/10">
             {children}
           </div>
         )}
@@ -186,329 +188,351 @@ export default function PropertyDetail() {
   if (propLoading || !property) return <Loader />;
 
   return (
-    <div className="min-h-screen bg-noir-780 text-gray-100 p-6">
-      {/* HEADER */}
-      <header className="flex items-center mb-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
-        >
-          <ArrowLeft className="w-6 h-6 text-greenLight" />
-        </button>
-        <h1 className="ml-4 text-2xl font-bold text-white">Retour</h1>
-      </header>
+    <div className="min-h-screen bg-noir-780 text-gray-100">
+      {/* PAGE CONTAINER */}
+      <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-8">
+        {/* HEADER */}
+        <header className="sticky top-0 z-20 -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 backdrop-blur supports-[backdrop-filter]:bg-noir-780/70 bg-noir-780/90 border-b border-white/10 px-3 sm:px-4 md:px-6 lg:px-8 py-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 sm:p-2.5 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
+              aria-label="Retour"
+            >
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-greenLight" />
+            </button>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Retour</h1>
+          </div>
+        </header>
 
-      <h2 className="text-3xl mb-6 text-white">
-        Détails du bien <span className="text-greenLight">{property.name}</span>
-      </h2>
+        <div className="mt-4 sm:mt-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl mb-3 sm:mb-5 text-white leading-tight">
+            Détails du bien <span className="text-greenLight">{property.name}</span>
+          </h2>
 
-      {photosLoading
-        ? <Loader />
-        : <PhotoCarousel photos={photos} onAdd={addPhoto} onDelete={deletePhoto} />
-      }
-
-      <DonutChart data={pieData} />
-
-      {!!tenantResolveError && (
-        <p className="mt-2 mb-2 text-sm text-amber-300">{tenantResolveError}</p>
-      )}
-
-      {/* Grille de tuiles */}
-      <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
-        <TileButton
-          idFor="panel-location"
-          label="Location"
-          icon={<MapPin className="w-7 h-7" />}
-          active={activeTab === 'location'}
-          onClick={() => setActiveTab(t => (t === 'location' ? null : 'location'))}
-        />
-        <TileButton
-          idFor="panel-financial"
-          label="Financier"
-          icon={<DollarSign className="w-7 h-7" />}
-          active={activeTab === 'financial'}
-          onClick={() => setActiveTab(t => (t === 'financial' ? null : 'financial'))}
-        />
-        <TileButton
-          idFor="panel-bills"
-          label="Factures"
-          icon={<Receipt className="w-7 h-7" />}
-          active={activeTab === 'bills'}
-          onClick={() => setActiveTab(t => (t === 'bills' ? null : 'bills'))}
-        />
-        <TileButton
-          idFor="panel-tenant"
-          label="Locataire"
-          icon={<User2 className="w-7 h-7" />}
-          active={activeTab === 'tenant'}
-          onClick={() => setActiveTab(t => (t === 'tenant' ? null : 'tenant'))}
-        />
-        <TileButton
-          idFor="panel-works"
-          label="Travaux"
-          icon={<Hammer className="w-7 h-7" />}
-          active={activeTab === 'works'}
-          onClick={() => setActiveTab(t => (t === 'works' ? null : 'works'))}
-        />
-        <TileButton
-          idFor="panel-lease"
-          label={rentalKind === 'LCD' ? "Séjours & Paiements" : "Bail & Loyers"}
-          icon={<FileText className="w-7 h-7" />}
-          active={activeTab === 'lease'}
-          onClick={() => setActiveTab(t => (t === 'lease' ? null : 'lease'))}
-        />
-
-        {/* Nouvelle tuile DPE */}
-        <TileButton
-          idFor="panel-dpe"
-          label="DPE"
-          icon={<Gauge className="w-7 h-7" />}
-          active={activeTab === 'dpe'}
-          onClick={() => setActiveTab(t => (t === 'dpe' ? null : 'dpe'))}
-        />
-
-        {/* Nouvelle tuile Charges récupérables */}
-        <TileButton
-          idFor="panel-rec-charges"
-          label="Charges récupérables"
-          icon={<Receipt className="w-7 h-7" />}
-          active={activeTab === 'rec-charges'}
-          onClick={() => setActiveTab(t => (t === 'rec-charges' ? null : 'rec-charges'))}
-        />
-
-        {/* Panel: Location */}
-        <Panel id="panel-location" show={activeTab === 'location'}>
-          <SectionLoader loading={false} error={null}>
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm uppercase tracking-wider text-gray-400">Information location</p>
-                <h3 className="mt-1 text-xl font-semibold text-white">
-                  {property?.propertyType || "Bien"} — {property?.city || "Ville"}
-                </h3>
-
-                {property?.address ? (
-                  <a
-                    href={`https://maps.google.com/?q=${encodeURIComponent(property.address)}`}
-                    target="_blank" rel="noreferrer"
-                    className="mt-1 inline-flex items-center text-greenLight hover:underline"
-                  >
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {property.address}
-                  </a>
-                ) : (
-                  <span className="text-gray-400">Adresse non renseignée</span>
-                )}
+          {photosLoading
+            ? <Loader />
+            : (
+              <div className="rounded-2xl overflow-hidden border border-white/10 ring-1 ring-black/10 shadow-[0_10px_22px_-12px_rgba(0,0,0,0.65)]">
+                <PhotoCarousel photos={photos} onAdd={addPhoto} onDelete={deletePhoto} />
               </div>
-            </div>
+            )
+          }
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <SpecTile icon={<Home className="w-4 h-4" />} label="Type de bien" value={property?.propertyType} />
-              <SpecTile icon={<Hash className="w-4 h-4" />} label="Code Postal" value={property?.postalCode} />
-              <SpecTile icon={<MapPin className="w-4 h-4" />} label="Ville" value={property?.city} />
-              <SpecTile icon={<Ruler className="w-4 h-4" />} label="Surface" value={property?.surface ? `${property.surface} m²` : null} />
-              <SpecTile icon={<Building2 className="w-4 h-4" />} label="Bâtiment" value={property?.building} />
-              <SpecTile icon={<Hash className="w-4 h-4" />} label="Lot" value={property?.lot} />
-              <SpecTile icon={<Layers  className="w-4 h-4" />} label="Étage" value={property?.floor} />
-              <SpecTile icon={<DoorOpen className="w-4 h-4" />} label="Porte" value={property?.door} />
-              <SpecTile icon={<User2 className="w-4 h-4" />} label="Propriétaire" value={property?.owner} />
-              <SpecTile
-                icon={<CalendarDays className="w-4 h-4" />}
-                label="Date d’acquisition"
-                value={property?.acquisitionDate ? new Date(property.acquisitionDate).toLocaleDateString("fr-FR") : null}
-              />
-            </div>
+          <div className="mt-4 sm:mt-6">
+            <DonutChart data={pieData} />
+          </div>
 
-            <div className="mt-6">
-              <p className="font-semibold text-gray-300 mb-2">Équipements</p>
-              {property?.amenities && Object.keys(property.amenities).some(k => property.amenities[k]) ? (
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(property.amenities)
-                    .filter(([, v]) => v)
-                    .map(([amenity]) => (
-                      <span
-                        key={amenity}
-                        className="px-3 py-1 rounded-2xl text-sm bg-[#0a1016]/70 border border-white/10 ring-1 ring-black/10 text-gray-100"
-                      >
-                        {amenity}
-                      </span>
-                    ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Aucun</p>
-              )}
-            </div>
-          </SectionLoader>
-        </Panel>
+          {!!tenantResolveError && (
+            <p className="mt-2 mb-2 text-sm text-amber-300">{tenantResolveError}</p>
+          )}
 
-        {/* Panel: Financier */}
-        <Panel id="panel-financial" show={activeTab === 'financial'}>
-          <SectionLoader loading={false} error={null}>
-            {finData && Object.keys(finData).length > 0 ? (
-              rentalKind === 'LCD' ? (
-                <FinancialDataDisplayShort data={finData} results={finData} />
-              ) : rentalKind === 'AV' ? (
-                <div className="space-y-3">
-                  <GlassCard>
-                    <p className="text-sm text-gray-300">
-                      Ce bien est en mode <b>achat / revente</b>. Consulte l’analyse dédiée.
-                    </p>
-                  </GlassCard>
-                  <button
-                    onClick={() => navigate(`/properties/${id}/financial-sell?mode=AV`)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl font-medium text-white bg-gradient-to-b from-greenLight to-checkgreen shadow-md hover:from-checkgreen hover:to-greenLight hover:shadow-lg transition"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Ouvrir l’analyse revente
-                  </button>
-                </div>
-              ) : (
-                <FinancialDataDisplay data={finData} results={finData} />
-              )
-            ) : (
-              <PrimaryButton onClick={goToFinancial} icon={Plus}>
-                Ajouter
-              </PrimaryButton>
-            )}
-          </SectionLoader>
-        </Panel>
-
-        {/* Panel: Factures */}
-        <Panel id="panel-bills" show={activeTab === 'bills'}>
-          <SectionLoader loading={billsLoading} error={null}>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Gestion des factures</h3>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-              <GlassCard>
-                <p className="text-xs uppercase tracking-wide text-gray-400">Total factures</p>
-                <p className="mt-1 text-2xl font-bold text-white">{Number(totalBills || 0).toFixed(2)} €</p>
-              </GlassCard>
-              <GlassCard>
-                <p className="text-xs uppercase tracking-wide text-gray-400">Travaux estimés</p>
-                <p className="mt-1 text-2xl font-bold text-white">{Number(travauxEstimes || 0).toFixed(2)} €</p>
-              </GlassCard>
-              <GlassCard>
-                <p className="text-xs uppercase tracking-wide text-gray-400">Budget restant</p>
-                <p className="mt-1 text-2xl font-bold text-white">{Number(budgetRestant || 0).toFixed(2)} €</p>
-              </GlassCard>
-            </div>
-
-            {/* Formulaire inline générique */}
-            <BillInlineForm onSubmit={addBill} />
-
-            {Array.isArray(bills) && bills.length > 0 ? (
-              <div className="space-y-3">
-                {bills.map((bill) => (
-                  <BillRow
-                    key={bill.id || bill._id || bill.fileUrl}
-                    bill={bill}
-                    onDelete={() => deleteBill && deleteBill(bill.id || bill._id)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <GlassCard className="text-gray-400">Aucune facture pour le moment.</GlassCard>
-            )}
-          </SectionLoader>
-        </Panel>
-
-        {/* Panel: Locataire */}
-        <Panel id="panel-tenant" show={activeTab === 'tenant'}>
-          <SectionLoader loading={false} error={null}>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Dossier locataire</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleGoToTenant}
-                  disabled={resolvingTenant}
-                  className="px-4 py-2 rounded-3xl font-medium text-white bg-white/10 hover:bg-white/15 border border-white/10 transition disabled:opacity-60"
-                  title="Gérer le dossier"
-                >
-                  {resolvingTenant ? 'Ouverture…' : 'Gérer'}
-                </button>
-                <PrimaryButton
-                  onClick={() => navigate(`/locataire/new?property=${id}`)}
-                  icon={Plus}
-                  title="Ajouter un locataire"
-                >
-                  Ajouter
-                </PrimaryButton>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              <GlassCard className="lg:col-span-2">
-                <div className="mb-4">
-                  <p className="text-xs uppercase tracking-wide text-gray-400">Identité & Contact</p>
-                </div>
-                <TenantTab ownerId={property.owner} active={activeTab === 'tenant'} />
-              </GlassCard>
-
-              <div className="space-y-3">
-                <GlassCard>
-                  <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">Raccourcis</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <QuickAction icon={<Phone className="w-4 h-4" />} label="Appeler" />
-                    <QuickAction icon={<Mail className="w-4 h-4" />} label="Email" />
-                    <QuickAction icon={<FileText className="w-4 h-4" />} label="Contrat" />
-                    <QuickAction icon={<CalendarDays className="w-4 h-4" />} label="Échéances" />
-                  </div>
-                </GlassCard>
-
-                <GlassCard>
-                  <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">Statut</p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 rounded-2xl text-xs bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">Actif</span>
-                    <span className="px-3 py-1 rounded-2xl text-xs bg-white/10 text-gray-200 border border-white/10">Vérifié</span>
-                  </div>
-                </GlassCard>
-              </div>
-            </div>
-          </SectionLoader>
-        </Panel>
-
-        {/* Panel: DPE (NOUVEAU) */}
-        <Panel id="panel-dpe" show={activeTab === 'dpe'}>
-          <SectionLoader loading={false} error={null}>
-            <DpePanel propertyId={id} initialDpe={property?.dpe || null} />
-          </SectionLoader>
-        </Panel>
-
-        {/* Panel: Charges récupérables (NOUVEAU) */}
-        <Panel id="panel-rec-charges" show={activeTab === 'rec-charges'}>
-          <SectionLoader loading={billsLoading} error={null}>
-            <RecoverableChargesPanel
-              propertyId={id}
-              bills={bills}
-              loading={billsLoading}
-              addBill={addBill}
-              deleteBill={deleteBill}
+          {/* GRID: tiles + panels */}
+          <div
+            className={[
+              "mt-4 grid gap-3 sm:gap-4 md:gap-5",
+              // Tiles row: 2 on mobile, 3 on small, 4 on md, 6 on lg+
+              "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+            ].join(" ")}
+          >
+            <TileButton
+              idFor="panel-location"
+              label="Location"
+              icon={<MapPin className="w-7 h-7" />}
+              active={activeTab === 'location'}
+              onClick={() => setActiveTab(t => (t === 'location' ? null : 'location'))}
             />
-          </SectionLoader>
-        </Panel>
+            <TileButton
+              idFor="panel-financial"
+              label="Financier"
+              icon={<DollarSign className="w-7 h-7" />}
+              active={activeTab === 'financial'}
+              onClick={() => setActiveTab(t => (t === 'financial' ? null : 'financial'))}
+            />
+            <TileButton
+              idFor="panel-bills"
+              label="Factures"
+              icon={<Receipt className="w-7 h-7" />}
+              active={activeTab === 'bills'}
+              onClick={() => setActiveTab(t => (t === 'bills' ? null : 'bills'))}
+            />
+            <TileButton
+              idFor="panel-tenant"
+              label="Locataire"
+              icon={<User2 className="w-7 h-7" />}
+              active={activeTab === 'tenant'}
+              onClick={() => setActiveTab(t => (t === 'tenant' ? null : 'tenant'))}
+            />
+            <TileButton
+              idFor="panel-works"
+              label="Travaux"
+              icon={<Hammer className="w-7 h-7" />}
+              active={activeTab === 'works'}
+              onClick={() => setActiveTab(t => (t === 'works' ? null : 'works'))}
+            />
+            <TileButton
+              idFor="panel-lease"
+              label={rentalKind === 'LCD' ? "Séjours & Paiements" : "Bail & Loyers"}
+              icon={<FileText className="w-7 h-7" />}
+              active={activeTab === 'lease'}
+              onClick={() => setActiveTab(t => (t === 'lease' ? null : 'lease'))}
+            />
 
-        {/* Panel: Travaux */}
-        <Panel id="panel-works" show={activeTab === 'works'}>
-          <SectionLoader loading={false} error={null}>
-            <Suspense fallback={<SectionLoader loading={true} error={null} />}>
-              <WorkProgress propertyId={id} />
-            </Suspense>
-          </SectionLoader>
-        </Panel>
+            {/* Nouvelle tuile DPE */}
+            <TileButton
+              idFor="panel-dpe"
+              label="DPE"
+              icon={<Gauge className="w-7 h-7" />}
+              active={activeTab === 'dpe'}
+              onClick={() => setActiveTab(t => (t === 'dpe' ? null : 'dpe'))}
+            />
 
-        {/* Panel: Bail / Séjours */}
-        <Panel id="panel-lease" show={activeTab === 'lease'}>
-          <SectionLoader loading={false} error={null}>
-            <Suspense fallback={<SectionLoader loading={true} error={null} />}>
-              {rentalKind === 'LCD' ? (
-                <ShortStayPanel property={property} propertyId={id} />
-              ) : (
-                <LeasePanel property={property} propertyId={id} onOpenTenant={handleGoToTenant} />
-              )}
-            </Suspense>
-          </SectionLoader>
-        </Panel>
+            {/* Nouvelle tuile Charges récupérables */}
+            <TileButton
+              idFor="panel-rec-charges"
+              label="Charges récupérables"
+              icon={<Receipt className="w-7 h-7" />}
+              active={activeTab === 'rec-charges'}
+              onClick={() => setActiveTab(t => (t === 'rec-charges' ? null : 'rec-charges'))}
+            />
+
+            {/* Panel: Location */}
+            <Panel id="panel-location" show={activeTab === 'location'}>
+              <SectionLoader loading={false} error={null}>
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                  <div>
+                    <p className="text-xs sm:text-sm uppercase tracking-wider text-gray-400">Information location</p>
+                    <h3 className="mt-1 text-lg sm:text-xl md:text-2xl font-semibold text-white">
+                      {property?.propertyType || "Bien"} — {property?.city || "Ville"}
+                    </h3>
+
+                    {property?.address ? (
+                      <a
+                        href={`https://maps.google.com/?q=${encodeURIComponent(property.address)}`}
+                        target="_blank" rel="noreferrer"
+                        className="mt-1 inline-flex items-center text-greenLight hover:underline text-sm"
+                      >
+                        <MapPin className="w-4 h-4 mr-1" />
+                        <span className="truncate max-w-[70vw] sm:max-w-none align-middle">{property.address}</span>
+                      </a>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Adresse non renseignée</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+                  <SpecTile icon={<Home className="w-4 h-4" />} label="Type de bien" value={property?.propertyType} />
+                  <SpecTile icon={<Hash className="w-4 h-4" />} label="Code Postal" value={property?.postalCode} />
+                  <SpecTile icon={<MapPin className="w-4 h-4" />} label="Ville" value={property?.city} />
+                  <SpecTile icon={<Ruler className="w-4 h-4" />} label="Surface" value={property?.surface ? `${property.surface} m²` : null} />
+                  <SpecTile icon={<Building2 className="w-4 h-4" />} label="Bâtiment" value={property?.building} />
+                  <SpecTile icon={<Hash className="w-4 h-4" />} label="Lot" value={property?.lot} />
+                  <SpecTile icon={<Layers  className="w-4 h-4" />} label="Étage" value={property?.floor} />
+                  <SpecTile icon={<DoorOpen className="w-4 h-4" />} label="Porte" value={property?.door} />
+                  <SpecTile icon={<User2 className="w-4 h-4" />} label="Propriétaire" value={property?.owner} />
+                  <SpecTile
+                    icon={<CalendarDays className="w-4 h-4" />}
+                    label="Date d’acquisition"
+                    value={property?.acquisitionDate ? new Date(property.acquisitionDate).toLocaleDateString("fr-FR") : null}
+                  />
+                </div>
+
+                <div className="mt-6">
+                  <p className="font-semibold text-gray-300 mb-2 text-sm">Équipements</p>
+                  {property?.amenities && Object.keys(property.amenities).some(k => property.amenities[k]) ? (
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(property.amenities)
+                        .filter(([, v]) => v)
+                        .map(([amenity]) => (
+                          <span
+                            key={amenity}
+                            className="px-3 py-1 rounded-2xl text-xs sm:text-sm bg-[#0a1016]/70 border border-white/10 ring-1 ring-black/10 text-gray-100"
+                          >
+                            {amenity}
+                          </span>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">Aucun</p>
+                  )}
+                </div>
+              </SectionLoader>
+            </Panel>
+
+            {/* Panel: Financier */}
+            <Panel id="panel-financial" show={activeTab === 'financial'}>
+              <SectionLoader loading={false} error={null}>
+                {finData && Object.keys(finData).length > 0 ? (
+                  rentalKind === 'LCD' ? (
+                    <FinancialDataDisplayShort data={finData} results={finData} />
+                  ) : rentalKind === 'AV' ? (
+                    <div className="space-y-3">
+                      <GlassCard>
+                        <p className="text-sm text-gray-300">
+                          Ce bien est en mode <b>achat / revente</b>. Consulte l’analyse dédiée.
+                        </p>
+                      </GlassCard>
+                      <button
+                        onClick={() => navigate(`/properties/${id}/financial-sell?mode=AV`)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl font-medium text-white bg-gradient-to-b from-greenLight to-checkgreen shadow-md hover:from-checkgreen hover:to-greenLight hover:shadow-lg transition"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Ouvrir l’analyse revente
+                      </button>
+                    </div>
+                  ) : (
+                    <FinancialDataDisplay data={finData} results={finData} />
+                  )
+                ) : (
+                  <div className="flex w-full justify-start">
+                    <PrimaryButton onClick={goToFinancial} icon={Plus}>
+                      Ajouter
+                    </PrimaryButton>
+                  </div>
+                )}
+              </SectionLoader>
+            </Panel>
+
+            {/* Panel: Factures */}
+            <Panel id="panel-bills" show={activeTab === 'bills'}>
+              <SectionLoader loading={billsLoading} error={null}>
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-white">Gestion des factures</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
+                  <GlassCard>
+                    <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400">Total factures</p>
+                    <p className="mt-1 text-xl sm:text-2xl font-bold text-white">{Number(totalBills || 0).toFixed(2)} €</p>
+                  </GlassCard>
+                  <GlassCard>
+                    <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400">Travaux estimés</p>
+                    <p className="mt-1 text-xl sm:text-2xl font-bold text-white">{Number(travauxEstimes || 0).toFixed(2)} €</p>
+                  </GlassCard>
+                  <GlassCard>
+                    <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400">Budget restant</p>
+                    <p className="mt-1 text-xl sm:text-2xl font-bold text-white">{Number(budgetRestant || 0).toFixed(2)} €</p>
+                  </GlassCard>
+                </div>
+
+                {/* Formulaire inline générique */}
+                <BillInlineForm onSubmit={addBill} />
+
+                {Array.isArray(bills) && bills.length > 0 ? (
+                  <div className="space-y-2 sm:space-y-3">
+                    {bills.map((bill) => (
+                      <BillRow
+                        key={bill.id || bill._id || bill.fileUrl}
+                        bill={bill}
+                        onDelete={() => deleteBill && deleteBill(bill.id || bill._id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <GlassCard className="text-gray-400">Aucune facture pour le moment.</GlassCard>
+                )}
+              </SectionLoader>
+            </Panel>
+
+            {/* Panel: Locataire */}
+            <Panel id="panel-tenant" show={activeTab === 'tenant'}>
+              <SectionLoader loading={false} error={null}>
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-white">Dossier locataire</h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleGoToTenant}
+                      disabled={resolvingTenant}
+                      className="px-3 sm:px-4 py-2 rounded-3xl font-medium text-white bg-white/10 hover:bg-white/15 border border-white/10 transition disabled:opacity-60"
+                      title="Gérer le dossier"
+                    >
+                      {resolvingTenant ? 'Ouverture…' : 'Gérer'}
+                    </button>
+                    <PrimaryButton
+                      onClick={() => navigate(`/locataire/new?property=${id}`)}
+                      icon={Plus}
+                      title="Ajouter un locataire"
+                    >
+                      Ajouter
+                    </PrimaryButton>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+                  <GlassCard className="lg:col-span-2">
+                    <div className="mb-4">
+                      <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400">Identité & Contact</p>
+                    </div>
+                    <TenantTab ownerId={property.owner} active={activeTab === 'tenant'} />
+                  </GlassCard>
+
+                  <div className="space-y-2 sm:space-y-3">
+                    <GlassCard>
+                      <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400 mb-2">Raccourcis</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <QuickAction icon={<Phone className="w-4 h-4" />} label="Appeler" />
+                        <QuickAction icon={<Mail className="w-4 h-4" />} label="Email" />
+                        <QuickAction icon={<FileText className="w-4 h-4" />} label="Contrat" />
+                        <QuickAction icon={<CalendarDays className="w-4 h-4" />} label="Échéances" />
+                      </div>
+                    </GlassCard>
+
+                    <GlassCard>
+                      <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400 mb-2">Statut</p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-3 py-1 rounded-2xl text-xs bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">Actif</span>
+                        <span className="px-3 py-1 rounded-2xl text-xs bg-white/10 text-gray-200 border border-white/10">Vérifié</span>
+                      </div>
+                    </GlassCard>
+                  </div>
+                </div>
+              </SectionLoader>
+            </Panel>
+
+            {/* Panel: DPE (NOUVEAU) */}
+            <Panel id="panel-dpe" show={activeTab === 'dpe'}>
+              <SectionLoader loading={false} error={null}>
+                <DpePanel propertyId={id} initialDpe={property?.dpe || null} />
+              </SectionLoader>
+            </Panel>
+
+            {/* Panel: Charges récupérables (NOUVEAU) */}
+            <Panel id="panel-rec-charges" show={activeTab === 'rec-charges'}>
+              <SectionLoader loading={billsLoading} error={null}>
+                <RecoverableChargesPanel
+                  propertyId={id}
+                  bills={bills}
+                  loading={billsLoading}
+                  addBill={addBill}
+                  deleteBill={deleteBill}
+                />
+              </SectionLoader>
+            </Panel>
+
+            {/* Panel: Travaux */}
+            <Panel id="panel-works" show={activeTab === 'works'}>
+              <SectionLoader loading={false} error={null}>
+                <Suspense fallback={<SectionLoader loading={true} error={null} />}>
+                  <WorkProgress propertyId={id} />
+                </Suspense>
+              </SectionLoader>
+            </Panel>
+
+            {/* Panel: Bail / Séjours */}
+            <Panel id="panel-lease" show={activeTab === 'lease'}>
+              <SectionLoader loading={false} error={null}>
+                <Suspense fallback={<SectionLoader loading={true} error={null} />}>
+                  {rentalKind === 'LCD' ? (
+                    <ShortStayPanel property={property} propertyId={id} />
+                  ) : (
+                    <LeasePanel property={property} propertyId={id} onOpenTenant={handleGoToTenant} />
+                  )}
+                </Suspense>
+              </SectionLoader>
+            </Panel>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -520,16 +544,16 @@ function SpecTile({ icon, label, value }) {
   return (
     <div
       className={[
-        "rounded-2xl p-3",
+        "rounded-2xl p-3 sm:p-3.5 md:p-4",
         "bg-[#0a1016]/60 border border-white/10 ring-1 ring-black/10",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_18px_-10px_rgba(0,0,0,0.6)]"
       ].join(" ")}
     >
-      <div className="flex items-center gap-2 text-gray-400 text-[11px] uppercase tracking-wide">
+      <div className="flex items-center gap-2 text-gray-400 text-[10px] sm:text-[11px] md:text-xs uppercase tracking-wide">
         <span className="text-gray-300/80">{icon}</span>
-        <span>{label}</span>
+        <span className="truncate">{label}</span>
       </div>
-      <div className="mt-1.5 text-white font-medium">{display}</div>
+      <div className="mt-1.5 text-white font-medium text-sm sm:text-base truncate" title={String(display)}>{display}</div>
     </div>
   );
 }
@@ -538,7 +562,7 @@ function GlassCard({ className = "", children }) {
   return (
     <div
       className={[
-        "relative rounded-2xl p-3",
+        "relative rounded-2xl p-3 sm:p-4",
         "bg-[#0a1016]/60 border border-white/10 ring-1 ring-black/10",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_10px_22px_-12px_rgba(0,0,0,0.65)]",
         "before:content-[''] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/10",
@@ -562,19 +586,19 @@ function BillRow({ bill, onDelete }) {
     : (bill?.createdAt ? new Date(bill.createdAt).toLocaleDateString("fr-FR") : "—");
 
   return (
-    <GlassCard className="p-4">
-      <div className="flex items-center justify-between gap-3">
+    <GlassCard className="p-3 sm:p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
-          <p className="truncate text-white font-medium">{title}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Émise le {dateStr}</p>
+          <p className="truncate text-white font-medium text-sm sm:text-base">{title}</p>
+          <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">Émise le {dateStr}</p>
         </div>
 
-        <div className="text-right">
-          <p className="text-lg font-semibold text-white">
+        <div className="text-left sm:text-right">
+          <p className="text-base sm:text-lg font-semibold text-white">
             {amount !== null ? `${Number(amount).toFixed(2)} €` : "—"}
           </p>
           {bill?.category && (
-            <p className="text-xs text-gray-400 mt-0.5">{bill.category}</p>
+            <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">{bill.category}</p>
           )}
         </div>
 
@@ -607,7 +631,7 @@ function QuickAction({ icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center justify-center gap-2 px-3 py-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-100 text-sm transition"
+      className="flex items-center justify-center gap-2 px-3 py-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-100 text-xs sm:text-sm transition"
     >
       <span className="text-gray-300">{icon}</span>
       <span>{label}</span>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import PopupNotification from '../CalculatorCredit/PopupNotification/PopupNotification';
+import PopupNotification from './PopupNotification/PopupNotification';
 
 function usePersistedState(key, defaultValue) {
   const [state, setState] = useState(() => {
@@ -20,7 +20,7 @@ function usePersistedState(key, defaultValue) {
   return [state, setState];
 }
 
-// Nouvelle fonction utilitaire pour récupérer un token CSRF frais
+// CSRF frais
 async function fetchCsrfToken() {
   const resp = await fetch('http://localhost:5000/csrf-token', {
     credentials: 'include'
@@ -43,6 +43,8 @@ function parseNumberFromString(value) {
   const parsed = parseFloat(cleaned);
   return isNaN(parsed) ? 0 : parsed;
 }
+
+/* ----------------------- Étapes UI ----------------------- */
 
 function StepOne({ propertyPrice, setPropertyPrice, propertyPriceNet, setPropertyPriceNet, agencyFeesPercent, setAgencyFeesPercent, onNext }) {
   const handleChange = (setter) => (e) => {
@@ -82,24 +84,15 @@ function StepOne({ propertyPrice, setPropertyPrice, propertyPriceNet, setPropert
 }
 
 function StepTwo({ 
-  isFurnished, 
-  setIsFurnished, 
-  renovationCosts, 
-  setRenovationCosts, 
-  renovationPaidByPocket, 
-  setRenovationPaidByPocket, 
-  personalContribution, 
-  setPersonalContribution, 
-  useNotaryAsContribution, 
-  setUseNotaryAsContribution, 
-  notaryFees, 
-  onPrev, 
-  onNext, 
-  computedDiscount, 
-  useCustomFurnitureValue, 
-  setUseCustomFurnitureValue, 
-  customFurnitureValue, 
-  setCustomFurnitureValue 
+  isFurnished, setIsFurnished,
+  renovationCosts, setRenovationCosts,
+  renovationPaidByPocket, setRenovationPaidByPocket,
+  personalContribution, setPersonalContribution,
+  useNotaryAsContribution, setUseNotaryAsContribution,
+  notaryFees, onPrev, onNext,
+  computedDiscount,
+  useCustomFurnitureValue, setUseCustomFurnitureValue,
+  customFurnitureValue, setCustomFurnitureValue
 }) {
   const handleIntChange = (setter) => (e) => {
     setter(parseNumberFromString(e.target.value));
@@ -133,6 +126,7 @@ function StepTwo({
             </div>
           )}
         </div>
+
         <div>
           <label className="block text-sm text-gray-400 mb-1">Estimation des travaux</label>
           <div className="flex items-center">
@@ -145,6 +139,7 @@ function StepTwo({
             <label htmlFor="renovationPaidByPocket" className="ml-2 text-gray-300 text-sm">Payer les travaux de ma poche (non inclus dans l'emprunt)</label>
           </div>
         </div>
+
         <div>
           <label className="block text-sm text-gray-400 mb-1">Apport personnel</label>
           <div className="flex items-center">
@@ -175,6 +170,7 @@ function StepTwo({
           </div>
         </div>
       </div>
+
       <div className="mt-6 flex justify-between">
         <button onClick={onPrev} className="px-6 py-3 bg-gray-600 text-gray-200 rounded-3xl">Précédent</button>
         <button onClick={onNext} className="px-6 py-3 bg-greenLight text-white rounded-3xl">Suivant</button>
@@ -184,24 +180,14 @@ function StepTwo({
 }
 
 function StepThree({ 
-  propertyTax, 
-  setPropertyTax, 
-  syndicPeriod, 
-  syndicFees, 
-  setSyndicFees, 
-  ownerInsurancePeriod, 
-  ownerInsuranceAmount, 
-  setOwnerInsuranceAmount, 
-  loanDuration, 
-  setLoanDuration, 
-  interestRate, 
-  setInterestRate, 
-  insuranceRate, 
-  setInsuranceRate, 
-  onPrev, 
-  onNext, 
-  handleSyndicPeriodChange, 
-  handleOwnerInsurancePeriodChange 
+  propertyTax, setPropertyTax,
+  syndicPeriod, syndicFees, setSyndicFees,
+  ownerInsurancePeriod, ownerInsuranceAmount, setOwnerInsuranceAmount,
+  loanDuration, setLoanDuration,
+  interestRate, setInterestRate,
+  insuranceRate, setInsuranceRate,
+  onPrev, onNext,
+  handleSyndicPeriodChange, handleOwnerInsurancePeriodChange
 }) {
   const handleIntChange = (setter) => (e) => {
     setter(parseNumberFromString(e.target.value));
@@ -220,6 +206,7 @@ function StepThree({
             <span className="ml-2 text-gray-400">€</span>
           </div>
         </div>
+
         <div>
           <label className="block text-sm text-gray-400 mb-1">Syndic (part propriétaire)</label>
           <div className="flex items-center space-x-4">
@@ -242,6 +229,7 @@ function StepThree({
             </p>
           )}
         </div>
+
         <div>
           <label className="block text-sm text-gray-400 mb-1">Assurance propriétaire non occupant</label>
           <div className="flex items-center space-x-4">
@@ -264,11 +252,13 @@ function StepThree({
             </p>
           )}
         </div>
+
         <div>
           <label className="block text-sm text-gray-400 mb-1">Durée du prêt</label>
           <input type="range" min="5" max="20" step="5" value={loanDuration} onChange={(e) => setLoanDuration(Number(e.target.value))} className="w-full accent-greenLight" />
           <p className="text-xs text-gray-400 mt-1">{loanDuration} ans</p>
         </div>
+
         <div>
           <label className="block text-sm text-gray-400 mb-1">Taux d'intérêt annuel</label>
           <div className="flex items-center">
@@ -276,6 +266,7 @@ function StepThree({
             <span className="ml-2 text-gray-400">%</span>
           </div>
         </div>
+
         <div>
           <label className="block text-sm text-gray-400 mb-1">Assurance emprunteur (taux annuel)</label>
           <div className="flex items-center">
@@ -284,6 +275,7 @@ function StepThree({
           </div>
         </div>
       </div>
+
       <div className="mt-6 flex justify-between">
         <button onClick={onPrev} className="px-6 py-3 bg-gray-600 text-gray-200 rounded-3xl">Précédent</button>
         <button onClick={onNext} className="px-6 py-3 bg-greenLight text-white rounded-3xl">Suivant</button>
@@ -323,7 +315,7 @@ function StepFour({ monthlyRent, setMonthlyRent, monthlyCharges, setMonthlyCharg
   );
 }
 
-function StepFive({ computedResults, onPrev, onShowModal }) {
+function StepFive({ computedResults, onPrev, onGoSave }) {
   return (
     <section className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-600">
       <h2 className="text-xl font-semibold mb-4 text-gray-100">Étape 5 : Résultats</h2>
@@ -359,11 +351,40 @@ function StepFive({ computedResults, onPrev, onShowModal }) {
       </div>
       <div className="mt-6 flex justify-between">
         <button onClick={onPrev} className="px-6 py-3 bg-gray-600 text-gray-200 rounded-3xl">Précédent</button>
-        <button onClick={onShowModal} className="px-6 py-3 bg-greenLight text-white rounded-3xl">Sauvegarder</button>
+        <button onClick={onGoSave} className="px-6 py-3 bg-greenLight text-white rounded-3xl">Sauvegarder</button>
       </div>
     </section>
   );
 }
+
+/** Nouvelle étape 6 : Page de sauvegarde (plus de modale) */
+function StepSave({
+  saveName, setSaveName,
+  onPrev, onConfirm
+}) {
+  return (
+    <section className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-600">
+      <h2 className="text-xl font-semibold mb-4 text-gray-100">Étape 6 : Sauvegarde</h2>
+      <p className="text-gray-300 mb-4">Donnez un nom à votre simulation pour la retrouver facilement plus tard.</p>
+      <div>
+        <label className="block text-sm text-gray-400 mb-1">Nom de la sauvegarde</label>
+        <input
+          type="text"
+          value={saveName}
+          onChange={(e) => setSaveName(e.target.value)}
+          className="w-full p-2 border border-gray-600 rounded-3xl pl-3 bg-gray-800 text-gray-100"
+          placeholder="Ex: Studio Aurillac 20 ans"
+        />
+      </div>
+      <div className="mt-6 flex justify-between">
+        <button onClick={onPrev} className="px-6 py-3 bg-gray-600 text-gray-200 rounded-3xl">Précédent</button>
+        <button onClick={onConfirm} className="px-6 py-3 bg-greenLight text-white rounded-3xl">Sauvegarder</button>
+      </div>
+    </section>
+  );
+}
+
+/* ----------------------- Composant principal ----------------------- */
 
 const MortageSimulator = () => {
   const navigate = useNavigate();
@@ -390,11 +411,9 @@ const MortageSimulator = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [popup, setPopup] = useState(null);
   const [saveName, setSaveName] = useState("");
-  const [showModal, setShowModal] = useState(false);
   const notaryRate = 0.08;
-  
+
   useEffect(() => {
-    // Calcul du % de frais d'agence si on saisit les deux prix
     if (propertyPrice && propertyPriceNet) {
       const newFees = roundToTwo(100 * ((propertyPrice / propertyPriceNet) - 1));
       if (newFees !== agencyFeesPercent) setAgencyFeesPercent(newFees);
@@ -405,17 +424,14 @@ const MortageSimulator = () => {
   const numPropertyPriceNet = parseFloat(propertyPriceNet) || 0;
   const computedDiscount = numPropertyPriceNet * 0.05;
   const discount = isFurnished ? (useCustomFurnitureValue ? customFurnitureValue : computedDiscount) : 0;
-  // Prix net vendeur sans décote
   const propertyPriceNetWithoutDiscount = roundToTwo(numPropertyPriceNet - discount);
   const notaryFees = roundToTwo(propertyPriceNetWithoutDiscount * notaryRate);
-  // Financement des travaux
   const financedRenovation = renovationPaidByPocket ? 0 : parseFloat(renovationCosts) || 0;
-  // L'apport personnel couvre une partie des frais de notaire
   const financedNotary = Math.max(0, notaryFees - (parseFloat(personalContribution) || 0));
-  // Montant financé
   const netLoanAmount = roundToTwo(Math.max(0, propertyPriceNetWithoutDiscount + financedNotary + financedRenovation));
   const monthlyInterestRate = parseFloat(interestRate.replace(',', '.')) / 100 / 12 || 0;
   const numberOfMonths = loanDuration * 12;
+
   let monthlyLoanPayment = 0;
   if (netLoanAmount > 0 && monthlyInterestRate > 0 && numberOfMonths > 0) {
     monthlyLoanPayment = roundToTwo(netLoanAmount * (monthlyInterestRate / (1 - Math.pow(1 + monthlyInterestRate, -numberOfMonths))));
@@ -436,10 +452,7 @@ const MortageSimulator = () => {
   const grossYield = totalPurchaseCost > 0 ? roundToTwo((annualRent / totalPurchaseCost) * 100) : 0;
   const netYield = (totalPurchaseCost + financingCost) > 0 ? roundToTwo((annualRent / (totalPurchaseCost + financingCost)) * 100) : 0;
   const monthlyCashFlow = roundToTwo(monthlyRent - totalMonthlyCost);
-
-  // Frais d'agence = différence entre le prix avec agence et le prix net vendeur
   const agencyFees = roundToTwo(numPropertyPrice - numPropertyPriceNet);
-  // Total acquisition = Prix net vendeur sans décote + frais d'agence + reste à financer (notaire)
   const totalAcquisition = roundToTwo(propertyPriceNetWithoutDiscount + agencyFees + financedNotary);
 
   const computedResults = {
@@ -461,36 +474,25 @@ const MortageSimulator = () => {
 
   const handleSyndicPeriodChangeLocal = (newPeriod) => {
     if (newPeriod !== syndicPeriod) {
-      if (newPeriod === 'annual') {
-        setSyndicFees(roundToTwo((parseFloat(syndicFees) || 0) * 12));
-      } else {
-        setSyndicFees(roundToTwo((parseFloat(syndicFees) || 0) / 12));
-      }
+      if (newPeriod === 'annual') setSyndicFees(roundToTwo((parseFloat(syndicFees) || 0) * 12));
+      else setSyndicFees(roundToTwo((parseFloat(syndicFees) || 0) / 12));
       setSyndicPeriod(newPeriod);
     }
   };
 
   const handleOwnerInsurancePeriodChangeLocal = (newPeriod) => {
     if (newPeriod !== ownerInsurancePeriod) {
-      if (newPeriod === 'annual') {
-        setOwnerInsuranceAmount(roundToTwo((parseFloat(ownerInsuranceAmount) || 0) * 12));
-      } else {
-        setOwnerInsuranceAmount(roundToTwo((parseFloat(ownerInsuranceAmount) || 0) / 12));
-      }
+      if (newPeriod === 'annual') setOwnerInsuranceAmount(roundToTwo((parseFloat(ownerInsuranceAmount) || 0) * 12));
+      else setOwnerInsuranceAmount(roundToTwo((parseFloat(ownerInsuranceAmount) || 0) / 12));
       setOwnerInsurancePeriod(newPeriod);
     }
   };
 
   const nextStep = () => setCurrentStep((prev) => prev + 1);
   const prevStep = () => setCurrentStep((prev) => prev - 1);
-  const openSaveModal = () => {
-    setShowModal(true);
-  };
-  const handleSubmit = () => {
-    handleConfirmSave();
-  };
 
-  // Modifiez la fonction handleConfirmSave dans MortageSimulator.jsx
+  // ➜ On remplace l'ouverture de modale par un passage à l'étape 6 (page)
+  const goToSavePage = () => setCurrentStep(6);
 
   const handleConfirmSave = async () => {
     if (!saveName.trim()) {
@@ -523,10 +525,8 @@ const MortageSimulator = () => {
 
     try {
       const token = localStorage.getItem('token');
-      // 1) on récupère un CSRF token fraîchement généré
       const csrfToken = await fetchCsrfToken();
 
-      // 2) on envoie la requête avec le header X-XSRF-TOKEN
       const response = await fetch('http://localhost:5000/api/simulations', {
         method: 'POST',
         credentials: 'include',
@@ -537,29 +537,26 @@ const MortageSimulator = () => {
         },
         body: JSON.stringify(simulationData),
       });
-    
-    const data = await response.json();
-    if (response.ok) {
-      setPopup({
-        message: "Simulation sauvegardée !",
-        type: "success",
-        duration: 3000,
-        onClose: () => {
-          navigate(`/detailscalcul/${data.simulation.id}`);
-          setPopup(null);
-        },
-      });
-    } else {
-      setPopup({ message: "Erreur : " + data.message, type: "error", duration: 3000 });
+
+      const data = await response.json();
+      if (response.ok) {
+        setPopup({
+          message: "Simulation sauvegardée !",
+          type: "success",
+          duration: 3000,
+          onClose: () => {
+            navigate(`/detailscalcul/${data.simulation.id}`);
+            setPopup(null);
+          },
+        });
+      } else {
+        setPopup({ message: "Erreur : " + (data.message || 'Requête invalide'), type: "error", duration: 3000 });
+      }
+    } catch (error) {
+      console.error(error);
+      setPopup({ message: "Erreur lors de la sauvegarde de la simulation.", type: "error", duration: 3000 });
     }
-  } catch (error) {
-    console.error(error);
-    setPopup({ message: "Erreur lors de la sauvegarde de la simulation.", type: "error", duration: 3000 });
-  } finally {
-    setShowModal(false);
-    setSaveName("");
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 text-gray-100 p-6">
@@ -571,15 +568,17 @@ const MortageSimulator = () => {
           onClose={popup.onClose ? popup.onClose : () => setPopup(null)}
         />
       )}
+
       <header className="flex items-center mb-4">
-      <button
+        <button
           onClick={() => navigate(-1)}
-          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full shadow-md hover:bg-checkgreen transition"
+          className="p-2 bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600 rounded-full hover:bg-checkgreen transition"
         >
           <ArrowLeft className="w-6 h-6 text-greenLight" />
         </button>
-        <h1 className="ml-4 text-2xl font-bold text-white">Simaltion d'investissement</h1>
+        <h1 className="ml-4 text-2xl font-bold text-white">Simulation d'investissement</h1>
       </header>
+
       {currentStep === 1 && (
         <StepOne
           propertyPrice={propertyPrice}
@@ -591,6 +590,7 @@ const MortageSimulator = () => {
           onNext={nextStep}
         />
       )}
+
       {currentStep === 2 && (
         <StepTwo
           isFurnished={isFurnished}
@@ -613,6 +613,7 @@ const MortageSimulator = () => {
           setCustomFurnitureValue={setCustomFurnitureValue}
         />
       )}
+
       {currentStep === 3 && (
         <StepThree
           propertyTax={propertyTax}
@@ -635,6 +636,7 @@ const MortageSimulator = () => {
           onNext={nextStep}
         />
       )}
+
       {currentStep === 4 && (
         <StepFour
           monthlyRent={monthlyRent}
@@ -645,21 +647,23 @@ const MortageSimulator = () => {
           onNext={nextStep}
         />
       )}
+
       {currentStep === 5 && (
-        <StepFive computedResults={computedResults} onPrev={prevStep} onShowModal={openSaveModal} />
+        <StepFive
+          computedResults={computedResults}
+          onPrev={prevStep}
+          onGoSave={goToSavePage}
+        />
       )}
-      {showModal && (
-        <div className="fixed inset-0 flex items-end justify-center z-50">
-          <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowModal(false)}></div>
-          <div className="bg-gray-800 w-full h-1/3 rounded-t-lg p-4 z-50 animate-slideUp">
-            <h3 className="text-lg font-semibold mb-2 mt-6 text-center text-gray-100">Nom de la sauvegarde</h3>
-            <input type="text" value={saveName} onChange={(e) => setSaveName(e.target.value)} className="w-full p-2 border border-gray-600 rounded-3xl pl-3 bg-gray-700 text-gray-100" />
-            <div className="mt-4 flex justify-end space-x-2">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-600 text-gray-200 rounded-3xl transition">Annuler</button>
-              <button onClick={handleSubmit} className="px-4 py-2 bg-greenLight text-white rounded-3xl transition">Sauvegarder</button>
-            </div>
-          </div>
-        </div>
+
+      {/* Nouvelle page “normale” de sauvegarde */}
+      {currentStep === 6 && (
+        <StepSave
+          saveName={saveName}
+          setSaveName={setSaveName}
+          onPrev={prevStep}
+          onConfirm={handleConfirmSave}
+        />
       )}
     </div>
   );

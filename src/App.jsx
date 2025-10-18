@@ -14,12 +14,9 @@ import 'react-loading-skeleton/dist/skeleton.css';
 // Utils
 import ScrollToTop from './components/Utils/ScrollToTop';
 
-// Composants standards
-import Navbar from './components/Navbar/Navbar';
+// ✅ On GARDE la nav du bas
 import NavigationButton from './components/Navbar/NavigationButton';
 
-// Hook swipe
-import useSwipeNavigation from './components/App/useSwipeNavigation';
 
 // Routes
 import { mainRoutes } from './components/Navbar/routes';
@@ -44,7 +41,7 @@ const LoadingSkeleton = React.memo(() => (
   </div>
 ));
 
-// Props d'animation Framer Motion
+// Animations
 const pageAnimationProps = {
   initial: { x: '100%', opacity: 0 },
   animate: { x: 0, opacity: 1 },
@@ -127,16 +124,13 @@ const ModalRoutes = ({ location }) => {
   );
 };
 
-// Contenu principal avec swipe
-const MainContent = React.memo(({ location }) => {
-  // Exclure les pages d'authentification du swipe
-  const authPaths = ['/connexion', '/inscription'];
-  const isAuthPage = authPaths.includes(location.pathname);
-  const pages = ['/pea', '/immobilier', '/MoreActions'];
-  const swipeHandlers = isAuthPage ? {} : useSwipeNavigation(pages, location.pathname);
 
+const MainContent = React.memo(({ location }) => {
   return (
-    <div {...swipeHandlers} className="h-full flex flex-col overflow-hidden pt-16 pb-20">
+    <div
+      className="h-full flex flex-col overflow-hidden pb-20"
+      style={{ paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }} // marge pour la nav du bas + safe area iOS
+    >
       <AnimatePresence mode="wait">
         <GeneralErrorBoundary key={location.pathname}>
           <Suspense fallback={<LoadingSkeleton />}>
@@ -213,8 +207,8 @@ function AppContent() {
         <ActionsProvider>
           <MainContent location={background || location} />
           {background && <ModalRoutes location={location} />}
+          {/* ✅ Nav du bas */}
           <NavigationButton />
-          <Navbar />
         </ActionsProvider>
       )}
     </>
@@ -227,7 +221,9 @@ export default function App() {
     <Router>
       <ScrollToTop />
       <GeneralErrorBoundary>
-        <AppContent />
+        <Suspense fallback={<LoadingSkeleton />}>
+          <AppContent />
+        </Suspense>
       </GeneralErrorBoundary>
     </Router>
   );

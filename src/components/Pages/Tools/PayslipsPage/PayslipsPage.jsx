@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus, Trash2, Download, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import MonthPicker from "/src/components/Pages/Dashboard/Modules/PayslipsPage/MonthPicker";
+import MonthPicker from "./MonthPicker";
 
 const LS_KEY = "payslips:v1";
 
